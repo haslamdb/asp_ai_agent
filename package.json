@@ -1,0 +1,13 @@
+{
+  "name": "asp-ai-agent",
+  "version": "1.0.0",
+  "description": "ASP AI Agent - AI-powered tools for antimicrobial stewardship",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "latest"
+  }
+}

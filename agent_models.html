@@ -163,8 +163,13 @@
 
     <script>
         // === Common Elements & API Config ===
-        const apiKey = ""; // API key is an empty string
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        // For local development, use: http://localhost:3000/api/gemini
+        // For production (Vercel), this will be automatically set to your domain
+        const API_ENDPOINT = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000/api/gemini'
+            : 'https://asp-ai-agent.vercel.app/api/gemini';
+        
+        const apiUrl = API_ENDPOINT;
         // Initialize the Markdown converter with tables enabled
         const markdownConverter = new showdown.Converter({ tables: true });
 
