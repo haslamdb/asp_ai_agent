@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASP AI Agent - Antibiotic Stewardship Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+        
+        main {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .feature-card {
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chat-interface {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: #fafafa;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .chat-submit {
+            padding: 0.75rem 1.5rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .chat-submit:hover {
+            background-color: #2980b9;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+        }
+        
+        .user-message {
+            background-color: #e3f2fd;
+            text-align: right;
+        }
+        
+        .ai-message {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>ASP AI Training Assistant</h1>
+            <p class="subtitle">AI-Powered Antibiotic Stewardship Education for ID Fellows</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <main>
+            <section class="section">
+                <h2>Welcome to the ASP Training Platform</h2>
+                <p>This interactive platform uses AI to help Infectious Disease fellows develop expertise in antibiotic stewardship through case-based learning, evidence-based discussions, and personalized feedback.</p>
+            </section>
+            
+            <section class="section">
+                <h2>Key Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>Case-Based Learning</h3>
+                        <p>Work through realistic clinical scenarios with AI guidance to develop practical stewardship skills.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Evidence-Based Discussions</h3>
+                        <p>Explore current literature and guidelines with AI assistance to support clinical decision-making.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Personalized Feedback</h3>
+                        <p>Receive tailored suggestions and insights based on your responses and learning progress.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Interactive Scenarios</h3>
+                        <p>Practice handling common stewardship challenges in a safe, educational environment.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section">
+                <h2>AI Assistant</h2>
+                <div class="chat-interface">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai-message">
+                            Hello! I'm your ASP training assistant. I can help you work through antibiotic stewardship cases, discuss guidelines, or answer questions about antimicrobial therapy. How can I assist you today?
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question or describe a case...">
+                        <button class="chat-submit" id="chatSubmit">Send</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // Basic chat interface functionality
+        const chatInput = document.getElementById('chatInput');
+        const chatSubmit = document.getElementById('chatSubmit');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        chatSubmit.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Simulate AI response (placeholder)
+            setTimeout(() => {
+                addMessage("I understand your question about antibiotic stewardship. This is a placeholder response - the AI integration will be implemented to provide evidence-based guidance and case discussions.", 'ai');
+            }, 1000);
+        }
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
