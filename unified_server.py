@@ -8,7 +8,7 @@ Integrates:
 - Anthropic Claude API
 """
 
-from flask import Flask, request, jsonify, Response, stream_with_context
+from flask import Flask, request, jsonify, Response, stream_with_context, session
 from flask_cors import CORS
 import requests
 import os
@@ -22,8 +22,18 @@ import concurrent.futures
 import threading
 import time
 
+# Import session management
+from session_manager import (
+    SessionManager, UserSession, ConversationTurn, 
+    ModuleProgress, ModuleStatus, DifficultyLevel
+)
+
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'])
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
+CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
+
+# Initialize session manager
+session_mgr = SessionManager()
 
 # Configuration
 OLLAMA_API = "http://localhost:11434"
@@ -42,6 +52,108 @@ def health_check():
         'timestamp': datetime.now().isoformat(),
         'services': check_services()
     })
+
+@app.route('/api/session/create', methods=['POST'])
+def create_session():
+    """Create a new user session"""
+    data = request.json or {}
+    user_session = session_mgr.create_session(
+        email=data.get('email'),
+        name=data.get('name'),
+        institution=data.get('institution'),
+        fellowship_year=data.get('fellowship_year')
+    )
+    
+    # Store in Flask session
+    session['user_id'] = user_session.user_id
+    
+    return jsonify({
+        'user_id': user_session.user_id,
+        'created_at': user_session.created_at.isoformat(),
+        'current_difficulty': user_session.current_difficulty.value
+    })
+
+@app.route('/api/session/current', methods=['GET'])
+def get_current_session():
+    """Get current session info"""
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    if not user_id:
+        return jsonify({'error': 'No active session'}), 401
+    
+    user_session = session_mgr.get_session(user_id)
+    if not user_session:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    return jsonify(user_session.get_progress_summary())
+
+@app.route('/api/user/progress', methods=['GET'])
+def get_user_progress():
+    """Get detailed user progress"""
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    if not user_id:
+        return jsonify({'error': 'No active session'}), 401
+    
+    user_session = session_mgr.get_session(user_id)
+    if not user_session:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    progress_data = user_session.get_progress_summary()
+    
+    # Add detailed module progress
+    progress_data['modules'] = {}
+    for module_id, progress in user_session.module_progress.items():
+        progress_data['modules'][module_id] = {
+            'status': progress.status.value,
+            'attempts': progress.attempts,
+            'best_score': progress.best_score,
+            'mastery_level': progress.mastery_level,
+            'last_attempt': progress.last_attempt.isoformat() if progress.last_attempt else None
+        }
+    
+    # Add recent conversation context
+    progress_data['recent_conversations'] = [
+        {
+            'timestamp': turn.timestamp.isoformat(),
+            'module_id': turn.module_id,
+            'user_message': turn.user_message[:100] + '...' if len(turn.user_message) > 100 else turn.user_message
+        }
+        for turn in user_session.get_context_window(5)
+    ]
+    
+    return jsonify(progress_data)
+
+@app.route('/api/conversation/history', methods=['GET'])
+def get_conversation_history():
+    """Get conversation history for current user"""
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    if not user_id:
+        return jsonify({'error': 'No active session'}), 401
+    
+    limit = request.args.get('limit', 10, type=int)
+    history = session_mgr.get_conversation_history(user_id, limit)
+    
+    return jsonify({
+        'user_id': user_id,
+        'conversations': [
+            {
+                'turn_id': turn.turn_id,
+                'timestamp': turn.timestamp.isoformat(),
+                'module_id': turn.module_id,
+                'user_message': turn.user_message,
+                'ai_response': turn.ai_response,
+                'citations': turn.citations,
+                'metrics': turn.metrics
+            }
+            for turn in history
+        ]
+    })
+
+@app.route('/api/analytics', methods=['GET'])
+def get_analytics():
+    """Get system-wide analytics (admin endpoint)"""
+    # In production, add authentication here
+    analytics = session_mgr.get_analytics()
+    return jsonify(analytics)
 
 def check_services():
     """Check which services are available"""
@@ -454,24 +566,59 @@ def gemini_chat(model: str, messages: List[Dict], system_prompt: str = '') -> tu
 def asp_feedback():
     """
     Special endpoint for ASP-specific feedback using the best available model
+    Now with session management and multi-turn context
     """
     data = request.json
     module = data.get('module', 'general')
     user_input = data.get('input', '')
     preferred_model = data.get('model')
     
+    # Get or create user session
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    user_session = None
+    if user_id:
+        user_session = session_mgr.get_session(user_id)
+    
+    if not user_session:
+        # Create anonymous session
+        user_session = session_mgr.create_session()
+        session['user_id'] = user_session.user_id
+        user_id = user_session.user_id
+    
+    # Adapt difficulty based on user's current level
+    difficulty_prompts = {
+        DifficultyLevel.BEGINNER: "Provide foundational concepts with clear explanations. Use simple examples.",
+        DifficultyLevel.INTERMEDIATE: "Build on basic knowledge. Include some nuance and complexity.",
+        DifficultyLevel.ADVANCED: "Assume strong foundation. Focus on edge cases and advanced strategies.",
+        DifficultyLevel.EXPERT: "Engage at expert level. Include cutting-edge research and controversial topics."
+    }
+    
+    difficulty_modifier = difficulty_prompts.get(user_session.current_difficulty, "")
+    
     # Build specialized prompts based on module
     if module == 'business_case':
-        system_prompt = """You are a senior hospital administrator (CFO/CMO) reviewing an ASP business case.
+        system_prompt = f"""You are a senior hospital administrator (CFO/CMO) reviewing an ASP business case.
         Focus on ROI calculations, stakeholder engagement strategies, and measurable outcomes.
-        Be skeptical but constructive. Ground feedback in real-world ASP literature."""
+        Be skeptical but constructive. Ground feedback in real-world ASP literature.
+        {difficulty_modifier}"""
     elif module == 'prescriber_psychology':
-        system_prompt = """You are an expert in behavioral science and prescriber psychology for ASP.
+        system_prompt = f"""You are an expert in behavioral science and prescriber psychology for ASP.
         Analyze cognitive biases (commission bias, omission bias, availability heuristic).
-        Suggest evidence-based communication strategies like academic detailing and motivational interviewing."""
+        Suggest evidence-based communication strategies like academic detailing and motivational interviewing.
+        {difficulty_modifier}"""
     else:
-        system_prompt = """You are an ASP expert providing feedback on antimicrobial stewardship.
-        Focus on evidence-based practices and implementation strategies."""
+        system_prompt = f"""You are an ASP expert providing feedback on antimicrobial stewardship.
+        Focus on evidence-based practices and implementation strategies.
+        {difficulty_modifier}"""
+    
+    # Add conversation context
+    context_prompt = ""
+    recent_turns = user_session.get_context_window(3)
+    if recent_turns:
+        context_prompt = "\n\nPrevious conversation context:\n"
+        for turn in recent_turns:
+            context_prompt += f"User: {turn.user_message[:200]}...\n"
+            context_prompt += f"Assistant: {turn.ai_response[:200]}...\n\n"
     
     # Try to enhance with citations
     citations = []
@@ -487,8 +634,10 @@ def asp_feedback():
         except:
             pass
     
-    # Build enhanced input
+    # Build enhanced input with context
     enhanced_input = user_input
+    if context_prompt:
+        enhanced_input = context_prompt + "\nCurrent question: " + user_input
     if citations:
         enhanced_input += "\n\nRelevant literature to consider:\n"
         for cite in citations:
@@ -514,6 +663,9 @@ def asp_feedback():
         'ollama:gemma2:27b',  # Local fallback
     ]
     
+    response_data = None
+    model_used = None
+    
     for model_id in model_preference:
         provider = model_id.split(':')[0]
         if provider == 'claude' and not ANTHROPIC_API_KEY:
@@ -527,7 +679,40 @@ def asp_feedback():
         if result[1] == 200:
             response_data = result[0].get_json()
             response_data['citations'] = citations
-            return jsonify(response_data)
+            model_used = model_id
+            break
+    
+    if response_data:
+        # Save conversation turn
+        turn = ConversationTurn(
+            user_message=user_input,
+            ai_response=response_data.get('response', ''),
+            module_id=module,
+            context_used={'difficulty': user_session.current_difficulty.value},
+            citations=citations,
+            metrics={'model': model_used}
+        )
+        user_session.add_turn(turn)
+        session_mgr.save_conversation_turn(user_id, turn)
+        
+        # Calculate and update module progress (simple scoring based on response length and citations)
+        score = 0.5  # Base score
+        if len(response_data.get('response', '')) > 500:
+            score += 0.2
+        if citations:
+            score += 0.3
+        
+        user_session.update_module_progress(module, score, response_data)
+        session_mgr.update_session(user_session)
+        
+        # Add session info to response
+        response_data['session_info'] = {
+            'user_id': user_id,
+            'difficulty': user_session.current_difficulty.value,
+            'module_attempts': user_session.module_progress.get(module, ModuleProgress(module)).attempts if module in user_session.module_progress else 0
+        }
+        
+        return jsonify(response_data)
     
     return jsonify({'error': 'No AI models available', 'citations': citations}), 503
 
