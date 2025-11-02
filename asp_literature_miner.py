@@ -203,27 +203,30 @@ class ASPLiteratureSearcher:
 class AIFilterer:
     """Filter papers using a local LLM (Ollama)"""
 
-    def __init__(self, ollama_url="http://localhost:11434", model="gemma2:27b", use_scoring=True):
+    def __init__(self, ollama_url="http://localhost:11434", model="gemma2:27b", use_scoring=True, max_tokens=128):
         """Initialize AI filterer"""
         if not HAS_REQUESTS:
             raise ImportError("requests required. Install with: pip install requests")
 
         self.ollama_url = f"{ollama_url}/api/chat"
         self.ollama_base_url = ollama_url
+        self.ollama_tags_url = f"{ollama_url}/api/tags"
         self.model = model
         self.use_scoring = use_scoring
+        self.max_tokens = max_tokens
+        self.request_times = []  # Track request times for monitoring
 
         if use_scoring:
             self.system_prompt = (
                 "You are an expert medical librarian specializing in Antimicrobial Stewardship education. "
-                "Your task is to rate how relevant each paper is to ASP training, teaching, curriculum, or educational principles. "
-                "Rate each paper on a scale from 0-10 where:\n"
-                "10 = Directly about ASP education, training programs, curriculum development, or teaching methods\n"
-                "7-9 = Strong educational component with practical training applications\n"
-                "4-6 = Some educational value but primarily clinical/operational focus\n"
-                "1-3 = Minimal educational content, mostly clinical outcomes or QI metrics\n"
-                "0 = No educational relevance\n\n"
-                "Respond with ONLY a single number (0-10)."
+                "Rate papers on relevance to ASP TRAINING/EDUCATION (0-10):\n\n"
+                "10: Core ASP education (curriculum design, teaching methods, training programs)\n"
+                "8-9: Strong training focus (competency assessment, educational interventions)\n"
+                "6-7: Mixed clinical/educational (implementation with training component)\n"
+                "4-5: Minimal education (brief mention of training in QI project)\n"
+                "1-3: Tangential (general ASP topics, no educational focus)\n"
+                "0: Not relevant\n\n"
+                "Respond with ONLY the numeric score (0-10). No explanation."
             )
         else:
             self.system_prompt = (
@@ -236,25 +239,81 @@ class AIFilterer:
         self.filtered_papers = []
 
     def check_ollama_connection(self) -> bool:
-        """Check if Ollama server is running"""
+        """Check if Ollama server is running and model is available"""
         print_info(f"Checking connection to Ollama at {self.ollama_base_url}...")
+
+        # Check if Ollama server is running
         try:
-            response = requests.get(self.ollama_base_url, timeout=3)
-            if response.status_code == 200:
-                print_success(f"Ollama server connected. Using model: {self.model}")
-                return True
-            else:
+            response = requests.get(self.ollama_base_url, timeout=5)
+            if response.status_code != 200:
                 print_error(f"Ollama server found, but returned status {response.status_code}")
                 return False
         except requests.exceptions.ConnectionError:
             print_error(f"Could not connect to Ollama at {self.ollama_base_url}")
-            print_info("Please ensure Ollama is running.")
+            print_info("Please start Ollama with: ollama serve")
             return False
         except Exception as e:
             print_error(f"Error connecting to Ollama: {e}")
             return False
 
-    def filter_paper(self, paper: Dict, threshold: float = 7.0) -> Tuple[bool, Optional[float]]:
+        print_success("Ollama server is running")
+
+        # Check if the specified model is available
+        print_info(f"Checking if model '{self.model}' is available...")
+        try:
+            response = requests.get(self.ollama_tags_url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+
+            available_models = [m['name'] for m in data.get('models', [])]
+
+            # Check for exact match or with :latest tag
+            model_found = False
+            for available in available_models:
+                if available == self.model or available == f"{self.model}:latest" or available.startswith(f"{self.model}:"):
+                    model_found = True
+                    break
+
+            if not model_found:
+                print_error(f"Model '{self.model}' not found in Ollama")
+                print_info(f"Available models: {', '.join(available_models) if available_models else 'none'}")
+                print_info(f"Pull the model with: ollama pull {self.model}")
+                return False
+
+            print_success(f"Model '{self.model}' is available")
+
+            # Display GPU info if available
+            self._check_gpu_availability()
+
+            return True
+
+        except Exception as e:
+            print_error(f"Error checking model availability: {e}")
+            return False
+
+    def _check_gpu_availability(self):
+        """Check and display GPU availability for Ollama"""
+        try:
+            # Try to get GPU info via nvidia-smi
+            import subprocess
+            result = subprocess.run(
+                ['nvidia-smi', '--query-gpu=index,name,memory.total', '--format=csv,noheader'],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+            if result.returncode == 0 and result.stdout:
+                print_info("GPU(s) detected:")
+                for line in result.stdout.strip().split('\n'):
+                    print(f"  {line}")
+                print_info("Ollama will automatically use available GPU(s)")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            # nvidia-smi not available, running on CPU
+            print_warning("GPU not detected. Running on CPU (slower inference)")
+        except Exception:
+            pass  # Silent fail for GPU check
+
+    def filter_paper(self, paper: Dict, threshold: float = 7.0, retry_count: int = 2) -> Tuple[bool, Optional[float]]:
         """
         Use LLM to determine if a paper is relevant to ASP training/education.
         Returns (is_relevant, score) where score is None for yes/no mode
@@ -268,48 +327,104 @@ class AIFilterer:
                 {"role": "user", "content": user_prompt}
             ],
             "stream": False,
-            "options": {"temperature": 0.0}
+            "options": {
+                "temperature": 0.0,
+                "num_predict": self.max_tokens  # Limit output tokens for efficiency
+            }
         }
 
-        try:
-            response = requests.post(self.ollama_url, json=payload, timeout=30)
-            response.raise_for_status()
-            result = response.json()
-            answer = result.get('message', {}).get('content', '').strip()
+        # Track request time for monitoring
+        start_time = time.time()
 
-            if self.use_scoring:
-                # Extract numeric score
-                try:
-                    score = float(answer)
-                    # Clamp to 0-10 range
-                    score = max(0.0, min(10.0, score))
-                    is_relevant = score >= threshold
-                    return (is_relevant, score)
-                except ValueError:
-                    print_warning(f"Could not parse score '{answer}' for PMID {paper['pmid']}, defaulting to 0")
-                    return (False, 0.0)
-            else:
-                # Yes/No mode
-                is_relevant = 'yes' in answer.lower()
-                return (is_relevant, None)
+        for attempt in range(retry_count + 1):
+            try:
+                # Increased timeout for GPU processing
+                response = requests.post(self.ollama_url, json=payload, timeout=60)
+                response.raise_for_status()
+                result = response.json()
+                answer = result.get('message', {}).get('content', '').strip()
 
-        except requests.exceptions.Timeout:
-            print_error(f"Ollama request timed out for PMID {paper['pmid']}")
-            return (False, None if not self.use_scoring else 0.0)
-        except Exception as e:
-            print_error(f"Ollama request failed for PMID {paper['pmid']}: {e}")
-            return (False, None if not self.use_scoring else 0.0)
+                elapsed = time.time() - start_time
+                self.request_times.append(elapsed)
 
-    def batch_filter(self, papers_list: List[Dict], threshold: float = 7.0) -> List[Dict]:
-        """Filter a list of papers using the LLM"""
+                # Log slow requests
+                if elapsed > 10:
+                    print_warning(f"Slow filtering for PMID {paper['pmid']}: {elapsed:.1f}s")
+
+                if self.use_scoring:
+                    # Extract numeric score - handle cases where model adds explanation
+                    try:
+                        # Try to extract just the number
+                        import re
+                        match = re.search(r'\b([0-9]|10)(?:\.\d+)?\b', answer)
+                        if match:
+                            score = float(match.group(0))
+                        else:
+                            score = float(answer)
+
+                        # Clamp to 0-10 range
+                        score = max(0.0, min(10.0, score))
+                        is_relevant = score >= threshold
+                        return (is_relevant, score)
+                    except ValueError:
+                        print_warning(f"Could not parse score '{answer[:50]}' for PMID {paper['pmid']}, defaulting to 0")
+                        return (False, 0.0)
+                else:
+                    # Yes/No mode
+                    is_relevant = 'yes' in answer.lower()
+                    return (is_relevant, None)
+
+            except requests.exceptions.Timeout:
+                if attempt < retry_count:
+                    print_warning(f"Timeout for PMID {paper['pmid']}, retrying ({attempt+1}/{retry_count})...")
+                    time.sleep(2)  # Brief delay before retry
+                    continue
+                else:
+                    print_error(f"Ollama request timed out for PMID {paper['pmid']} after {retry_count+1} attempts")
+                    return (False, None if not self.use_scoring else 0.0)
+            except requests.exceptions.HTTPError as e:
+                if attempt < retry_count and e.response.status_code >= 500:
+                    print_warning(f"Server error for PMID {paper['pmid']}, retrying ({attempt+1}/{retry_count})...")
+                    time.sleep(2)
+                    continue
+                else:
+                    print_error(f"HTTP error for PMID {paper['pmid']}: {e.response.status_code}")
+                    return (False, None if not self.use_scoring else 0.0)
+            except Exception as e:
+                print_error(f"Ollama request failed for PMID {paper['pmid']}: {str(e)[:100]}")
+                return (False, None if not self.use_scoring else 0.0)
+
+        return (False, None if not self.use_scoring else 0.0)
+
+    def batch_filter(self, papers_list: List[Dict], threshold: float = 7.0,
+                    checkpoint_file: Optional[str] = None) -> List[Dict]:
+        """Filter a list of papers using the LLM with checkpointing support"""
         print_info(f"Starting AI filtering for {len(papers_list)} papers...")
         print_info(f"Mode: {'Scoring (0-10)' if self.use_scoring else 'Binary (Yes/No)'}")
         if self.use_scoring:
             print_info(f"Threshold: {threshold}")
 
+        # Load checkpoint if exists
+        start_idx = 0
         self.filtered_papers = []
+        processed_pmids = set()
 
-        for paper in pbar(papers_list, desc="Filtering Papers"):
+        if checkpoint_file and Path(checkpoint_file).exists():
+            print_info(f"Loading checkpoint from {checkpoint_file}...")
+            try:
+                with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                    checkpoint_data = json.load(f)
+                    self.filtered_papers = checkpoint_data.get('filtered_papers', [])
+                    processed_pmids = set(checkpoint_data.get('processed_pmids', []))
+                    start_idx = len(processed_pmids)
+                print_success(f"Resumed from checkpoint: {start_idx} papers already processed")
+            except Exception as e:
+                print_warning(f"Could not load checkpoint: {e}. Starting from beginning.")
+
+        # Filter papers
+        papers_to_process = [p for p in papers_list if p['pmid'] not in processed_pmids]
+
+        for idx, paper in enumerate(pbar(papers_to_process, desc="Filtering Papers")):
             is_relevant, score = self.filter_paper(paper, threshold)
 
             if is_relevant:
@@ -318,8 +433,19 @@ class AIFilterer:
                     paper['relevance_score'] = round(score, 1)
                 self.filtered_papers.append(paper)
 
-            # Short delay to avoid overwhelming Ollama
-            time.sleep(0.1)
+            processed_pmids.add(paper['pmid'])
+
+            # Adaptive delay based on GPU performance
+            # With RTX A6000, we can process faster
+            time.sleep(0.2)
+
+            # Save checkpoint every 10 papers
+            if checkpoint_file and (idx + 1) % 10 == 0:
+                self._save_checkpoint(checkpoint_file, processed_pmids)
+
+        # Final checkpoint save
+        if checkpoint_file:
+            self._save_checkpoint(checkpoint_file, processed_pmids)
 
         # Sort by score if using scoring mode
         if self.use_scoring:
@@ -330,7 +456,27 @@ class AIFilterer:
             avg_score = sum(p.get('relevance_score', 0) for p in self.filtered_papers) / len(self.filtered_papers)
             print_info(f"Average relevance score: {avg_score:.1f}/10")
 
+        # Print performance statistics
+        if self.request_times:
+            avg_time = sum(self.request_times) / len(self.request_times)
+            max_time = max(self.request_times)
+            min_time = min(self.request_times)
+            print_info(f"Performance: avg={avg_time:.1f}s, min={min_time:.1f}s, max={max_time:.1f}s per paper")
+
         return self.filtered_papers
+
+    def _save_checkpoint(self, checkpoint_file: str, processed_pmids: set):
+        """Save filtering progress checkpoint"""
+        try:
+            checkpoint_data = {
+                'filtered_papers': self.filtered_papers,
+                'processed_pmids': list(processed_pmids),
+                'timestamp': datetime.now().isoformat()
+            }
+            with open(checkpoint_file, 'w', encoding='utf-8') as f:
+                json.dump(checkpoint_data, f, indent=2)
+        except Exception as e:
+            print_warning(f"Could not save checkpoint: {e}")
 
     def save_to_csv(self, filename: str) -> bool:
         """Save filtered results to CSV"""
@@ -796,9 +942,15 @@ def main():
             else:
                 sys.exit(1)
         else:
-            filterer.batch_filter(papers_list, threshold=args.score_threshold)
+            # Use checkpoint file for resumable filtering
+            checkpoint_file = str(output_dir / 'filter_checkpoint.json')
+            filterer.batch_filter(papers_list, threshold=args.score_threshold,
+                                checkpoint_file=checkpoint_file)
             filterer.save_to_csv(str(papers_filtered_csv))
             filterer.save_to_json(str(papers_filtered_json))
+            # Clean up checkpoint after successful completion
+            if Path(checkpoint_file).exists():
+                Path(checkpoint_file).unlink()
 
     # Step 3: Find PDFs
     if args.step in ['find', 'all']:
