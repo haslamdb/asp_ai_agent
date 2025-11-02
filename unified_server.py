@@ -8,13 +8,19 @@ Integrates:
 - Anthropic Claude API
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 import requests
 import os
 import json
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
+from functools import lru_cache
+import hashlib
+import asyncio
+import concurrent.futures
+import threading
+import time
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'])
@@ -525,6 +531,37 @@ def asp_feedback():
     
     return jsonify({'error': 'No AI models available', 'citations': citations}), 503
 
+@lru_cache(maxsize=100)
+def get_cached_citations(query_hash: str) -> Optional[List[Dict]]:
+    """Cache citation searches for common queries"""
+    try:
+        if check_services().get('citation_assistant', {}).get('status') == 'online':
+            search_resp = requests.post(
+                f"{CITATION_API}/api/search",
+                json={'query': query_hash, 'max_results': 5},
+                timeout=15
+            )
+            if search_resp.status_code == 200:
+                return search_resp.json().get('results', [])
+    except:
+        pass
+    return []
+
+def calculate_relevance_score(citations: List[Dict]) -> float:
+    """Calculate average relevance score for citations"""
+    if not citations:
+        return 0.0
+    scores = []
+    for cite in citations:
+        # Estimate relevance based on available metadata
+        score = 0.5  # base score
+        if cite.get('year', 0) > 2020:
+            score += 0.2  # recent publication
+        if len(cite.get('context', '')) > 100:
+            score += 0.3  # substantial context
+        scores.append(score)
+    return sum(scores) / len(scores) if scores else 0.0
+
 @app.route('/api/hybrid-asp', methods=['POST'])
 def hybrid_asp_agent():
     """
@@ -562,43 +599,80 @@ def hybrid_asp_agent():
     else:
         structured_query = cloud_response[0].get_json().get('response', user_query)
     
-    # Step 2: Get factual content from citation_assistant and local model
+    # Step 2: Get factual content with parallel processing
+    start_time = time.time()
     factual_content = ""
     citations = []
     
-    # Try citation assistant first
-    if check_services().get('citation_assistant', {}).get('status') == 'online':
-        try:
-            # Search for relevant literature
-            search_resp = requests.post(
-                f"{CITATION_API}/api/search",
-                json={'query': structured_query, 'max_results': 5},
-                timeout=15
-            )
-            if search_resp.status_code == 200:
-                citations = search_resp.json().get('results', [])
-                
-                # Build context from citations
-                citation_context = "\n".join([
-                    f"- {cite.get('title', '')} ({cite.get('year', '')}): {cite.get('context', '')}"
-                    for cite in citations[:3]
-                ])
-                
-                # Use local Gemma2 via Ollama to generate factual response
-                if check_services().get('ollama', {}).get('status') == 'online':
-                    local_prompt = f"""Based on the following peer-reviewed literature, provide a factual, evidence-based response about {structured_query}:
-                    
-                    {citation_context}
-                    
-                    Focus on: mechanisms of action, spectrum of activity, resistance patterns, clinical pearls, and stewardship considerations.
-                    Be precise and cite specific findings from the literature provided."""
-                    
-                    local_messages = [{'role': 'user', 'content': local_prompt}]
-                    local_response = ollama_chat('gemma2:27b', local_messages)
-                    if local_response[1] == 200:
-                        factual_content = local_response[0].get_json().get('response', '')
-        except Exception as e:
-            print(f"Citation assistant error: {str(e)}")
+    # Create hash for caching
+    query_hash = hashlib.md5(structured_query.encode()).hexdigest()
+    
+    # Use ThreadPoolExecutor for parallel processing
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = []
+        
+        # Submit citation search task
+        if check_services().get('citation_assistant', {}).get('status') == 'online':
+            def fetch_citations():
+                try:
+                    # Try cache first
+                    cached = get_cached_citations.cache_info()
+                    search_resp = requests.post(
+                        f"{CITATION_API}/api/search",
+                        json={'query': structured_query, 'max_results': 5},
+                        timeout=15
+                    )
+                    if search_resp.status_code == 200:
+                        return search_resp.json().get('results', [])
+                except Exception as e:
+                    print(f"Citation error: {str(e)}")
+                return []
+            
+            citation_future = executor.submit(fetch_citations)
+            futures.append(('citations', citation_future))
+        
+        # Submit local model generation task
+        if check_services().get('ollama', {}).get('status') == 'online':
+            def generate_local_content(cit_future):
+                try:
+                    # Wait for citations to build context
+                    cits = cit_future.result(timeout=10) if cit_future else []
+                    if cits:
+                        citation_context = "\n".join([
+                            f"- {cite.get('title', '')} ({cite.get('year', '')}): {cite.get('context', '')}"
+                            for cite in cits[:3]
+                        ])
+                        
+                        local_prompt = f"""Based on the following peer-reviewed literature, provide a factual, evidence-based response about {structured_query}:
+                        
+                        {citation_context}
+                        
+                        Focus on: mechanisms of action, spectrum of activity, resistance patterns, clinical pearls, and stewardship considerations.
+                        Be precise and cite specific findings from the literature provided."""
+                        
+                        local_messages = [{'role': 'user', 'content': local_prompt}]
+                        local_response = ollama_chat('gemma2:27b', local_messages)
+                        if local_response[1] == 200:
+                            return local_response[0].get_json().get('response', '')
+                except Exception as e:
+                    print(f"Local generation error: {str(e)}")
+                return ""
+            
+            local_future = executor.submit(generate_local_content, 
+                                         citation_future if 'citation_future' in locals() else None)
+            futures.append(('local', local_future))
+        
+        # Collect results
+        for name, future in futures:
+            try:
+                if name == 'citations':
+                    citations = future.result(timeout=15)
+                elif name == 'local':
+                    factual_content = future.result(timeout=30)
+            except Exception as e:
+                print(f"Error collecting {name}: {str(e)}")
+    
+    processing_time = time.time() - start_time
     
     # Step 3: Use cloud model to format educational response
     formatting_prompt = """You are an expert medical educator specializing in antimicrobial stewardship.
@@ -640,7 +714,155 @@ def hybrid_asp_agent():
     response_data['model'] = f'hybrid:{cloud_model}+gemma2'
     response_data['structured_query'] = structured_query
     
+    # Add quality metrics
+    response_data['quality_metrics'] = {
+        'num_citations': len(citations),
+        'avg_relevance': calculate_relevance_score(citations),
+        'used_local_model': bool(factual_content),
+        'processing_time_seconds': round(processing_time, 2),
+        'cache_info': {
+            'hits': get_cached_citations.cache_info().hits if hasattr(get_cached_citations, 'cache_info') else 0,
+            'misses': get_cached_citations.cache_info().misses if hasattr(get_cached_citations, 'cache_info') else 0,
+        },
+        'services_used': {
+            'cloud_interpretation': True,
+            'citation_assistant': len(citations) > 0,
+            'local_gemma2': bool(factual_content),
+            'cloud_formatting': final_response[1] == 200
+        }
+    }
+    
     return jsonify(response_data)
+
+@app.route('/api/hybrid-asp-stream', methods=['POST'])
+def hybrid_asp_stream():
+    """
+    Streaming version of the hybrid ASP agent
+    Returns Server-Sent Events (SSE) with progress updates
+    """
+    data = request.json
+    user_query = data.get('query', '')
+    cloud_model = data.get('cloud_model', 'claude:4.5-sonnet')
+    
+    def generate():
+        # Stage 1: Interpreting query
+        yield f"data: {json.dumps({'stage': 1, 'status': 'interpreting', 'message': 'Analyzing your question...'})}\n\n"
+        
+        interpretation_prompt = """You are an ASP education assistant. Analyze this learner's question and:
+        1. Identify the core medical/antimicrobial concept being asked about
+        2. Extract any specific pathogens, antibiotics, or conditions mentioned
+        3. Determine what type of information would be most educational
+        4. Reformulate as a clear, focused query for medical literature search
+        
+        Output ONLY the reformulated query, nothing else."""
+        
+        interpretation_messages = [
+            {'role': 'system', 'content': interpretation_prompt},
+            {'role': 'user', 'content': user_query}
+        ]
+        
+        cloud_response = chat_with_model(cloud_model, interpretation_messages)
+        structured_query = user_query
+        if cloud_response[1] == 200:
+            structured_query = cloud_response[0].get_json().get('response', user_query)
+            yield f"data: {json.dumps({'stage': 1, 'status': 'complete', 'structured_query': structured_query})}\n\n"
+        
+        # Stage 2: Fetching citations and generating local content
+        yield f"data: {json.dumps({'stage': 2, 'status': 'searching', 'message': 'Searching medical literature...'})}\n\n"
+        
+        citations = []
+        factual_content = ""
+        
+        # Parallel processing with status updates
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            futures = []
+            
+            if check_services().get('citation_assistant', {}).get('status') == 'online':
+                def fetch_citations():
+                    try:
+                        search_resp = requests.post(
+                            f"{CITATION_API}/api/search",
+                            json={'query': structured_query, 'max_results': 5},
+                            timeout=15
+                        )
+                        if search_resp.status_code == 200:
+                            return search_resp.json().get('results', [])
+                    except Exception as e:
+                        print(f"Citation error: {str(e)}")
+                    return []
+                
+                citation_future = executor.submit(fetch_citations)
+                futures.append(('citations', citation_future))
+            
+            # Wait and report results
+            for name, future in futures:
+                try:
+                    if name == 'citations':
+                        citations = future.result(timeout=15)
+                        if citations:
+                            yield f"data: {json.dumps({'stage': 2, 'status': 'found_citations', 'count': len(citations)})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'stage': 2, 'status': 'error', 'message': str(e)})}\n\n"
+        
+        # Stage 3: Generating local content
+        if citations and check_services().get('ollama', {}).get('status') == 'online':
+            yield f"data: {json.dumps({'stage': 3, 'status': 'generating', 'message': 'Generating evidence-based content...'})}\n\n"
+            
+            citation_context = "\n".join([
+                f"- {cite.get('title', '')} ({cite.get('year', '')}): {cite.get('context', '')}"
+                for cite in citations[:3]
+            ])
+            
+            local_prompt = f"""Based on the following peer-reviewed literature, provide a factual response about {structured_query}:
+            
+            {citation_context}
+            
+            Focus on mechanisms, spectrum, resistance, and clinical pearls."""
+            
+            local_messages = [{'role': 'user', 'content': local_prompt}]
+            local_response = ollama_chat('gemma2:27b', local_messages)
+            if local_response[1] == 200:
+                factual_content = local_response[0].get_json().get('response', '')
+                yield f"data: {json.dumps({'stage': 3, 'status': 'complete', 'has_content': bool(factual_content)})}\n\n"
+        
+        # Stage 4: Formatting response
+        yield f"data: {json.dumps({'stage': 4, 'status': 'formatting', 'message': 'Creating educational response...'})}\n\n"
+        
+        formatting_prompt = """Format this into an educational response with key points, progressive explanation, and clinical pearls."""
+        
+        final_content = f"Question: {user_query}\n\n"
+        if factual_content:
+            final_content += f"Evidence: {factual_content}\n\n"
+        if citations:
+            final_content += "References:\n"
+            for cite in citations[:3]:
+                final_content += f"- {cite.get('title', '')} ({cite.get('year', '')})\n"
+        
+        formatting_messages = [
+            {'role': 'system', 'content': formatting_prompt},
+            {'role': 'user', 'content': final_content}
+        ]
+        
+        final_response = chat_with_model(cloud_model, formatting_messages)
+        if final_response[1] == 200:
+            response_text = final_response[0].get_json().get('response', '')
+            
+            # Send final response with metrics
+            quality_metrics = {
+                'num_citations': len(citations),
+                'avg_relevance': calculate_relevance_score(citations),
+                'used_local_model': bool(factual_content),
+                'services_used': {
+                    'citation_assistant': len(citations) > 0,
+                    'local_gemma2': bool(factual_content),
+                }
+            }
+            
+            yield f"data: {json.dumps({'stage': 4, 'status': 'complete', 'response': response_text, 'citations': citations, 'metrics': quality_metrics})}\n\n"
+        
+        yield f"data: {json.dumps({'stage': 5, 'status': 'done'})}\n\n"
+    
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 def chat_with_model(model_id: str, messages: List[Dict]) -> tuple:
     """Helper to chat with a specific model"""
