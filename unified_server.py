@@ -117,7 +117,7 @@ def list_models():
         models.extend([
             {
                 'id': 'claude:3-opus',
-                'name': 'Claude 3 Opus',
+                'name': 'Claude 4.1 Opus',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
@@ -125,7 +125,7 @@ def list_models():
             },
             {
                 'id': 'claude:3-sonnet',
-                'name': 'Claude 3 Sonnet',
+                'name': 'Claude 4.5 Sonnet',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
@@ -133,7 +133,7 @@ def list_models():
             },
             {
                 'id': 'claude:3-haiku',
-                'name': 'Claude 3 Haiku',
+                'name': 'Claude 4.5 Haiku',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
@@ -145,16 +145,16 @@ def list_models():
     if GEMINI_API_KEY:
         models.extend([
             {
-                'id': 'gemini:2.0-flash',
-                'name': 'Gemini 2.0 Flash',
+                'id': 'gemini:2.5-flash',
+                'name': 'Gemini 2.5 Flash',
                 'provider': 'google',
                 'type': 'llm',
                 'local': False,
                 'description': 'Latest Gemini model with multimodal capabilities'
             },
             {
-                'id': 'gemini:1.5-pro',
-                'name': 'Gemini 1.5 Pro',
+                'id': 'gemini:2.5-pro',
+                'name': 'Gemini 2.5 Pro',
                 'provider': 'google',
                 'type': 'llm',
                 'local': False,
@@ -265,12 +265,16 @@ def claude_chat(model: str, messages: List[Dict], system_prompt: str = '', tempe
     try:
         # Map model names to Claude model IDs
         model_map = {
-            '3-opus': 'claude-3-opus-20240229',
-            '3-sonnet': 'claude-3-5-sonnet-20241022',
-            '3-haiku': 'claude-3-haiku-20240307'
+            '3-opus': 'claude-opus-4-1',  # Claude 4.1 Opus
+            '4.1-opus': 'claude-opus-4-1',
+            '3-sonnet': 'claude-sonnet-4-5',
+            '3-haiku': 'claude-haiku-4-5',
+            '3.5-sonnet': 'claude-sonnet-4-5',
+            '4.5-sonnet': 'claude-sonnet-4-5',
+            '4.5-haiku': 'claude-haiku-4-5'
         }
         
-        claude_model = model_map.get(model, 'claude-3-5-sonnet-20241022')
+        claude_model = model_map.get(model, 'claude-sonnet-4-5')
         
         # Prepare messages for Claude API
         claude_messages = []
@@ -378,11 +382,13 @@ def gemini_chat(model: str, messages: List[Dict], system_prompt: str = '') -> tu
     try:
         # Map model names
         model_map = {
-            '2.0-flash': 'gemini-2.0-flash-exp',
-            '1.5-pro': 'gemini-1.5-pro-latest'
+            '2.0-flash': 'gemini-2.5-flash',
+            '2.5-flash': 'gemini-2.5-flash',
+            '1.5-pro': 'gemini-2.5-pro',
+            '2.5-pro': 'gemini-2.5-pro'
         }
         
-        gemini_model = model_map.get(model, 'gemini-2.0-flash-preview-09-2025')
+        gemini_model = model_map.get(model, 'gemini-2.5-flash')
         
         # Convert messages to Gemini format
         contents = []
@@ -498,7 +504,7 @@ def asp_feedback():
     # Try models in order of preference for medical tasks
     model_preference = [
         'claude:3-sonnet',  # Best for medical reasoning
-        'gemini:2.0-flash',  # Good with search integration
+        'gemini:2.5-flash',  # Good with search integration
         'ollama:gemma2:27b',  # Local fallback
     ]
     
@@ -518,6 +524,123 @@ def asp_feedback():
             return jsonify(response_data)
     
     return jsonify({'error': 'No AI models available', 'citations': citations}), 503
+
+@app.route('/api/hybrid-asp', methods=['POST'])
+def hybrid_asp_agent():
+    """
+    Hybrid agent for ASP education:
+    1. Cloud model interprets user intent
+    2. Local model (citation_assistant + Gemma2) generates factual content
+    3. Cloud model formats educational response
+    """
+    data = request.json
+    user_query = data.get('query', '')
+    cloud_model = data.get('cloud_model', 'claude:4.5-sonnet')
+    
+    if not user_query:
+        return jsonify({'error': 'Query is required'}), 400
+    
+    # Step 1: Use cloud model to interpret and structure the query
+    interpretation_prompt = """You are an ASP education assistant. Analyze this learner's question and:
+    1. Identify the core medical/antimicrobial concept being asked about
+    2. Extract any specific pathogens, antibiotics, or conditions mentioned
+    3. Determine what type of information would be most educational (mechanism, spectrum, resistance patterns, etc.)
+    4. Reformulate as a clear, focused query for medical literature search
+    
+    Output ONLY the reformulated query, nothing else."""
+    
+    interpretation_messages = [
+        {'role': 'system', 'content': interpretation_prompt},
+        {'role': 'user', 'content': user_query}
+    ]
+    
+    # Get structured query from cloud model
+    cloud_response = chat_with_model(cloud_model, interpretation_messages)
+    if cloud_response[1] != 200:
+        # Fallback to original query if interpretation fails
+        structured_query = user_query
+    else:
+        structured_query = cloud_response[0].get_json().get('response', user_query)
+    
+    # Step 2: Get factual content from citation_assistant and local model
+    factual_content = ""
+    citations = []
+    
+    # Try citation assistant first
+    if check_services().get('citation_assistant', {}).get('status') == 'online':
+        try:
+            # Search for relevant literature
+            search_resp = requests.post(
+                f"{CITATION_API}/api/search",
+                json={'query': structured_query, 'max_results': 5},
+                timeout=15
+            )
+            if search_resp.status_code == 200:
+                citations = search_resp.json().get('results', [])
+                
+                # Build context from citations
+                citation_context = "\n".join([
+                    f"- {cite.get('title', '')} ({cite.get('year', '')}): {cite.get('context', '')}"
+                    for cite in citations[:3]
+                ])
+                
+                # Use local Gemma2 via Ollama to generate factual response
+                if check_services().get('ollama', {}).get('status') == 'online':
+                    local_prompt = f"""Based on the following peer-reviewed literature, provide a factual, evidence-based response about {structured_query}:
+                    
+                    {citation_context}
+                    
+                    Focus on: mechanisms of action, spectrum of activity, resistance patterns, clinical pearls, and stewardship considerations.
+                    Be precise and cite specific findings from the literature provided."""
+                    
+                    local_messages = [{'role': 'user', 'content': local_prompt}]
+                    local_response = ollama_chat('gemma2:27b', local_messages)
+                    if local_response[1] == 200:
+                        factual_content = local_response[0].get_json().get('response', '')
+        except Exception as e:
+            print(f"Citation assistant error: {str(e)}")
+    
+    # Step 3: Use cloud model to format educational response
+    formatting_prompt = """You are an expert medical educator specializing in antimicrobial stewardship.
+    Format the following factual content into an educational response that:
+    1. Starts with key learning points
+    2. Explains concepts progressively (basic to advanced)
+    3. Includes clinical pearls and practical tips
+    4. Highlights common misconceptions or pitfalls
+    5. Ends with a brief summary and self-check questions
+    
+    Make it engaging and appropriate for ID fellows."""
+    
+    final_content = f"Original question: {user_query}\n\n"
+    if factual_content:
+        final_content += f"Evidence-based content:\n{factual_content}\n\n"
+    if citations:
+        final_content += "Key references:\n"
+        for cite in citations[:3]:
+            final_content += f"- {cite.get('title', '')} ({cite.get('year', '')})\n"
+    
+    formatting_messages = [
+        {'role': 'system', 'content': formatting_prompt},
+        {'role': 'user', 'content': final_content}
+    ]
+    
+    # Get formatted response from cloud model
+    final_response = chat_with_model(cloud_model, formatting_messages)
+    if final_response[1] != 200:
+        # Return raw content if formatting fails
+        return jsonify({
+            'response': factual_content or "Unable to generate response",
+            'citations': citations,
+            'model': 'hybrid',
+            'error': 'Formatting failed'
+        }), 207
+    
+    response_data = final_response[0].get_json()
+    response_data['citations'] = citations
+    response_data['model'] = f'hybrid:{cloud_model}+gemma2'
+    response_data['structured_query'] = structured_query
+    
+    return jsonify(response_data)
 
 def chat_with_model(model_id: str, messages: List[Dict]) -> tuple:
     """Helper to chat with a specific model"""

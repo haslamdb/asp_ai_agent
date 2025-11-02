@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=========================================="
-echo "Starting ASP AI Agent Local Server"
+echo "Starting ASP AI Agent with Ollama Models"
 echo "=========================================="
 
 # Check if Python is installed

@@ -35,8 +35,40 @@ pkill -f unified_server.py 2>/dev/null || true
 # Wait a moment for cleanup
 sleep 2
 
-echo "🌟 Starting unified server..."
-python unified_server.py
+echo "🌟 Starting unified API server on port 5000..."
+python unified_server.py &
+API_PID=$!
 
-# If the script exits, show a message
-echo "❌ Server stopped"
+# Give the API server time to start
+sleep 2
+
+echo ""
+echo "🌐 Starting web server on port 8080..."
+python -m http.server 8080 &
+WEB_PID=$!
+
+echo ""
+echo "============================================"
+echo "✅ Both servers are running!"
+echo "============================================"
+echo ""
+echo "Access the ASP AI Agent at:"
+echo "  📍 http://localhost:8080 - Main landing page"
+echo "  📚 http://localhost:8080/agent_models.html - Training modules"
+echo "  💬 http://localhost:8080/asp_ai_agent.html - Chat interface"
+echo ""
+echo "API endpoints available at:"
+echo "  🔧 http://localhost:5000/api/models"
+echo "  🔧 http://localhost:5000/api/chat"
+echo ""
+echo "Press Ctrl+C to stop both servers"
+echo ""
+
+# Trap Ctrl+C and clean up both processes
+trap 'echo ""; echo "🛑 Stopping servers..."; kill $API_PID $WEB_PID 2>/dev/null; exit' INT
+
+# Wait for either process to exit (shouldn't happen unless there's an error)
+wait $API_PID $WEB_PID
+
+# If we get here, something went wrong
+echo "❌ One or both servers stopped unexpectedly"
