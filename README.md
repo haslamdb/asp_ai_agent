@@ -1,95 +1,131 @@
 # ASP AI Agent
 
-AI-powered tools and interfaces for antimicrobial stewardship programs.
+AI-powered tools and interfaces for antimicrobial stewardship programs with support for multiple AI models including Claude, Gemini, and local Ollama models.
 
-## Live Demo
-- GitHub Pages (Frontend only): https://haslamdb.github.io/asp_ai_agent/
-- Full app with API (Vercel): Will be available after deployment
+## 🚀 Quick Start
 
-## Features
-- **Agent Models**: Test different AI agent models for ASP scenarios
-- **ASP AI Agent Interface**: Main application interface for stewardship activities
+**New to the project?** See our detailed [Setup Guide (SETUP.md)](./SETUP.md) for complete installation instructions.
 
-## Setup Instructions
+### Fastest Setup (30 seconds)
 
-### Option 1: Deploy to Vercel (Recommended for Full Functionality)
-
-1. **Sign up for Vercel** (if you haven't already):
-   - Go to https://vercel.com/signup
-   - Sign up with your GitHub account
-
-2. **Import this repository**:
-   - Click "Add New Project" in Vercel dashboard
-   - Import `haslamdb/asp_ai_agent` repository
-   - Configure the project:
-     - Framework Preset: Other
-     - Root Directory: ./
-     - Build Command: (leave empty)
-     - Output Directory: (leave empty)
-
-3. **Set up environment variables**:
-   - In Vercel project settings, go to "Environment Variables"
-   - Add: `GEMINI_API_KEY` with your Google Gemini API key
-   - Get a free API key from: https://makersuite.google.com/app/apikey
-
-4. **Deploy**:
-   - Click "Deploy"
-   - Your app will be available at `https://[your-project-name].vercel.app`
-
-5. **Update the API endpoint**:
-   - Edit `agent_models.html` line 170
-   - Replace `asp-ai-agent.vercel.app` with your actual Vercel domain
-
-### Option 2: Local Development
-
-1. **Install dependencies**:
+1. **Clone the repository**:
    ```bash
-   npm install
+   git clone https://github.com/haslamdb/asp_ai_agent.git
+   cd asp_ai_agent
    ```
 
-2. **Create `.env.local` file**:
+2. **Get an API key** (choose one):
+   - **Claude**: https://console.anthropic.com → API Keys
+   - **Gemini**: https://aistudio.google.com → Get API Key
+
+3. **Set environment variable**:
    ```bash
-   echo "GEMINI_API_KEY=your_api_key_here" > .env.local
+   export ANTHROPIC_API_KEY='your-claude-key-here'
+   # OR
+   export GEMINI_API_KEY='your-gemini-key-here'
    ```
 
-3. **Run development server**:
+4. **Start the server**:
    ```bash
-   npm run dev
-   ```
-   or
-   ```bash
-   vercel dev
+   pip install -r requirements.txt
+   python unified_server.py
    ```
 
-4. **Open browser**:
-   - Navigate to http://localhost:3000
+5. **Open interface**: Visit `agent_models.html` in your browser or use:
+   ```bash
+   python -m http.server 8080
+   # Then go to http://localhost:8080
+   ```
 
-## Project Structure
+## 🌟 Features
+
+- **Agent Models Interface** (`agent_models.html`) - Advanced ASP training modules with AI feedback
+- **Chat Interface** (`asp_ai_agent.html`) - General ASP consultation and case discussions  
+- **Multi-Model Support** - Claude 3.5 Sonnet, Gemini 2.5 Flash, and local Ollama models
+- **Unified Backend** - Single server handling all AI providers with automatic fallbacks
+- **Production Ready** - Vercel deployment with secure API key management
+
+## 🔗 Live Demo
+
+- **GitHub Pages** (Frontend only): https://haslamdb.github.io/asp_ai_agent/
+- **Full Application**: Deploy to Vercel for complete functionality with AI models
+
+## 📖 Documentation
+
+- **[Complete Setup Guide](./SETUP.md)** - Detailed installation and configuration
+- **[API Key Setup](./SETUP.md#3-get-api-keys-choose-one-or-both)** - How to obtain Claude and Gemini keys
+- **[Server Instructions](./SETUP.md#4-start-the-server)** - Starting the unified backend
+- **[Deployment Guide](./SETUP.md#production-deployment-with-vercel)** - Production hosting on Vercel
+
+## 🏗️ Project Structure
+
 ```
 asp_ai_agent/
 ├── api/
-│   └── gemini.js        # Vercel Edge Function for API proxy
-├── agent_models.html    # AI model testing interface
-├── asp_ai_agent.html    # Main ASP agent interface
-├── index.html           # Landing page
-├── vercel.json          # Vercel configuration
-├── package.json         # Node dependencies
-└── README.md           # This file
+│   ├── gemini.js           # Vercel Edge Function for Gemini API
+│   └── claude.js           # Vercel Edge Function for Claude API
+├── agent_models.html       # Main training interface with modules
+├── asp_ai_agent.html       # Chat interface for general consultation
+├── index.html              # Landing page navigation
+├── unified_server.py       # Local development server (all models)
+├── requirements.txt        # Python dependencies
+├── SETUP.md               # Complete setup instructions
+└── vercel.json            # Production deployment config
 ```
 
-## Security Notes
-- Never commit API keys to the repository
-- The API proxy ensures your Gemini API key stays secure on the server
-- CORS is configured to only allow requests from authorized origins
+## 🚀 Deployment Options
 
-## Technologies Used
-- **Frontend**: HTML, Tailwind CSS, JavaScript
-- **Backend**: Vercel Edge Functions
-- **AI**: Google Gemini API
-- **Hosting**: Vercel (API) + GitHub Pages (static files)
+### Local Development
+Perfect for testing and development with all model options:
+```bash
+python unified_server.py  # Supports Claude, Gemini, and Ollama
+```
 
-## Contributing
-Pull requests are welcome! For major changes, please open an issue first.
+### Production (Vercel)
+Secure, scalable deployment for production use:
+- Automatic HTTPS and global CDN
+- Secure environment variable management
+- Edge functions for low latency
 
-## License
+See [SETUP.md](./SETUP.md) for complete deployment instructions.
+
+## 🤖 AI Model Comparison
+
+| Model | Best For | Cost | Local | Search |
+|-------|----------|------|-------|---------|
+| **Claude 3.5 Sonnet** | Complex medical reasoning | Pay-per-use | No | No |
+| **Gemini 2.5 Flash** | General queries | Free tier | No | Yes |
+| **Ollama (Local)** | Privacy, offline use | Free | Yes | No |
+
+## 🔐 Security
+
+- API keys are never exposed to the browser
+- Server-side proxy protects credentials
+- CORS configured for authorized origins only
+- Environment variables for key management
+
+## 🛠️ Technologies
+
+- **Frontend**: HTML5, Tailwind CSS, JavaScript ES6+
+- **Backend**: Python Flask, Vercel Edge Functions
+- **AI Models**: Anthropic Claude, Google Gemini, Local Ollama
+- **Hosting**: Vercel (production), GitHub Pages (static)
+
+## 📋 Requirements
+
+- Python 3.8+ (for local server)
+- API key for Claude or Gemini (see [SETUP.md](./SETUP.md))
+- Modern web browser
+- Optional: Ollama for local models
+
+## 🤝 Contributing
+
+Pull requests welcome! For major changes, please open an issue first to discuss the proposed changes.
+
+## 📄 License
+
 This project is proprietary and confidential.
+
+---
+
+**Need help?** Check the [Setup Guide](./SETUP.md) or open an issue for support.

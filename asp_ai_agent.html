@@ -31,6 +31,35 @@
             margin-bottom: 2rem;
         }
         
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .model-selector {
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+        
+        .model-selector label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .model-selector select {
+            background-color: white;
+            color: #333;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
         h1 {
             text-align: center;
             font-size: 2.5rem;
@@ -145,8 +174,19 @@
 <body>
     <header>
         <div class="container">
-            <h1>ASP AI Training Assistant</h1>
-            <p class="subtitle">AI-Powered Antibiotic Stewardship Education for ID Fellows</p>
+            <div class="header-content">
+                <div>
+                    <h1>ASP AI Training Assistant</h1>
+                    <p class="subtitle">AI-Powered Antibiotic Stewardship Education for ID Fellows</p>
+                </div>
+                <div class="model-selector">
+                    <label for="ai-model">AI Model:</label>
+                    <select id="ai-model">
+                        <option value="gemini">Gemini 2.5 Flash</option>
+                        <option value="claude">Claude 3.5 Sonnet</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </header>
     
@@ -197,10 +237,28 @@
     </div>
     
     <script>
+        // API Configuration
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        const API_ENDPOINTS = {
+            gemini: isLocal ? 'http://localhost:5000' : 'https://asp-ai-agent.vercel.app/api/gemini',
+            claude: isLocal ? 'http://localhost:5000/claude' : 'https://asp-ai-agent.vercel.app/api/claude'
+        };
+        
         // Basic chat interface functionality
         const chatInput = document.getElementById('chatInput');
         const chatSubmit = document.getElementById('chatSubmit');
         const chatMessages = document.getElementById('chatMessages');
+        const modelSelector = document.getElementById('ai-model');
+        
+        let currentModel = 'gemini';
+        let conversationHistory = [];
+        
+        // Update model when selector changes
+        modelSelector.addEventListener('change', (e) => {
+            currentModel = e.target.value;
+            console.log(`Switched to ${currentModel} model`);
+        });
         
         chatSubmit.addEventListener('click', sendMessage);
         chatInput.addEventListener('keypress', (e) => {
@@ -209,20 +267,94 @@
             }
         });
         
-        function sendMessage() {
+        async function sendMessage() {
             const message = chatInput.value.trim();
             if (!message) return;
             
             // Add user message
             addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
             
-            // Clear input
+            // Clear input and show loading
             chatInput.value = '';
+            chatSubmit.disabled = true;
+            chatSubmit.textContent = 'Sending...';
             
-            // Simulate AI response (placeholder)
-            setTimeout(() => {
-                addMessage("I understand your question about antibiotic stewardship. This is a placeholder response - the AI integration will be implemented to provide evidence-based guidance and case discussions.", 'ai');
-            }, 1000);
+            try {
+                const response = await callAI(message);
+                addMessage(response, 'ai');
+                conversationHistory.push({ role: 'assistant', content: response });
+            } catch (error) {
+                console.error('Error calling AI:', error);
+                addMessage(`Sorry, I encountered an error: ${error.message}`, 'ai');
+            } finally {
+                chatSubmit.disabled = false;
+                chatSubmit.textContent = 'Send';
+            }
+        }
+        
+        async function callAI(userMessage) {
+            const apiUrl = API_ENDPOINTS[currentModel];
+            const systemPrompt = `You are an expert AI assistant specializing in Antimicrobial Stewardship Programs (ASP) for Infectious Disease fellows. 
+
+Your role is to:
+1. Provide evidence-based guidance on antibiotic stewardship practices
+2. Help analyze clinical cases and recommend appropriate antimicrobial therapy
+3. Discuss ASP implementation strategies and quality metrics
+4. Support learning objectives for ID fellowship training
+5. Reference current guidelines (IDSA, SHEA, CDC) when appropriate
+
+Maintain a professional, educational tone while being practical and actionable in your responses.`;
+            
+            let payload, response;
+            
+            if (currentModel === 'gemini') {
+                // Gemini format - use conversation history
+                const contents = conversationHistory.map(msg => ({
+                    parts: [{ text: msg.content }],
+                    role: msg.role === 'assistant' ? 'model' : 'user'
+                }));
+                
+                payload = {
+                    contents: contents,
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+                
+                response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Gemini API error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received';
+                
+            } else if (currentModel === 'claude') {
+                // Claude format - use conversation history
+                payload = {
+                    system: systemPrompt,
+                    messages: conversationHistory.slice(-10), // Keep last 10 messages for context
+                    max_tokens: 4000
+                };
+                
+                response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Claude API error: ${response.status} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                return result.text || result.content?.[0]?.text || 'No response received';
+            }
         }
         
         function addMessage(text, sender) {

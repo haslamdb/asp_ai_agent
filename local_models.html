@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASP AI Agent - Multi-Model Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .model-badge {
+            transition: all 0.3s ease;
+        }
+        .model-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .spinner {
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #6366f1;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">ASP AI Agent</h1>
+                    <p class="mt-1 text-lg opacity-90">Multi-Model Interface with Local & Cloud AI</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="connection-status" class="flex items-center">
+                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                        <span class="text-sm">Connected</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Model Selection Bar -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <label class="text-sm font-medium text-gray-700">Select Model:</label>
+                    <select id="model-select" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <button id="refresh-models" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="model-info" class="text-sm text-gray-600"></div>
+            </div>
+            
+            <!-- Available Models Display -->
+            <div id="models-grid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <!-- Model badges will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Chat Interface -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chat with AI Models</h2>
+            
+            <div id="chat-messages" class="border rounded-lg p-4 h-96 overflow-y-auto mb-4 bg-gray-50">
+                <div class="text-gray-500 text-center py-8">
+                    Select a model and start chatting...
+                </div>
+            </div>
+            
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input" 
+                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="Type your message here..."
+                    onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()">
+                <button onclick="sendMessage()" 
+                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <!-- ASP Module Tester -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">ASP Module Tester</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Module Type:</label>
+                    <select id="module-type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="business_case">Business Case Review</option>
+                        <option value="prescriber_psychology">Prescriber Psychology</option>
+                        <option value="general">General ASP Feedback</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Input:</label>
+                    <textarea id="module-input" rows="6" 
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="Enter your business case, prescriber scenario, or ASP question..."></textarea>
+                </div>
+                
+                <button onclick="getASPFeedback()" 
+                    class="w-full px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Get Expert Feedback
+                </button>
+                
+                <div id="asp-feedback" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-semibold text-gray-900 mb-2">Feedback:</h3>
+                    <div id="feedback-content" class="prose prose-sm max-w-none"></div>
+                    <div id="citations" class="hidden mt-4 pt-4 border-t">
+                        <h4 class="font-semibold text-gray-900 mb-2">Supporting Literature:</h4>
+                        <ul id="citations-list" class="text-sm space-y-1"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const converter = new showdown.Converter({ tables: true });
+        let currentModel = null;
+        let availableModels = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModels();
+            checkHealth();
+            setInterval(checkHealth, 30000); // Check health every 30 seconds
+        });
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                updateConnectionStatus(data.status === 'healthy');
+            } catch (error) {
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(isConnected) {
+            const statusEl = document.getElementById('connection-status');
+            if (isConnected) {
+                statusEl.innerHTML = `
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                    <span class="text-sm">Connected</span>
+                `;
+            } else {
+                statusEl.innerHTML = `
+                    <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                    <span class="text-sm">Disconnected</span>
+                `;
+            }
+        }
+
+        async function loadModels() {
+            try {
+                const response = await fetch(`${API_BASE}/api/models`);
+                const data = await response.json();
+                availableModels = data.models;
+                
+                // Update select dropdown
+                const select = document.getElementById('model-select');
+                select.innerHTML = '<option value="">Choose a model...</option>';
+                
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.name;
+                    select.appendChild(option);
+                });
+                
+                // Update models grid
+                updateModelsGrid(data.models);
+                
+                // Set default model if available
+                if (data.models.length > 0) {
+                    currentModel = data.models[0].id;
+                    select.value = currentModel;
+                    updateModelInfo(data.models[0]);
+                }
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                document.getElementById('model-select').innerHTML = 
+                    '<option value="">Failed to load models</option>';
+            }
+        }
+
+        function updateModelsGrid(models) {
+            const grid = document.getElementById('models-grid');
+            grid.innerHTML = '';
+            
+            models.forEach(model => {
+                const badge = document.createElement('div');
+                badge.className = 'model-badge p-3 rounded-lg border cursor-pointer ' +
+                    (model.local ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300');
+                badge.onclick = () => selectModel(model);
+                
+                const emoji = model.provider === 'ollama' ? '🦙' :
+                             model.provider === 'anthropic' ? '🤖' :
+                             model.provider === 'google' ? '🔮' :
+                             model.provider === 'citation_assistant' ? '📚' : '🤖';
+                
+                badge.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">${emoji}</span>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">${model.name}</div>
+                            <div class="text-xs text-gray-600">${model.local ? 'Local' : 'Cloud'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(badge);
+            });
+        }
+
+        function selectModel(model) {
+            currentModel = model.id;
+            document.getElementById('model-select').value = model.id;
+            updateModelInfo(model);
+        }
+
+        function updateModelInfo(model) {
+            const info = document.getElementById('model-info');
+            if (model) {
+                info.innerHTML = `
+                    <span class="${model.local ? 'text-green-600' : 'text-blue-600'}">
+                        ${model.local ? '🏠 Local' : '☁️ Cloud'} | ${model.provider}
+                    </span>
+                `;
+            }
+        }
+
+        document.getElementById('model-select').addEventListener('change', (e) => {
+            currentModel = e.target.value;
+            const model = availableModels.find(m => m.id === currentModel);
+            if (model) updateModelInfo(model);
+        });
+
+        document.getElementById('refresh-models').addEventListener('click', loadModels);
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message || !currentModel) return;
+            
+            // Add user message to chat
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Show typing indicator
+            const typingId = addChatMessage('assistant', '<div class="spinner"></div>', true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [{ role: 'user', content: message }]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Remove typing indicator
+                document.getElementById(typingId)?.remove();
+                
+                if (response.ok) {
+                    addChatMessage('assistant', data.response);
+                    
+                    // Show citations if available
+                    if (data.citations && data.citations.length > 0) {
+                        let citationsHtml = '<div class="mt-2 text-xs text-gray-600">Sources: ';
+                        data.citations.forEach((cite, i) => {
+                            citationsHtml += `<span class="font-medium">[${i+1}] ${cite.title}</span>`;
+                            if (i < data.citations.length - 1) citationsHtml += ', ';
+                        });
+                        citationsHtml += '</div>';
+                        addChatMessage('system', citationsHtml);
+                    }
+                } else {
+                    addChatMessage('error', `Error: ${data.error}`);
+                }
+            } catch (error) {
+                document.getElementById(typingId)?.remove();
+                addChatMessage('error', `Failed to send message: ${error.message}`);
+            }
+        }
+
+        function addChatMessage(role, content, isHtml = false) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg-' + Date.now();
+            messageDiv.id = messageId;
+            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
+                (role === 'user' ? 'bg-indigo-100 ml-auto max-w-xs md:max-w-md' :
+                 role === 'error' ? 'bg-red-100' :
+                 role === 'system' ? 'bg-gray-100 text-center' :
+                 'bg-gray-100 mr-auto max-w-xs md:max-w-md');
+            
+            if (isHtml) {
+                messageDiv.innerHTML = content;
+            } else if (role === 'assistant' && !content.includes('<div')) {
+                messageDiv.innerHTML = converter.makeHtml(content);
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            return messageId;
+        }
+
+        async function getASPFeedback() {
+            const moduleType = document.getElementById('module-type').value;
+            const input = document.getElementById('module-input').value.trim();
+            
+            if (!input || !currentModel) {
+                alert('Please select a model and enter some input');
+                return;
+            }
+            
+            const feedbackDiv = document.getElementById('asp-feedback');
+            const contentDiv = document.getElementById('feedback-content');
+            const citationsDiv = document.getElementById('citations');
+            const citationsList = document.getElementById('citations-list');
+            
+            feedbackDiv.classList.remove('hidden');
+            contentDiv.innerHTML = '<div class="spinner mx-auto"></div>';
+            citationsDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/asp-feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        module: moduleType,
+                        input: input,
+                        model: currentModel
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    contentDiv.innerHTML = converter.makeHtml(data.response);
+                    
+                    // Show citations if available
+                    if (data.citations && data.citations.length > 0) {
+                        citationsDiv.classList.remove('hidden');
+                        citationsList.innerHTML = '';
+                        data.citations.forEach(cite => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${cite.title}</strong> (${cite.year}) - Relevance: ${cite.score.toFixed(2)}`;
+                            citationsList.appendChild(li);
+                        });
+                    }
+                } else {
+                    contentDiv.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = `<p class="text-red-600">Failed to get feedback: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

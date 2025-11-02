@@ -42,8 +42,20 @@
     <!-- Header -->
     <header class="bg-gradient-to-r from-indigo-700 to-purple-800 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 class="text-3xl font-bold">ASP Leadership Lab</h1>
-            <p class="mt-1 text-lg opacity-90">Advanced Competency Modules for ID Fellows</p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">ASP Leadership Lab</h1>
+                    <p class="mt-1 text-lg opacity-90">Advanced Competency Modules for ID Fellows</p>
+                </div>
+                <!-- AI Model Selector -->
+                <div class="bg-white/10 rounded-lg p-3">
+                    <label for="ai-model-select" class="block text-sm font-medium mb-2">AI Model:</label>
+                    <select id="ai-model-select" class="bg-white text-gray-900 rounded px-3 py-1 text-sm">
+                        <option value="gemini">Gemini 2.5 Flash</option>
+                        <option value="claude">Claude 3.5 Sonnet</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -163,13 +175,25 @@
 
     <script>
         // === Common Elements & API Config ===
-        // For local development, use: http://localhost:3000/api/gemini
-        // For production (Vercel), this will be automatically set to your domain
-        const API_ENDPOINT = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3000/api/gemini'
-            : 'https://asp-ai-agent.vercel.app/api/gemini';
+        // Check if we're running locally
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
         
-        const apiUrl = API_ENDPOINT;
+        // API endpoints for different models
+        const API_ENDPOINTS = {
+            gemini: isLocal ? 'http://localhost:5000' : 'https://asp-ai-agent.vercel.app/api/gemini',
+            claude: isLocal ? 'http://localhost:5000/claude' : 'https://asp-ai-agent.vercel.app/api/claude'
+        };
+        
+        // Get current selected model
+        const modelSelector = document.getElementById('ai-model-select');
+        let currentModel = 'gemini'; // Default to Gemini
+        
+        // Update API endpoint when model changes
+        modelSelector.addEventListener('change', (e) => {
+            currentModel = e.target.value;
+            console.log(`Switched to ${currentModel} model`);
+        });
+        
         // Initialize the Markdown converter with tables enabled
         const markdownConverter = new showdown.Converter({ tables: true });
 
@@ -208,14 +232,8 @@ Be skeptical, data-driven, and practical. Your feedback should be a mix of criti
             const userQuery = `Here is my draft business case for the surgical ASP initiative. Please review it based on your criteria:
 ${userText}`;
             
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: businessCaseSystemPrompt }] },
-                tools: [{ "google_search": {} }], 
-            };
-
             try {
-                const { text, sources } = await makeGeminiCall(payload);
+                const { text, sources } = await makeApiCall(businessCaseSystemPrompt, userQuery);
                 if (text) {
                     // Convert Markdown to HTML
                     const html = markdownConverter.makeHtml(text);
@@ -290,14 +308,8 @@ Ground your recommendations in real-world evidence.`;
 -   **Role:** ${role}
 -   **Attitude:** ${attitude}`;
             
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: prescriberProfileSystemPrompt }] },
-                tools: [{ "google_search": {} }], 
-            };
-
             try {
-                const { text, sources } = await makeGeminiCall(payload);
+                const { text, sources } = await makeApiCall(prescriberProfileSystemPrompt, userQuery);
                 if (text) {
                     // Convert Markdown to HTML
                     const html = markdownConverter.makeHtml(text);
@@ -321,10 +333,93 @@ Ground your recommendations in real-world evidence.`;
         // === Common Helper Functions ===
 
         /**
-         * Generic function to call the Gemini API
+         * Unified function to call either Gemini or Claude API
+         * Implements retry logic with exponential backoff.
+         */
+        async function makeApiCall(systemPrompt, userMessage, retries = 3, delay = 1000) {
+            const apiUrl = API_ENDPOINTS[currentModel];
+            
+            try {
+                let payload, response;
+                
+                if (currentModel === 'gemini') {
+                    // Gemini API format
+                    payload = {
+                        contents: [{ parts: [{ text: userMessage }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        tools: [{ "google_search": {} }], 
+                    };
+                    
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else if (currentModel === 'claude') {
+                    // Claude API format
+                    payload = {
+                        system: systemPrompt,
+                        messages: [{ role: 'user', content: userMessage }],
+                        max_tokens: 4000
+                    };
+                    
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!response.ok) {
+                    // Handle rate limiting (429) and other server errors
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(res => setTimeout(res, delay));
+                        return makeApiCall(systemPrompt, userMessage, retries - 1, delay * 2);
+                    }
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                // Extract text and sources based on model
+                let text, sources = [];
+                
+                if (currentModel === 'gemini') {
+                    // Gemini response format
+                    text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    // Extract grounding sources from Gemini
+                    const groundingMetadata = result.candidates?.[0]?.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attr => attr.web)
+                            .filter(web => web && web.uri && web.title);
+                    }
+                } else if (currentModel === 'claude') {
+                    // Claude response format
+                    text = result.text || result.content?.[0]?.text;
+                    // Note: Claude doesn't have built-in search like Gemini, so sources will be empty
+                    sources = [];
+                }
+                
+                return { text, sources };
+
+            } catch (error) {
+                // Handle network errors
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return makeApiCall(systemPrompt, userMessage, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        /**
+         * Generic function to call the Gemini API (Legacy - kept for compatibility)
          * Implements retry logic with exponential backoff.
          */
         async function makeGeminiCall(payload, retries = 3, delay = 1000) {
+            const apiUrl = API_ENDPOINTS.gemini;
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
