@@ -48,3 +48,7 @@ pids
 venv/
 __pycache__/
 *.pyc
+
+# Literature PDFs
+asp_literature/pdfs/*.pdf
+*.pdf

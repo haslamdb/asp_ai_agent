@@ -136,19 +136,36 @@ class ASPLiteratureSearcher:
 
             for article in articles:
                 try:
+                    # Sanitize strings to remove embedded newlines and carriage returns
+                    # This fixes a bug where pymed sometimes returns concatenated records
+                    def clean_string(s):
+                        if s is None:
+                            return None
+                        # Replace all types of newlines and carriage returns with spaces
+                        return str(s).replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
+
+                    # Clean the PMID specifically - should only be first value if multiple
+                    pmid_raw = clean_string(article.pubmed_id)
+                    pmid = pmid_raw.split()[0] if pmid_raw else None
+
+                    # Skip if no valid PMID
+                    if not pmid or not pmid.isdigit():
+                        print_warning(f"Skipping article with invalid PMID: {pmid_raw[:50] if pmid_raw else 'None'}")
+                        continue
+
                     article_data = {
-                        'pmid': article.pubmed_id,
-                        'title': article.title or 'Unknown',
+                        'pmid': pmid,
+                        'title': clean_string(article.title) or 'Unknown',
                         'authors': ', '.join(
-                            [f"{au['lastname']} {au['initials']}"
+                            [f"{clean_string(au.get('lastname', ''))} {clean_string(au.get('initials', ''))}"
                              for au in article.authors]
                         ) if article.authors else 'Unknown',
                         'year': article.publication_date.year
                                 if article.publication_date else 'Unknown',
-                        'journal': article.journal or 'Unknown',
-                        'abstract': article.abstract or '',
-                        'url': f'https://pubmed.ncbi.nlm.nih.gov/{article.pubmed_id}/',
-                        'doi': getattr(article, 'doi', None),
+                        'journal': clean_string(article.journal) or 'Unknown',
+                        'abstract': clean_string(article.abstract) or '',
+                        'url': f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/',
+                        'doi': clean_string(getattr(article, 'doi', None)),
                     }
                     self.results.append(article_data)
                 except Exception as e:
