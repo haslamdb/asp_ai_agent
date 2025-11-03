@@ -95,6 +95,43 @@ Timeline and decision trees
 
 
 
+🤖 Model Selection and Optimization
+
+Based on performance testing (compare_models.py results):
+- RECOMMENDED DEFAULT: gemma2:27b 
+  - Fastest response time (12s vs 30-45s for larger models)
+  - Similar evaluation quality to larger models
+  - Efficient GPU usage (single GPU, leaves resources for other tasks)
+  - Best balance for interactive training system
+
+Model Fine-tuning Options (in order of practicality):
+
+1. RAG + Prompt Engineering (RECOMMENDED START)
+   - Build database of expert ASP evaluations
+   - Retrieve relevant examples for each scenario
+   - Use as few-shot prompts for consistent, high-quality feedback
+   - No GPU training required, immediate improvements
+
+2. Custom Ollama Modelfiles
+   - Create specialized system prompts and parameters
+   - Example: ollama create asp-evaluator -f ./Modelfile
+   - Customize temperature, examples, response format
+   - Quick iteration, no retraining needed
+
+3. Fine-tune Smaller Models (7B-9B)
+   - Train gemma2:9b or llama3.1:8b with your GPUs
+   - Use Axolotl, LLaMA-Factory, or Unsloth frameworks
+   - Import to Ollama: ollama create my-asp-model -f ./Modelfile
+   - Feasible with A5000+A6000 hardware
+
+4. LoRA/QLoRA Adapters
+   - Train small adapters (~1% of model size)
+   - Merge with base model or load dynamically
+   - Lower memory requirements than full fine-tuning
+   - Good for specialized domain adaptation
+
+Note: Direct fine-tuning of 27B-72B models not feasible with current hardware (requires 4-8x inference memory for training).
+
 💡 Key Insight
 Your platform has excellent technical foundations. The path forward is to add persistence, context, and personalization. Once fellows can have multi-turn conversations where the AI remembers context and adapts based on mastery, you'll have a genuinely transformative learning system that can scale across all 65 pediatric ID fellowship programs.
 Start with Phase 1 (session management + multi-turn context). This unlocks adaptive learning and scaffolded feedback—the most powerful pedagogical levers.
