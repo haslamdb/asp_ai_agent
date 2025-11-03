@@ -7,7 +7,7 @@ Usage:
     python asp_literature_miner.py --help
     python asp_literature_miner.py --step all --years 5 --max-results 100 --query-type training
     python asp_literature_miner.py --step search --max-results 500 --query-type broad
-    python asp_literature_miner.py --step filter --model "gemma2:27b" --score-threshold 7.0
+    python asp_literature_miner.py --step filter --model "qwen2.5:72b-instruct-q4_K_M" --score-threshold 7.0
 
 Author: Generated for Cincinnati Children's Hospital ASP AI Agent
 """
@@ -21,6 +21,10 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List, Tuple
 import csv
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Try importing optional dependencies
 try:
@@ -220,10 +224,18 @@ class ASPLiteratureSearcher:
 class AIFilterer:
     """Filter papers using a local LLM (Ollama)"""
 
-    def __init__(self, ollama_url="http://localhost:11434", model="gemma2:27b", use_scoring=True, max_tokens=128):
+    def __init__(self, ollama_url=None, model=None, use_scoring=True, max_tokens=128):
         """Initialize AI filterer"""
         if not HAS_REQUESTS:
             raise ImportError("requests required. Install with: pip install requests")
+
+        # Load from environment with fallback defaults
+        ollama_port = os.environ.get('OLLAMA_API_PORT', '11434')
+        if ollama_url is None:
+            ollama_url = f"http://localhost:{ollama_port}"
+
+        if model is None:
+            model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
 
         self.ollama_url = f"{ollama_url}/api/chat"
         self.ollama_base_url = ollama_url
@@ -837,8 +849,8 @@ def main():
                        default='broad',
                        help='Type of query to run (broad: all ASP, training: education/curriculum)')
     parser.add_argument('--model',
-                       default='gemma2:27b',
-                       help='Ollama model to use for filtering (default: gemma2:27b)')
+                       default=None,
+                       help='Ollama model to use for filtering (default: from OLLAMA_MODEL env or qwen2.5:72b-instruct-q4_K_M)')
     parser.add_argument('--score-threshold', type=float, default=7.0,
                        help='Minimum relevance score (0-10) for filtering (default: 7.0)')
     parser.add_argument('--skip-ai-filter', action='store_true',

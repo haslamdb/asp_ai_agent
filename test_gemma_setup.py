@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to verify Ollama and gemma2:27b setup
+Test script to verify Ollama and configured model setup
 Tests connection, model availability, and scoring functionality
 """
 
@@ -8,6 +8,7 @@ import sys
 import time
 import requests
 import json
+import os
 from pathlib import Path
 
 # Color codes for output
@@ -36,7 +37,10 @@ def print_info(text):
 def print_warning(text):
     print(f"{Colors.YELLOW}⚠{Colors.END} {text}")
 
-def test_ollama_server(ollama_url="http://localhost:11434"):
+def test_ollama_server(ollama_url=None):
+    if ollama_url is None:
+        port = os.environ.get('OLLAMA_API_PORT', '11434')
+        ollama_url = f"http://localhost:{port}"
     """Test 1: Check if Ollama server is running"""
     print_header("TEST 1: Ollama Server Connection")
 
@@ -56,8 +60,10 @@ def test_ollama_server(ollama_url="http://localhost:11434"):
         print_error(f"Connection error: {e}")
         return False
 
-def test_model_availability(ollama_url="http://localhost:11434", model="gemma2:27b"):
-    """Test 2: Check if gemma2:27b is installed"""
+def test_model_availability(ollama_url="http://localhost:11434", model=None):
+    """Test 2: Check if configured model is installed"""
+    if model is None:
+        model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
     print_header("TEST 2: Model Availability")
 
     try:
@@ -131,7 +137,9 @@ def test_gpu_availability():
         print_warning(f"Could not check GPU: {e}")
         return False
 
-def test_scoring_inference(ollama_url="http://localhost:11434", model="gemma2:27b"):
+def test_scoring_inference(ollama_url="http://localhost:11434", model=None):
+    if model is None:
+        model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
     """Test 4: Run sample scoring inference"""
     print_header("TEST 4: Sample Scoring Inference")
 
@@ -226,7 +234,8 @@ def test_scoring_inference(ollama_url="http://localhost:11434", model="gemma2:27
 
 def main():
     """Run all tests"""
-    print(f"\n{Colors.BOLD}Ollama gemma2:27b Setup Test{Colors.END}")
+    model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+    print(f"\n{Colors.BOLD}Ollama {model} Setup Test{Colors.END}")
     print("Testing ASP Literature Miner AI configuration\n")
 
     results = {}
@@ -243,8 +252,9 @@ def main():
     results['model'] = test_model_availability()
 
     if not results['model']:
-        print_error("\nCannot proceed without gemma2:27b model")
-        print_info("Run: ollama pull gemma2:27b")
+        model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+        print_error(f"\nCannot proceed without {model} model")
+        print_info(f"Run: ollama pull {model}")
         sys.exit(1)
 
     # Test 3: GPU
@@ -266,7 +276,8 @@ def main():
     if all_passed:
         print_success("\nAll tests passed! Ready to run asp_literature_miner.py")
         print_info("\nRecommended command:")
-        print("  python asp_literature_miner.py --step filter --model gemma2:27b --score-threshold 7.0")
+        model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+        print(f"  python asp_literature_miner.py --step filter --model {model} --score-threshold 7.0")
     else:
         print_warning("\nSome tests failed. Please fix issues before running the literature miner.")
 

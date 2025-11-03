@@ -21,10 +21,14 @@ import asyncio
 import concurrent.futures
 import threading
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import session management
 from session_manager import (
-    SessionManager, UserSession, ConversationTurn, 
+    SessionManager, UserSession, ConversationTurn,
     ModuleProgress, ModuleStatus, DifficultyLevel
 )
 
@@ -35,9 +39,11 @@ CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'http
 # Initialize session manager
 session_mgr = SessionManager()
 
-# Configuration
-OLLAMA_API = "http://localhost:11434"
-CITATION_API = "http://localhost:9998"  # Secure citation assistant
+# Configuration - load from environment with defaults
+OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
+CITATION_API_PORT = os.environ.get('CITATION_API_PORT', '9998')
+OLLAMA_API = f"http://localhost:{OLLAMA_API_PORT}"
+CITATION_API = f"http://localhost:{CITATION_API_PORT}"
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 
@@ -314,7 +320,8 @@ def claude_endpoint():
 def chat():
     """Unified chat endpoint for all models"""
     data = request.json
-    model_id = data.get('model', 'ollama:gemma2:27b')
+    default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+    model_id = data.get('model', f'ollama:{default_model}')
     messages = data.get('messages', [])
     query = data.get('query', '')
     system_prompt = data.get('system', '')
@@ -657,10 +664,11 @@ def asp_feedback():
             return jsonify(response_data)
     
     # Try models in order of preference for medical tasks
+    default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
     model_preference = [
         'claude:3-sonnet',  # Best for medical reasoning
         'gemini:2.5-flash',  # Good with search integration
-        'ollama:gemma2:27b',  # Local fallback
+        f'ollama:{default_model}',  # Local fallback
     ]
     
     response_data = None
@@ -834,9 +842,10 @@ def hybrid_asp_agent():
                         
                         Focus on: mechanisms of action, spectrum of activity, resistance patterns, clinical pearls, and stewardship considerations.
                         Be precise and cite specific findings from the literature provided."""
-                        
+
+                        default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
                         local_messages = [{'role': 'user', 'content': local_prompt}]
-                        local_response = ollama_chat('gemma2:27b', local_messages)
+                        local_response = ollama_chat(default_model, local_messages)
                         if local_response[1] == 200:
                             return local_response[0].get_json().get('response', '')
                 except Exception as e:
@@ -1001,11 +1010,12 @@ def hybrid_asp_stream():
             local_prompt = f"""Based on the following peer-reviewed literature, provide a factual response about {structured_query}:
             
             {citation_context}
-            
+
             Focus on mechanisms, spectrum, resistance, and clinical pearls."""
-            
+
+            default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
             local_messages = [{'role': 'user', 'content': local_prompt}]
-            local_response = ollama_chat('gemma2:27b', local_messages)
+            local_response = ollama_chat(default_model, local_messages)
             if local_response[1] == 200:
                 factual_content = local_response[0].get_json().get('response', '')
                 yield f"data: {json.dumps({'stage': 3, 'status': 'complete', 'has_content': bool(factual_content)})}\n\n"

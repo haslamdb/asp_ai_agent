@@ -10,13 +10,19 @@ import requests
 import os
 import json
 from typing import Dict, Any, List
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*'])
 
-# Configuration
-OLLAMA_API = "http://localhost:11434"
-CITATION_API = "http://localhost:9998"  # Secure citation assistant
+# Configuration - load from environment with defaults
+OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
+CITATION_API_PORT = os.environ.get('CITATION_API_PORT', '9998')
+OLLAMA_API = f"http://localhost:{OLLAMA_API_PORT}"
+CITATION_API = f"http://localhost:{CITATION_API_PORT}"
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 @app.route('/health', methods=['GET'])
@@ -114,7 +120,8 @@ def list_models():
 def chat():
     """Unified chat endpoint for all models"""
     data = request.json
-    model_id = data.get('model', 'ollama:gemma2:27b')
+    default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+    model_id = data.get('model', f'ollama:{default_model}')
     messages = data.get('messages', [])
     query = data.get('query', '')
     
@@ -300,9 +307,10 @@ def asp_feedback():
     
     # Try Ollama first (local), then Gemini (if configured)
     services = check_services()
-    
+    default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+
     if services.get('ollama', {}).get('status') == 'online':
-        result = ollama_chat('gemma2:27b', messages)
+        result = ollama_chat(default_model, messages)
         if result[1] == 200:
             response_data = result[0].get_json()
             response_data['citations'] = citations
