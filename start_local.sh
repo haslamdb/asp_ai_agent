@@ -20,12 +20,22 @@ pip3 install -q flask flask-cors requests 2>/dev/null || {
 # Check if Ollama is running
 echo ""
 echo "Checking Ollama status..."
-if systemctl is-active --quiet ollama; then
-    echo "✅ Ollama is running"
-    ollama list
+if pgrep -f "ollama serve" > /dev/null; then
+    echo "✅ Ollama is already running"
 else
-    echo "⚠️  Ollama is not running. Start it with: sudo systemctl start ollama"
+    echo "🚀 Starting Ollama with models from /home/david/models..."
+    export OLLAMA_MODELS=/home/david/models
+    /usr/local/bin/ollama serve > /tmp/ollama.log 2>&1 &
+    sleep 3
+    if pgrep -f "ollama serve" > /dev/null; then
+        echo "✅ Ollama started successfully"
+    else
+        echo "❌ Failed to start Ollama. Check /tmp/ollama.log"
+    fi
 fi
+echo ""
+echo "Available models:"
+curl -s http://localhost:11434/api/tags | python3 -c "import sys, json; models = json.load(sys.stdin)['models']; print('\n'.join(f\"  - {m['name']} ({m['details']['parameter_size']})\" for m in models))" 2>/dev/null || echo "  Unable to list models"
 
 # Check if Citation Assistant is running
 echo ""

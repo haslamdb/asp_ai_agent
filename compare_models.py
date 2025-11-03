@@ -78,10 +78,9 @@ def main():
     if available to ensure we're using the narrowest spectrum antibiotic.
     """
     
-    # Test both models
     models = [
         'llama3.1:70b',
-        'qwen2.5:72b-instruct-q4_K_M'
+        'qwen2.5:72b-instruct-q4_K_M'  
     ]
     
     results = {}
