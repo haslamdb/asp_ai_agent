@@ -32,12 +32,22 @@ from session_manager import (
     ModuleProgress, ModuleStatus, DifficultyLevel
 )
 
+# Import new modules
+from conversation_manager import ConversationManager, ConversationState
+from adaptive_engine import AdaptiveLearningEngine, MasteryLevel
+from rubric_scorer import RubricScorer, CriterionLevel
+from equity_analytics import EquityAnalytics
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
 
-# Initialize session manager
+# Initialize all managers
 session_mgr = SessionManager()
+conversation_mgr = ConversationManager()
+adaptive_engine = AdaptiveLearningEngine()
+rubric_scorer = RubricScorer()
+equity_analytics = EquityAnalytics()
 
 # Configuration - load from environment with defaults
 OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
@@ -160,6 +170,123 @@ def get_analytics():
     # In production, add authentication here
     analytics = session_mgr.get_analytics()
     return jsonify(analytics)
+
+@app.route('/api/adaptive/assessment', methods=['POST'])
+def adaptive_assessment():
+    """Get adaptive difficulty assessment for user"""
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    if not user_id:
+        return jsonify({'error': 'No active session'}), 401
+    
+    user_session = session_mgr.get_session(user_id)
+    if not user_session:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    data = request.json or {}
+    module_id = data.get('module_id')
+    
+    # Get mastery assessment
+    mastery_level = adaptive_engine.assess_mastery_level(user_session, module_id) if module_id else None
+    
+    # Get personalized learning path
+    learning_path = adaptive_engine.generate_personalized_path(user_session)
+    
+    # Get performance report
+    performance_report = adaptive_engine.generate_performance_report(user_session)
+    
+    return jsonify({
+        'current_mastery': mastery_level.name if mastery_level else None,
+        'current_difficulty': user_session.current_difficulty.value,
+        'learning_path': learning_path,
+        'performance_report': performance_report
+    })
+
+@app.route('/api/rubric/evaluate', methods=['POST'])
+def evaluate_with_rubric():
+    """Evaluate a response using rubric scoring"""
+    data = request.json or {}
+    response = data.get('response', '')
+    rubric_id = data.get('rubric_id')
+    context = data.get('context', {})
+    
+    if not response or not rubric_id:
+        return jsonify({'error': 'Response and rubric_id required'}), 400
+    
+    try:
+        evaluation = rubric_scorer.evaluate_response(response, rubric_id, context)
+        
+        return jsonify({
+            'rubric_id': evaluation.rubric_id,
+            'total_score': evaluation.total_score,
+            'percentage': evaluation.percentage,
+            'overall_level': evaluation.overall_level.name,
+            'strengths': evaluation.strengths,
+            'areas_for_improvement': evaluation.areas_for_improvement,
+            'specific_feedback': evaluation.specific_feedback,
+            'next_steps': evaluation.next_steps,
+            'criterion_scores': [
+                {
+                    'criterion': score.criterion.name,
+                    'level': score.level.name,
+                    'score': score.score,
+                    'feedback': score.feedback
+                }
+                for score in evaluation.criterion_scores
+            ]
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/equity/report', methods=['GET'])
+def equity_report():
+    """Get equity analytics report"""
+    # In production, add authentication here
+    days = request.args.get('days', 30, type=int)
+    format_type = request.args.get('format', 'json')
+    
+    report = equity_analytics.analyze_equity(days)
+    
+    if format_type == 'summary':
+        return equity_analytics.export_equity_report(report, 'summary'), 200, {'Content-Type': 'text/plain'}
+    else:
+        return jsonify(json.loads(equity_analytics.export_equity_report(report, 'json')))
+
+@app.route('/api/equity/dashboard', methods=['GET'])
+def equity_dashboard():
+    """Get equity dashboard data"""
+    # In production, add authentication here
+    dashboard_data = equity_analytics.generate_dashboard_data()
+    return jsonify(dashboard_data)
+
+@app.route('/api/conversation/process', methods=['POST'])
+def process_conversation():
+    """Process conversation turn with context awareness"""
+    user_id = session.get('user_id') or request.headers.get('X-User-Id')
+    if not user_id:
+        return jsonify({'error': 'No active session'}), 401
+    
+    user_session = session_mgr.get_session(user_id)
+    if not user_session:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    data = request.json or {}
+    user_message = data.get('message', '')
+    module_id = data.get('module_id')
+    
+    # Process through conversation manager
+    conversation_result = conversation_mgr.process_turn(
+        user_session, user_message, module_id
+    )
+    
+    # Get appropriate scenario if needed
+    if conversation_result['context'].state == ConversationState.SCENARIO_INTRODUCTION:
+        scenario = conversation_mgr.get_scenario_for_user(user_session, module_id)
+        if scenario:
+            # Adapt scenario complexity
+            adapted_scenario = adaptive_engine.adapt_scenario_complexity(scenario, user_session)
+            conversation_result['scenario'] = adapted_scenario
+    
+    return jsonify(conversation_result)
 
 def check_services():
     """Check which services are available"""
@@ -691,33 +818,113 @@ def asp_feedback():
             break
     
     if response_data:
+        # Process conversation context
+        conversation_context = conversation_mgr.process_turn(user_session, user_input, module)
+        
+        # Get coaching prompt if in active coaching mode
+        if conversation_context['response_strategy']['type'] == 'coaching':
+            coaching_prompt = conversation_mgr.generate_coaching_prompt(
+                conversation_context['context'],
+                conversation_context['response_strategy']
+            )
+            # Note: coaching prompt applied to earlier message construction
+        
         # Save conversation turn
         turn = ConversationTurn(
             user_message=user_input,
             ai_response=response_data.get('response', ''),
             module_id=module,
-            context_used={'difficulty': user_session.current_difficulty.value},
+            context_used={
+                'difficulty': user_session.current_difficulty.value,
+                'conversation_state': conversation_context['context'].state.value,
+                'scaffolding_level': conversation_context['scaffolding_level']
+            },
             citations=citations,
             metrics={'model': model_used}
         )
         user_session.add_turn(turn)
         session_mgr.save_conversation_turn(user_id, turn)
         
-        # Calculate and update module progress (simple scoring based on response length and citations)
-        score = 0.5  # Base score
-        if len(response_data.get('response', '')) > 500:
-            score += 0.2
-        if citations:
-            score += 0.3
+        # Evaluate response with rubric if appropriate
+        rubric_evaluation = None
+        score = 0.5  # Default score
         
+        if module in ['leadership', 'analytics', 'behavioral', 'clinical']:
+            # Map module to appropriate rubric
+            rubric_map = {
+                'leadership': 'leadership_business_case',
+                'analytics': 'analytics_dot_calculation',
+                'behavioral': 'behavioral_bias_identification',
+                'clinical': 'clinical_protocol_development'
+            }
+            rubric_id = rubric_map.get(module)
+            
+            if rubric_id:
+                try:
+                    evaluation = rubric_scorer.evaluate_response(
+                        response_data.get('response', ''),
+                        rubric_id,
+                        {'user_input': user_input, 'citations': citations}
+                    )
+                    rubric_evaluation = {
+                        'score': evaluation.percentage,
+                        'level': evaluation.overall_level.name,
+                        'strengths': evaluation.strengths[:2],
+                        'improvements': evaluation.areas_for_improvement[:2],
+                        'feedback': evaluation.specific_feedback
+                    }
+                    score = evaluation.percentage / 100  # Convert to 0-1 scale
+                except:
+                    # Fallback to simple scoring
+                    if len(response_data.get('response', '')) > 500:
+                        score += 0.2
+                    if citations:
+                        score += 0.3
+        else:
+            # Simple scoring for non-module responses
+            if len(response_data.get('response', '')) > 500:
+                score += 0.2
+            if citations:
+                score += 0.3
+        
+        # Update module progress with score
         user_session.update_module_progress(module, score, response_data)
+        
+        # Adaptive difficulty adjustment
+        recent_performance = {
+            'accuracy': score,
+            'response_time': 30,  # Placeholder - would track actual time
+            'hints_used': len(conversation_context.get('hints_available', [])),
+            'attempts': conversation_context['context'].attempts_on_current
+        }
+        new_difficulty, difficulty_reasoning = adaptive_engine.calculate_difficulty_adjustment(
+            user_session, recent_performance
+        )
+        if new_difficulty != user_session.current_difficulty:
+            user_session.current_difficulty = new_difficulty
+        
         session_mgr.update_session(user_session)
         
-        # Add session info to response
+        # Add comprehensive session info to response
         response_data['session_info'] = {
             'user_id': user_id,
             'difficulty': user_session.current_difficulty.value,
-            'module_attempts': user_session.module_progress.get(module, ModuleProgress(module)).attempts if module in user_session.module_progress else 0
+            'module_attempts': user_session.module_progress.get(module, ModuleProgress(module)).attempts if module in user_session.module_progress else 0,
+            'conversation_state': conversation_context['context'].state.value,
+            'scaffolding_level': conversation_context['scaffolding_level'],
+            'next_steps': conversation_context['next_steps']
+        }
+        
+        # Add rubric evaluation if available
+        if rubric_evaluation:
+            response_data['evaluation'] = rubric_evaluation
+        
+        # Add adaptive learning insights
+        mastery_level = adaptive_engine.assess_mastery_level(user_session, module)
+        response_data['learning_insights'] = {
+            'current_mastery': mastery_level.name,
+            'difficulty_adjustment': difficulty_reasoning if new_difficulty != user_session.current_difficulty else None,
+            'personalized_path': adaptive_engine.generate_personalized_path(user_session)[:1]  # Top recommendation
         }
         
         return jsonify(response_data)
