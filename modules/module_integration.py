@@ -37,55 +37,47 @@ class ModuleIntegration:
             return {"error": "No active session found"}
         
         # Get current difficulty level from adaptive engine
-        user_mastery = self.adaptive_engine.get_user_mastery(user_id, module_id)
+        mastery_level = self.adaptive_engine.assess_mastery_level(session, module_id)
         difficulty_map = {
-            "Remembering": DifficultyLevel.BEGINNER,
-            "Understanding": DifficultyLevel.BEGINNER,
-            "Applying": DifficultyLevel.INTERMEDIATE,
-            "Analyzing": DifficultyLevel.ADVANCED,
-            "Evaluating": DifficultyLevel.EXPERT,
-            "Creating": DifficultyLevel.EXPERT
+            "REMEMBERING": DifficultyLevel.BEGINNER,
+            "UNDERSTANDING": DifficultyLevel.BEGINNER,
+            "APPLYING": DifficultyLevel.INTERMEDIATE,
+            "ANALYZING": DifficultyLevel.ADVANCED,
+            "EVALUATING": DifficultyLevel.EXPERT,
+            "CREATING": DifficultyLevel.EXPERT
         }
-        difficulty = difficulty_map.get(user_mastery['mastery_level'], DifficultyLevel.BEGINNER)
+        difficulty = difficulty_map.get(mastery_level.name, DifficultyLevel.BEGINNER)
         
         # Get appropriate scenario
         scenario = self.cicu_module.get_scenario(difficulty)
         
         # Process conversation with context
         conversation_state = self.conversation_manager.process_turn(
-            user_id=user_id,
+            user_session=session,
             user_message=message,
-            module_context={
-                "module_id": module_id,
-                "scenario": scenario,
-                "difficulty": difficulty.value
-            }
+            module_id=module_id
         )
         
         # Evaluate response using module rubrics
         if conversation_state['state'] == 'assessment':
             evaluation = self.evaluate_with_rubrics(message, difficulty)
             
-            # Update adaptive engine with performance
-            self.adaptive_engine.update_performance(
-                user_id=user_id,
-                module_id=module_id,
-                performance_data={
-                    'accuracy': evaluation['overall_score'] / 5.0,
-                    'time_taken': 300,  # Would be actual time in production
-                    'hints_used': conversation_state.get('hints_used', 0),
-                    'attempts': conversation_state.get('attempts', 1)
-                }
-            )
+            # Update session with performance
+            session.module_progress[module_id] = {
+                'current_level': difficulty.value,
+                'last_score': evaluation['overall_score'],
+                'completed': False
+            }
+            self.session_manager.update_session(user_id, {'module_progress': session.module_progress})
             
-            # Get next recommendation
-            next_step = self.adaptive_engine.get_recommendation(user_id, module_id)
+            # Get next recommendation using generate_personalized_path
+            next_step = self.adaptive_engine.generate_personalized_path(session)
             
             return {
                 "response": conversation_state['response'],
                 "evaluation": evaluation,
                 "next_recommendation": next_step,
-                "progress": user_mastery
+                "progress": {"mastery_level": mastery_level.name}
             }
         
         # Provide hints if requested
