@@ -1,12 +1,21 @@
 # ASP AI Agent
 
-AI-powered tools and interfaces for antimicrobial stewardship programs with support for multiple AI models including Claude, Gemini, and local Ollama models.
+AI-powered adaptive educational platform for antimicrobial stewardship fellowship training with support for multiple AI models including Claude, Gemini, and local Ollama models.
+
+## 🎯 Project Overview
+
+The ASP AI Agent is a comprehensive educational system designed to train the next generation of antimicrobial stewardship leaders. It features adaptive learning modules, real-time feedback, and evidence-based clinical scenarios addressing critical gaps in ASP education.
+
+### Key Features
+- **Adaptive Learning System** - Personalized difficulty adjustment based on performance
+- **Multi-Turn Conversations** - Context-aware coaching with up to 50 turns of dialogue
+- **Rubric-Based Assessment** - Standardized evaluation across 4 competency domains
+- **Equity Analytics** - Real-time monitoring for educational disparities
+- **Clinical Modules** - Real-world scenarios from CICU, NICU, and other settings
 
 ## 🚀 Quick Start
 
-**New to the project?** See our detailed [Setup Guide (SETUP.md)](./SETUP.md) for complete installation instructions.
-
-### Fastest Setup (30 seconds)
+### Installation (30 seconds)
 
 1. **Clone the repository**:
    ```bash
@@ -14,118 +23,238 @@ AI-powered tools and interfaces for antimicrobial stewardship programs with supp
    cd asp_ai_agent
    ```
 
-2. **Get an API key** (choose one):
-   - **Claude**: https://console.anthropic.com → API Keys
-   - **Gemini**: https://aistudio.google.com → Get API Key
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3. **Set environment variable**:
+3. **Set API keys** (choose one or more):
    ```bash
    export ANTHROPIC_API_KEY='your-claude-key-here'
-   # OR
    export GEMINI_API_KEY='your-gemini-key-here'
+   # Optional: Install Ollama for local models
    ```
 
 4. **Start the server**:
    ```bash
-   pip install -r requirements.txt
-   python unified_server.py
+   ./start_local.sh  # Or: python unified_server.py
    ```
 
-5. **Open interface**: Visit `agent_models.html` in your browser or use:
-   ```bash
-   python -m http.server 8080
-   # Then go to http://localhost:8080
-   ```
+5. **Open interface**: Visit `http://localhost:5001`
 
-## 🌟 Features
-
-- **Agent Models Interface** (`agent_models.html`) - Advanced ASP training modules with AI feedback
-- **Chat Interface** (`asp_ai_agent.html`) - General ASP consultation and case discussions  
-- **Multi-Model Support** - Claude 3.5 Sonnet, Gemini 2.5 Flash, and local Ollama models
-- **Unified Backend** - Single server handling all AI providers with automatic fallbacks
-- **Production Ready** - Vercel deployment with secure API key management
-
-## 🔗 Live Demo
-
-- **GitHub Pages** (Frontend only): https://haslamdb.github.io/asp_ai_agent/
-- **Full Application**: Deploy to Vercel for complete functionality with AI models
-
-## 📖 Documentation
-
-- **[Complete Setup Guide](./SETUP.md)** - Detailed installation and configuration
-- **[API Key Setup](./SETUP.md#3-get-api-keys-choose-one-or-both)** - How to obtain Claude and Gemini keys
-- **[Server Instructions](./SETUP.md#4-start-the-server)** - Starting the unified backend
-- **[Deployment Guide](./SETUP.md#production-deployment-with-vercel)** - Production hosting on Vercel
-
-## 🏗️ Project Structure
+## 📂 Project Structure
 
 ```
 asp_ai_agent/
-├── api/
-│   ├── gemini.js           # Vercel Edge Function for Gemini API
-│   └── claude.js           # Vercel Edge Function for Claude API
-├── agent_models.html       # Main training interface with modules
-├── asp_ai_agent.html       # Chat interface for general consultation
-├── index.html              # Landing page navigation
-├── unified_server.py       # Local development server (all models)
-├── requirements.txt        # Python dependencies
-├── SETUP.md               # Complete setup instructions
-└── vercel.json            # Production deployment config
+├── docs/                           # Documentation
+│   ├── SETUP.md                   # Detailed setup instructions
+│   ├── IMPLEMENTATION_COMPLETE.md # Implementation status
+│   ├── CICU_Module_Documentation.md # CICU module details
+│   └── ASP_Agent_*.md            # System documentation
+│
+├── modules/                        # Educational modules
+│   ├── cicu_prolonged_antibiotics_module.py
+│   ├── module_integration.py
+│   └── cicu_module_export.json
+│
+├── tests/                          # Test suites
+│   ├── test_integration.py        # System integration tests
+│   └── test_gemma_setup.py       # Model testing
+│
+├── core_components/                # Core system files
+│   ├── unified_server.py          # Main server with all endpoints
+│   ├── session_manager.py         # User session management
+│   ├── conversation_manager.py    # Multi-turn dialogue handler
+│   ├── adaptive_engine.py         # Adaptive learning engine
+│   ├── rubric_scorer.py          # Assessment system
+│   └── equity_analytics.py       # Disparity monitoring
+│
+├── interfaces/                     # User interfaces
+│   ├── agent_models.html          # Training module interface
+│   ├── asp_ai_agent.html         # Chat consultation interface
+│   └── index.html                 # Landing page
+│
+├── api/                           # API endpoints
+│   ├── gemini.js                 # Vercel Edge Function
+│   └── claude.js                 # Vercel Edge Function
+│
+├── asp_literature/                # Literature mining
+│   ├── asp_literature_miner.py   # PubMed mining tool
+│   └── pdfs/                      # Downloaded papers
+│
+├── data/                          # Data storage
+│   ├── asp_sessions.db           # SQLite session database
+│   └── next_steps_and_implementation.txt
+│
+└── config/                        # Configuration
+    ├── requirements.txt           # Python dependencies
+    ├── vercel.json               # Vercel deployment
+    └── start_local.sh            # Local startup script
 ```
 
-## 🚀 Deployment Options
+## 🎓 Educational Modules
+
+### Currently Available
+
+#### CICU Prolonged Antibiotics Module
+Addresses overuse of meropenem and vancomycin in cardiac ICU settings.
+- **Scenarios**: 4 progressive difficulty levels
+- **Focus**: Data analysis → Intervention design → Implementation → Sustainability
+- **Metrics**: Process, outcome, and balancing measures
+- **Documentation**: [CICU Module Guide](./docs/CICU_Module_Documentation.md)
+
+### Coming Soon
+- NICU Antibiotic Stewardship
+- Emergency Department UTI Management
+- Surgical Prophylaxis Optimization
+- Outpatient Oral Antibiotic Selection
+
+## 🔧 Core Components
+
+### Session Management (`session_manager.py`)
+- SQLite persistence for user progress
+- Demographics and learning history tracking
+- Module completion status
+
+### Adaptive Learning Engine (`adaptive_engine.py`)
+- Bloom's taxonomy mastery levels
+- Performance-based difficulty adjustment
+- Personalized learning paths
+- Time-to-mastery predictions
+
+### Conversation Manager (`conversation_manager.py`)
+- State machine for dialogue flow
+- Intent analysis and scaffolding
+- Progressive hint system
+- Context retention (50 turns)
+
+### Rubric Scorer (`rubric_scorer.py`)
+- Standardized assessment criteria
+- 5-level scoring (Not Evident → Exemplary)
+- Competency-based evaluation
+- Progress tracking over time
+
+### Equity Analytics (`equity_analytics.py`)
+- Demographic performance analysis
+- Disparity detection and severity scoring
+- Actionable recommendations
+- Dashboard data generation
+
+## 🚀 API Endpoints
+
+### Core Educational Endpoints
+- `POST /api/asp-feedback` - Main ASP feedback with full context
+- `POST /api/session/create` - Create persistent user session
+- `GET /api/session/current` - Get current session with progress
+- `POST /api/conversation/process` - Process multi-turn dialogue
+- `GET /api/adaptive/assessment` - Get difficulty recommendations
+- `POST /api/rubric/evaluate` - Evaluate with standardized rubrics
+- `GET /api/equity/dashboard` - Equity analytics dashboard
+
+### Module-Specific Endpoints
+- `POST /api/modules/cicu/interact` - CICU module interaction
+- `GET /api/modules/cicu/tracker` - Implementation metrics
+- `POST /api/modules/cicu/countermeasure` - Get barrier solutions
+
+## 🤖 AI Model Support
+
+| Model | Best For | Features | Availability |
+|-------|----------|----------|--------------|
+| **Claude 3.5 Sonnet** | Complex medical reasoning | Best accuracy, nuanced feedback | API key required |
+| **Gemini 2.5 Flash** | Fast responses, search | Web search, quick iterations | Free tier available |
+| **Gemma2:27b** | Local deployment | Privacy, no API costs | Via Ollama |
+| **Llama3.1:70b** | Large local model | High quality, offline | Via Ollama |
+
+## 📊 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all integration tests
+python tests/test_integration.py
+
+# Test model setup
+python tests/test_gemma_setup.py
+
+# Test specific module
+python modules/cicu_prolonged_antibiotics_module.py
+```
+
+## 📖 Documentation
+
+- **[Setup Guide](./docs/SETUP.md)** - Complete installation instructions
+- **[Implementation Status](./docs/IMPLEMENTATION_COMPLETE.md)** - Current feature status
+- **[Executive Summary](./docs/ASP_Agent_Executive_Summary.md)** - Project overview
+- **[Visual Workflows](./docs/ASP_Agent_Visual_Workflows.md)** - System architecture
+- **[Module Guide](./docs/CICU_Module_Documentation.md)** - CICU module details
+
+## 🔐 Security & Privacy
+
+- API keys stored as environment variables
+- Server-side proxy for credential protection
+- SQLite database with user anonymization
+- CORS configured for authorized origins
+- No PHI/PII in educational scenarios
+
+## 🚀 Deployment
 
 ### Local Development
-Perfect for testing and development with all model options:
 ```bash
-python unified_server.py  # Supports Claude, Gemini, and Ollama
+./start_local.sh  # Starts on port 5001 with auto-reload
 ```
 
 ### Production (Vercel)
-Secure, scalable deployment for production use:
-- Automatic HTTPS and global CDN
-- Secure environment variable management
-- Edge functions for low latency
+```bash
+vercel --prod  # Deploy to production
+```
 
-See [SETUP.md](./SETUP.md) for complete deployment instructions.
+See [Setup Guide](./docs/SETUP.md) for detailed deployment instructions.
 
-## 🤖 AI Model Comparison
+## 📈 Roadmap
 
-| Model | Best For | Cost | Local | Search |
-|-------|----------|------|-------|---------|
-| **Claude 3.5 Sonnet** | Complex medical reasoning | Pay-per-use | No | No |
-| **Gemini 2.5 Flash** | General queries | Free tier | No | Yes |
-| **Ollama (Local)** | Privacy, offline use | Free | Yes | No |
+### Phase 1 ✅ (Complete)
+- Session management
+- Multi-turn conversations
+- Adaptive difficulty
+- Rubric scoring
+- Equity tracking
 
-## 🔐 Security
+### Phase 2 🚧 (Current - 8 weeks)
+- Module content creation
+- Frontend dashboard development
+- Integration testing
+- Pilot preparation
 
-- API keys are never exposed to the browser
-- Server-side proxy protects credentials
-- CORS configured for authorized origins only
-- Environment variables for key management
+### Phase 3 📅 (Planned - 12 weeks)
+- Pilot with 2-3 fellowship programs
+- Feedback collection and iteration
+- Performance optimization
+- Scale preparation
 
-## 🛠️ Technologies
-
-- **Frontend**: HTML5, Tailwind CSS, JavaScript ES6+
-- **Backend**: Python Flask, Vercel Edge Functions
-- **AI Models**: Anthropic Claude, Google Gemini, Local Ollama
-- **Hosting**: Vercel (production), GitHub Pages (static)
-
-## 📋 Requirements
-
-- Python 3.8+ (for local server)
-- API key for Claude or Gemini (see [SETUP.md](./SETUP.md))
-- Modern web browser
-- Optional: Ollama for local models
+### Phase 4 🎯 (Future)
+- Deploy to 65 pediatric ID programs
+- Continuous improvement
+- Research publications
+- National ASP certification integration
 
 ## 🤝 Contributing
 
-Pull requests welcome! For major changes, please open an issue first to discuss the proposed changes.
+We welcome contributions! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new features
+4. Update documentation
+5. Submit a pull request
 
 ## 📄 License
 
-This project is proprietary and confidential.
+This project is proprietary and confidential. All rights reserved.
+
+## 🆘 Support
+
+- **Technical Issues**: Open a GitHub issue
+- **Module Feedback**: asp-education@institution.edu
+- **Setup Help**: See [Setup Guide](./docs/SETUP.md)
 
 ---
 
-**Need help?** Check the [Setup Guide](./SETUP.md) or open an issue for support.
