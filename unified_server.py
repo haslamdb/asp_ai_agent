@@ -41,6 +41,9 @@ from equity_analytics import EquityAnalytics
 # Import CICU module
 from modules.cicu_prolonged_antibiotics_module import CICUAntibioticsModule, DifficultyLevel as CICUDifficultyLevel
 
+# Import ASP Literature RAG
+from asp_rag_module import ASPLiteratureRAG
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
@@ -54,6 +57,15 @@ equity_analytics = EquityAnalytics()
 
 # Initialize CICU module
 cicu_module = CICUAntibioticsModule()
+
+# Initialize ASP Literature RAG system
+print("Initializing ASP Literature RAG system...")
+try:
+    asp_rag = ASPLiteratureRAG()
+    print(f"✓ ASP Literature RAG loaded with {asp_rag.collection.count()} chunks")
+except Exception as e:
+    print(f"⚠ Warning: Could not initialize ASP RAG: {e}")
+    asp_rag = None
 
 # Configuration - load from environment with defaults
 OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
@@ -371,7 +383,47 @@ def cicu_ai_feedback():
     difficulty_level = level_map.get(level, CICUDifficultyLevel.BEGINNER)
     scenario = cicu_module.get_scenario(difficulty_level)
 
-    # Build comprehensive evaluation prompt
+    # Retrieve relevant literature using RAG
+    literature_context = ""
+    if asp_rag:
+        try:
+            # Extract key concepts for literature search
+            search_queries = [
+                f"antimicrobial stewardship {level}",
+                "reducing broad-spectrum antibiotic use",
+                "days of therapy DOT measurement",
+                "behavioral change interventions antimicrobial",
+                "implementation science stewardship"
+            ]
+
+            all_results = []
+            for query in search_queries:
+                results = asp_rag.search(query, n_results=2, min_similarity=0.4)
+                all_results.extend(results)
+
+            # Deduplicate by PMID and take top 5
+            seen_pmids = set()
+            unique_results = []
+            for result in all_results:
+                if result['pmid'] not in seen_pmids:
+                    seen_pmids.add(result['pmid'])
+                    unique_results.append(result)
+                    if len(unique_results) >= 5:
+                        break
+
+            if unique_results:
+                literature_parts = []
+                for i, result in enumerate(unique_results, 1):
+                    excerpt = result['text'][:400]  # Limit excerpt length
+                    literature_parts.append(f"[{i}] PMID {result['pmid']}: {excerpt}")
+
+                literature_context = "\n\n".join(literature_parts)
+                print(f"   Retrieved {len(unique_results)} relevant papers for context")
+        except Exception as e:
+            print(f"   Warning: RAG search failed: {e}")
+            literature_context = ""
+
+    # Build comprehensive evaluation prompt with literature context
     evaluation_prompt = f"""You are an expert antimicrobial stewardship educator evaluating a fellow's response to a training scenario.
 
 **SCENARIO:**
@@ -381,10 +433,23 @@ def cicu_ai_feedback():
 {chr(10).join(f"- {task}" for task in scenario['key_tasks'])}
 
 **LEARNER'S RESPONSE:**
-{user_input}
+{user_input}"""
+
+    # Add literature context if available
+    if literature_context:
+        evaluation_prompt += f"""
+
+**RELEVANT RESEARCH EVIDENCE:**
+The following are excerpts from recent antimicrobial stewardship literature that may be relevant to this scenario. Reference these when appropriate in your feedback to provide evidence-based guidance:
+
+{literature_context}
+
+When referencing these sources, cite them using the PMID numbers provided."""
+
+    evaluation_prompt += """
 
 **YOUR EVALUATION TASK:**
-Evaluate this response across 4 competency domains using the rubrics below. For each domain, assign a score (1-5) and provide specific, actionable feedback.
+Evaluate this response across 4 competency domains using the rubrics below. For each domain, assign a score (1-5) and provide specific, actionable feedback. When relevant, reference the research evidence provided above to support your feedback.
 
 **RUBRIC DOMAINS:**
 
