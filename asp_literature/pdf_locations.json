@@ -2,10 +2,10 @@
   {
     "pmid": "40534940",
     "doi": "10.5863/JPPT-25-01200",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12172678/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40345620",
@@ -18,10 +18,10 @@
   {
     "pmid": "39371369",
     "doi": "10.1093/ofid/ofae542",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11450624/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "41160711",
@@ -34,18 +34,18 @@
   {
     "pmid": "41141168",
     "doi": "10.7759/cureus.93058",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.cureus.com/articles/414652-emerging-role-of-emergency-physicians-in-antimicrobial-stewardship.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12549215/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41121325",
     "doi": "10.1186/s13012-025-01455-2",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://implementationscience.biomedcentral.com/counter/pdf/10.1186/s13012-025-01455-2",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12542473/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41066036",
@@ -58,18 +58,18 @@
   {
     "pmid": "40995025",
     "doi": "10.1093/jacamr/dlaf154 10.1080/1364557032000119616 10.1136/bmj.n71 10.1016/j.jhin.2019.08.001 10.1016/j.jhin.2018.06.022 10.1093/jacamr/dlaa096 10.1093/jac/dku543 10.1093/jacamr/dlad095 10.1016/j.jhin.2021.09.027",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/jacamr/article-pdf/7/5/dlaf154/64352507/dlaf154.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12455415/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40995022",
     "doi": "10.1093/jacamr/dlaf157 10.1016/S0140-6736(21)02724-0 10.1016/S0140-6736(22)02576-4 10.1186/s13756-019-0471-0 10.1001/jamanetworkopen.2022.53806 10.1016/S1473-3099(16)00065-7 10.1136/bmjopen-2017-017451 10.1007/s13187-015-0866-4 10.1080/13668250903093125 10.1016/j.cmi.2025.04.035 10.1016/S1473-3099(10)70027-X 10.1186/1748-5908-8-35 10.5116/ijme.59ba.2d47 10.1007/BF00138871",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/jacamr/article-pdf/7/5/dlaf157/64240533/dlaf157.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12455197/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40683827",
@@ -82,18 +82,18 @@
   {
     "pmid": "40502788",
     "doi": "10.21203/rs.3.rs-6579066/v1 10.1111/j.1365-2648.2007.04569.x 10.1186/s13063-015-0841-8 10.1186/s13012-021-01096-1 10.1136/bmj.h391 10.1186/s13012-017-0635-3 10.4324/9780203557334 10.1186/s12913-024-11714-5 10.1017/ice.2020.71 10.1016/S0140-6736(24)01867-1 10.1177/1077558716656970 10.1186/s13012-022-01247-y 10.1186/s43058-021-00138-5 10.1093/jpids/pix020 10.1093/cid/ciad743 10.35844/001c.116337",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.researchsquare.com/article/rs-6579066/latest.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12154139/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40395961",
     "doi": "10.3205/zma001733 10.1016/S0140-6736(21)02724-0 10.1093/jac/dky150 10.1093/jac/dkt440 10.1093/cid/cit370 10.1186/1472-6920-13-163 10.1016/j.ajic.2019.01.019 10.1371/journal.pone.0246820 10.1093/cid/ciw118 10.1007/s11606-009-1112-8 10.1108/LHS-06-2017-0031 10.1136/bmjopen-2015-008096 10.1371/journal.pone.0188521 10.4161/viru.23706 10.3205/dgkh000450 10.1080/01421599979743 10.1093/ofid/ofab231 10.1007/978-3-319-24277-4 10.1111/j.1529-1006.2004.00018.x 10.1186/s13756-020-00837-z 10.1371/journal.pone.0150056 10.1017/ash.2023.423 10.1037/0033-295X.115.2.502 10.1016/j.ajic.2018.10.022 10.1016/j.resplu.2023.100369 10.1037//0022-3514.77.6.1121 10.3390/ijerph19095763 10.11124/JBIES-20-00330 10.1097/ACM.0000000000004072 10.3390/antibiotics10040364 10.1093/jacamr/dlad130",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12086241/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40043769",
@@ -106,10 +106,10 @@
   {
     "pmid": "39839360",
     "doi": "10.1017/ash.2024.492 10.1542/peds.2018-1056 10.1542/peds.2010-1275 10.1080/14787210.2020.1787833 10.1001/jamainternmed.2016.6625 10.1016/j.acap.2014.07.005 10.1093/jac/dkz474 10.1093/cid/cit370 10.15766/mep_2374-8265.10726 10.1093/cid/cit480 10.1089/mdr.2010.0009 10.1093/cid/ciab600 10.1186/s13104-020-05170-7 10.1007/s15010-022-01807-w 10.1542/hpeds.2017-0059 10.15766/mep_2374-8265.11358 10.15766/mep_2374-8265.11066 10.15766/mep_2374-8265.10767 10.1016/j.jbi.2008.08.010 10.1016/j.jbi.2019.103208 10.1086/660761 10.4300/JGME-D-13-00154.1 10.1093/cid/ciaa029 10.1093/ofid/ofx117",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11748016/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39504190",
@@ -138,50 +138,50 @@
   {
     "pmid": "38952488",
     "doi": "10.1080/20523211.2024.2365224 10.3390/antibiotics7040097 10.1136/ejhpharm-2022-003241 10.3390/antibiotics12040793 10.2147/IPRP.S225333 10.3390/antibiotics12091383 10.3390/antibiotics12040647 10.3390/pharmacy10040098",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.tandfonline.com/doi/pdf/10.1080/20523211.2024.2365224?needAccess=true",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11216260/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41188840",
     "doi": "10.1186/s12909-025-08092-9",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://bmcmededuc.biomedcentral.com/counter/pdf/10.1186/s12909-025-08092-9",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12584285/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41127150",
     "doi": "10.1017/ash.2025.10189 10.1016/j.glohj.2023.02.002 10.1177/0018578718775330 10.1007/s40267-019-00688-8 10.1371/journal.pone.0195434 10.1093/cid/ciab1061 10.1111/ctr.13512 10.1111/ctr.70147 10.3390/antibiotics12071192 10.1002/phar.1506 10.1002/phar.1515 10.1093/ajhp/zxaa393 10.1016/j.idc.2019.10.008",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/3AC4405F54EC9901FD92A3D3E3EE9B2D/S2732494X25101897a.pdf/div-class-title-how-to-leverage-medication-use-evaluations-for-antimicrobial-stewardship-goals-a-primer-for-physicians-div.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12538338/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41111801",
     "doi": "10.7759/cureus.92540",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.cureus.com/articles/409507-adherence-to-nice-guidelines-and-centor-criteria-in-acute-sore-throat-management-an-audit-cycle.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12533547/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41098342",
     "doi": "10.1099/acmi.0.001030.v4 10.1001/jama.2016.11764 10.1093/jac/49.1.25 10.1136/bmj.f1493 10.1016/j.cmi.2017.08.026 10.1186/s12889-024-17766-w 10.2807/1560-7917.ES.2021.26.12.1900633 10.1093/cid/cit370 10.1016/j.medmal.2013.07.010 10.1093/jac/dky150 10.1371/journal.pone.0122476 10.1089/mdr.2010.0009 10.1093/cid/ciu537 10.1016/j.cptl.2017.03.021 10.1111/eje.12430 10.1186/1748-5908-6-42 10.1371/journal.pone.0150056 10.2807/1560-7917.es2014.19.41.20928 10.1093/pubmed/fdw059 10.1093/jac/dkr119 10.1007/s10198-012-0404-9 10.4018/979-8-3693-6482-6.ch005 10.1186/s40594-021-00270-7 10.2147/AMEP.S131851 10.1016/j.cmi.2014.11.015 10.1152/advan.00014.2014 10.3109/0142159X.2015.1060308 10.1080/0142159X.2020.1838465 10.1186/s12909-020-02433-6 10.1093/jac/dkt440 10.4314/mmj.v31i2.5",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12518050/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "41079139",
     "doi": "10.1093/jacamr/dlaf185 10.1186/s13756-018-0336-y 10.1186/s13756-023-01225-z 10.1308/205016814813877324 10.1093/cid/civ076 10.1111/cdoe.12199 10.1016/j.joen.2017.05.009 10.1016/j.ypmed.2024.108043 10.1093/jac/dkz152 10.3390/antibiotics10080987 10.1111/jop.12909 10.1093/intqhc/mzm042 10.1093/fampra/cmr084 10.3390/antibiotics9090575 10.1007/s40267-017-0388-8 10.1038/sj.bdj.2014.761 10.3390/antibiotics10060735 10.1016/j.medmal.2016.06.006 10.1136/bmjopen-2016-015674 10.3109/0142159X.2014.917165 10.1111/j.1365-2753.2010.01610.x 10.1093/jac/dky319 10.1371/journal.pone.0246506 10.1001/jama.2009.1385 10.1136/bmj-2022-070442 10.3390/medicina58020327 10.1159/000346960 10.3390/ijms232213913 10.3233/SHTI200597 10.1136/annrheumdis-2021-221244 10.1136/annrheumdis-2021-221244 10.1371/journal.pone.0215480 10.1177/16094069221095314 10.1016/j.sapharm.2021.02.003",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12514463/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40926417",
@@ -194,66 +194,66 @@
   {
     "pmid": "40895378",
     "doi": "10.35772/ghm.2025.01071",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12390772/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40881605",
     "doi": "10.1093/jacamr/dlaf041 10.1097/INF.0000000000000519 10.1016/S1473-3099(18)30605-4 10.1136/bmjopen-2014-006245 10.1093/jac/dkx502 10.3399/bjgp13X669149 10.1136/adc.2008.147579 10.1136/bmj.322.7282.336 10.1186/s12875-015-0348-0 10.1016/S1473-3099(14)70027-1 10.1186/1471-2296-14-182 10.1002/14651858.cd003539.pub2 10.1002/psb.1633 10.1136/bmj.d8173 10.1093/jac/dky004 10.1136/bmjqs-2015-004411 10.1093/jac/dkx542 10.1136/bmj.l440 10.3399/bjgp15X686497 10.1128/AAC.00209-16",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11961301/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40872694",
     "doi": "10.3390/vetsci12080743 10.3390/antibiotics10040409 10.5326/1547-3317-58.4.1 10.1111/jvim.12562 10.1111/jvim.15083 10.1186/s12917-018-1646-2 10.1016/j.jiac.2019.02.017 10.1371/journal.pone.0309554 10.1111/vde.12975 10.3389/frabi.2023.1233698 10.1128/microbiolspec.ARBA-0023-2017 10.3390/antibiotics13100927 10.1016/j.prevetmed.2020.104942 10.1186/1471-2334-14-534 10.1111/vec.12012 10.1186/s13054-017-1747-5 10.3389/fvets.2023.1270137 10.1128/jcm.02210-21 10.3390/antibiotics12101557 10.1016/j.jhin.2019.09.011 10.1371/journal.pone.0086457 10.1186/s12879-015-1184-5 10.1097/MCC.0000000000000126 10.21037/jeccm-22-6 10.3390/antibiotics13040375 10.1128/AAC.00825-16 10.1371/journal.pone.0311434 10.3390/antibiotics12111590 10.1128/microbiolspec.VMBF-0016-2015 10.1128/microbiolspec.GPP3-0057-2018",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.mdpi.com/2306-7381/12/8/743/pdf?version=1754967306",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12390016/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40868022",
     "doi": "10.3390/antibiotics14080828 10.1159/000510979 10.1007/978-3-319-31248-4_4 10.1126/science.288.5464.287 10.1056/NEJM198207083070203 10.3181/00379727-86-21030 10.1007/BF02617382 10.1353/pbm.2002.0064 10.1073/pnas.0407076101 10.1038/sj.embor.7400812 10.1038/nature06245 10.1038/nature06198 10.1038/nature05762 10.1038/nature09646 10.1038/nature11234 10.1038/nature11209 10.1038/nature09199 10.1101/gr.122705.111 10.1038/ismej.2011.169 10.1073/pnas.1300833110 10.1186/s12915-014-0071-7 10.1038/nature12347 10.1073/pnas.1323599111 10.1038/tp.2013.83 10.1038/nature12820 10.1126/science.1241214 10.1038/nature12506 10.1038/nature12171 10.1172/JCI78366 10.1186/s13756-023-01225-z 10.3390/ijerph20116025 10.1128/AEM.00415-15 10.1038/srep43481 10.1111/jam.15492 10.3390/antibiotics12111569 10.1038/s44259-024-00026-7 10.1128/AEM.02766-10 10.3390/nu12040949 10.1093/femsre/fuae017 10.1186/s12864-015-2153-5 10.1007/978-3-030-13035-0_6 10.1021/acs.chemrev.0c00199 10.3390/pathogens14020161 10.1016/j.gene.2022.146734 10.1016/j.bbrc.2018.12.071 10.1080/1040841X.2023.2197481 10.1002/cre2.65 10.3390/antibiotics12020293 10.1128/JB.183.18.5385-5394.2001 10.1016/S0924-8579(01)00407-1 10.7717/peerj.18835 10.3390/antibiotics12111584 10.1016/j.jds.2023.07.002 10.4103/jfmpc.jfmpc_837_21 10.3390/antibiotics13040360 10.7759/cureus.67277 10.1371/journal.pone.0239664 10.1128/mSphere.00162-21 10.3390/ijerph192416448 10.3390/antibiotics10050550 10.12968/denu.2016.43.10.954 10.1016/j.adaj.2018.05.034 10.14219/jada.archive.2000.0181 10.1111/scd.12450 10.1016/j.adaj.2019.08.020 10.18773/austprescr.2017.054 10.1080/00016357.2020.1751273 10.1186/s13063-022-06038-w 10.1371/journal.pone.0188061 10.1016/j.esmoop.2020.04.023 10.1002/jdd.12902 10.1093/jacamr/dlaa096 10.1002/jdd.12445 10.1186/s12909-020-1958-3 10.1093/jacamr/dlac039 10.1111/eje.12758 10.1146/annurev-genom-090711-163814 10.3390/nu14142872 10.1111/omi.12375 10.1016/j.pdpdt.2021.102231 10.1038/s41432-025-01120-z 10.1016/j.mib.2016.06.008 10.3389/fcimb.2021.668632 10.1039/D0NR04540C 10.3390/ijms23063226 10.3390/ijerph192315609 10.1111/odi.14288 10.1038/s41598-018-22687-x 10.3390/antibiotics12010114 10.1111/jcpe.13290 10.3390/pharmaceutics14081621 10.3389/fmicb.2018.01299 10.3389/fmicb.2021.670535 10.3389/fbioe.2024.1427758 10.3389/fcimb.2025.1556688 10.2147/IJN.S279652 10.3389/fcimb.2022.1009415 10.1177/15353702231187645 10.3389/fcimb.2023.1120995 10.1163/18762891-bja00023 10.3390/antibiotics4040567 10.1016/j.joen.2014.12.018 10.1002/JPER.22-0696 10.1073/pnas.1506207112 10.3390/antibiotics13121135",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.mdpi.com/2079-6382/14/8/828/pdf?version=1755239513",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12382797/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40867989",
     "doi": "10.3390/antibiotics14080794 10.1016/s0140-6736(21)02724-0 10.3389/fmed.2020.00503 10.1080/14740338.2022.2106368 10.1186/s13756-024-01369-6 10.1016/s2214-109x(23)00019-0 10.3389/fitd.2024.1497220 10.1177/00185787231224066 10.3389/fpubh.2025.1588778 10.1017/ash.2023.122 10.1093/jacamr/dlac115 10.1016/j.infpip.2023.100315 10.3389/fpubh.2024.1367703 10.3390/antibiotics12111613 10.1017/ash.2021.216 10.33590/emjmicrobiolinfectdis/10151610 10.1186/s12909-019-1623-x 10.3390/antibiotics11121829 10.1093/jac/dkx493 10.1017/ash.2023.404 10.2196/20963 10.1186/s12960-022-00710-7 10.3389/fpubh.2024.1455444 10.3390/antibiotics13100915 10.3390/antibiotics8010007 10.1016/s2214-109x(23)00554-5 10.1056/nejmoa1009370 10.1016/s0140-6736(17)31666-5 10.1186/s12960-020-00503-w 10.4102/ajlm.v11i1.1492 10.11604/pamj.2020.37.255.23787 10.1016/j.jbi.2019.103208 10.1080/02602930701773026 10.18637/jss.v028.i08 10.3390/antibiotics8010002 10.1093/heapol/czab021 10.2471/blt.17.203448",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.mdpi.com/2079-6382/14/8/794/pdf?version=1754321367",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12383062/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40867948",
     "doi": "10.3390/antibiotics14080754 10.1093/cid/ciw118 10.1016/j.ijantimicag.2019.01.008 10.1016/j.ijantimicag.2012.03.004 10.1186/s13756-023-01289-x 10.1093/cid/cix103 10.1016/S2214-109X(18)30186-4 10.1016/j.hrthm.2017.09.001 10.1161/CIRCULATIONAHA.109.192665 10.1161/CIRCEP.108.795906 10.1161/01.CIR.97.18.1796 10.1002/clc.22698 10.1016/j.jacc.2018.09.068 10.1186/s13756-024-01512-3 10.1186/s13019-021-01693-7 10.1093/cid/cir445 10.1016/j.ijantimicag.2014.11.014 10.1002/14651858.CD003543.pub4 10.3390/antibiotics11060791 10.47102/annals-acadmedsg.202523 10.1186/s43058-021-00209-7 10.1097/INF.0000000000001245 10.1017/ash.2023.465 10.1017/ash.2024.498 10.1007/s11096-021-01358-4 10.1017/ice.2018.170 10.1016/j.amjmed.2011.08.014 10.3390/pharmacy11040130 10.3390/life13081661",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12383033/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40828582",
     "doi": "10.1093/mmy/myaf074",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/mmy/advance-article-pdf/doi/10.1093/mmy/myaf074/64083938/myaf074.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12409126/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40775754",
     "doi": "10.1186/s12875-025-02919-6 10.17605/OSF.IO/96HTC.",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://bmcprimcare.biomedcentral.com/counter/pdf/10.1186/s12875-025-02919-6",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12329922/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40767777",
@@ -266,26 +266,26 @@
   {
     "pmid": "40739533",
     "doi": "10.1186/s40814-025-01686-6",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://pilotfeasibilitystudies.biomedcentral.com/counter/pdf/10.1186/s40814-025-01686-6",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12309048/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40684119",
     "doi": "10.1186/s12875-025-02933-8",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12275277/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40641708",
     "doi": "10.18295/2075-0528.2861 10.1542/peds.2011-2879 10.1542/peds.2011-2879 10.3390/pharmacy4040035 10.3390/pharmacy4040035 10.2147/IDR.S189114 10.2147/IDR.S189114 10.3389/fmicb.2013.00047 10.3389/fmicb.2013.00047 10.3390/antibiotics10040393 10.3390/antibiotics10040393 10.1016/S1473-3099(18)30605-4 10.1016/S1473-3099(18)30605-4 10.1016/j.jgar.2022.12.005 10.1016/j.jgar.2022.12.005 10.1542/peds.2020-040295 10.1016/j.jsps.2022.11.005 10.1016/j.jsps.2022.11.005 10.1542/hpeds.2017-0059 10.1542/hpeds.2017-0059 10.1371/journal.pone.0277308 10.1371/journal.pone.0277308 10.1080/14787210.2020.1761789 10.1080/14787210.2020.1761789 10.1093/ofid/ofy210.1137 10.1093/ofid/ofy210.1137",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://mjournal.squ.edu.om/cgi/viewcontent.cgi?article=2861&context=home",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12244316/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40561812",
@@ -298,26 +298,26 @@
   {
     "pmid": "40556752",
     "doi": "10.3389/fphar.2025.1637512",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.frontiersin.org/journals/pharmacology/articles/10.3389/fphar.2025.1637512/pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12186455/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40554542",
     "doi": "10.1371/journal.pgph.0004856 10.1371/journal.pgph.0001526",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://journals.plos.org/globalpublichealth/article/file?id=10.1371/journal.pgph.0004856&type=printable",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12186898/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40526077",
     "doi": "10.1128/aac.01850-24 10.1002/ams2.890 10.1016/S0140-6736(19)32989-7 10.1097/01.CCM.0000217961.75225.E9 10.1016/j.chest.2021.06.029 10.1007/s10096-019-03529-8 10.1097/CCM.0000000000001142 10.1097/CCM.0000000000000330 10.1097/CCM.0b013e3181cc4824 10.1186/s13054-021-03787-z 10.1186/s13054-015-1010-x 10.4161/viru.26913 10.1002/pbc.24485 10.1097/CCM.0000000000000509 10.1016/j.amjmed.2019.09.012 10.1016/j.jpeds.2020.12.035 10.1097/CCM.0000000000002377 10.1097/CCM.0b013e31821e87ab 10.1164/rccm.201609-1848OC 10.1007/s00134-021-06506-y 10.1007/s00134-012-2769-8 10.1371/journal.pone.0104475 10.1016/j.cmi.2019.10.021 10.1016/j.jemermed.2016.12.009 10.1007/s40121-015-0082-x 10.1086/510393 10.1093/cid/ciw118 10.3390/antibiotics12050834 10.1017/ash.2022.327 10.1056/CAT.18.0291 10.1080/14787210.2019.1568239 10.37201/req/s03.22.2022 10.2146/ajhp160379 10.3947/ic.2021.0093 10.1097/JHQ.0000000000000166 10.3390/antibiotics12081342 10.1017/ash.2023.122 10.1186/s12879-023-08398-3 10.35844/001c.13244 10.1056/NEJMoa1703058 10.1378/chest.09-0087 10.1093/jacamr/dlac094 10.1016/j.jemermed.2015.09.007 10.1111/1742-6723.12100 10.1097/NCQ.0000000000000540 10.1186/s13756-024-01400-w 10.5005/jp-journals-10071-24483 10.1016/j.clinthera.2016.12.003 10.1111/eci.13324 10.1186/s13613-023-01134-9",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12326957/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40490197",
@@ -338,10 +338,10 @@
   {
     "pmid": "40457362",
     "doi": "10.1186/s12903-025-06264-z",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://bmcoralhealth.biomedcentral.com/counter/pdf/10.1186/s12903-025-06264-z",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12128511/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40306368",
@@ -354,18 +354,18 @@
   {
     "pmid": "40256650",
     "doi": "10.1093/jacamr/dlaf056 10.26633/RPSP.2020.131 10.1186/s12913-023-10404-y 10.1186/s12874-022-01768-6 10.1016/j.jval.2019.01.014 10.1016/j.jinf.2018.04.002 10.1093/jalm/jfac133 10.1093/jac/dkab187 10.1017/S0266462323002647 10.1002/prp2.661 10.1002/chp.20001 10.4997/jrcpe.2015.305 10.1177/1094428115610808 10.5339/qjph.2024.5 10.36834/cmej.75681 10.2196/49825 10.1542/peds.2022-056356 10.1136/bmjopen-2021-058453",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12006660/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40238794",
     "doi": "10.1371/journal.pgph.0003493 10.14202/vetworld.2022.743-749 10.1016/S2468-2667(22)00225-0 10.1002/14651858.CD003539.pub2 10.1001/jamainternmed.2015.7095 10.3389/fpubh.2023.1274818 10.1016/j.cmi.2021.05.027 10.1038/s41598-023-41834-7 10.1371/journal.pone.0271454 10.1016/j.jhin.2017.12.007 10.1371/journal.pone.0225011 10.1016/S0140-6736(22)01531-8 10.1016/j.mcna.2018.05.002 10.1016/j.mcna.2018.05.011 10.1186/s13017-017-0145-2 10.2478/eb-2022-0011 10.1080/14787210.2019.1640602 10.1016/j.idh.2021.09.021 10.1136/bmjgh-2021-005829 10.1186/s12889-021-11163-3 10.1016/j.sapharm.2019.05.014 10.1155/2023/3306067 10.1371/journal.pone.0285396 10.3390/antibiotics11050669 10.1016/j.jhin.2015.01.006 10.1002/14651858.CD003543.pub4",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12002478/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40238184",
@@ -410,26 +410,26 @@
   {
     "pmid": "40109916",
     "doi": "10.1017/ash.2025.40",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11920916/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40094204",
     "doi": "10.1093/fampra/cmaf005 10.1016/s0140-6736(21)02724-0 10.1177/2042098614554919 10.1002/14651858.CD000245.pub4 10.5694/mja16.01042 10.1136/bmjqs.2010.049049 10.1093/jac/dkx503 10.1001/jamanetworkopen.2022.53806 10.1093/cid/ciab602 10.1093/jac/dkv328 10.1016/S0140-6736(13)60994-0 10.1186/s12875-021-01536-3 10.3399/bjgp12X659268 10.1007/s11096-010-9441-6 10.1177/135581960000500403 10.1093/fampra/cmac052 10.1186/1748-5908-6-42 10.1093/fampra/cmx070 10.1093/fampra/cmx074 10.1186/s12875-022-01920-7 10.3109/0142159X.2014.970626 10.1186/1748-5908-8-134 10.5694/mja14.00002 10.31128/AJGP-07-21-6084 10.3399/BJGP.2021.0026 10.1093/fampra/cmad055 10.5694/mja2.50250 10.1186/s12875-019-0917-8 10.3399/bjgp14X681373 10.3399/bjgp11X572445 10.1038/s41533-021-00247-7 10.1371/journal.pmed.1002733 10.1016/S2214-109X(17)30383-2 10.1016/j.jiph.2023.11.027 10.3390/antibiotics11091186",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11911915/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40001392",
     "doi": "10.3390/antibiotics14020148 10.1016/S0140-6736(21)02724-0 10.1016/S0140-6736(15)00473-0 10.1093/jac/dkae061 10.1136/bmjopen-2020-039284 10.1093/jac/dky004 10.1016/j.cmi.2021.02.007 10.1016/j.eclinm.2023.102245 10.1186/1748-5908-7-33 10.1186/1748-5908-6-42 10.1186/s12889-020-09227-x 10.7326/M19-1509 10.18549/PharmPract.2020.4.2235 10.1071/HC11218 10.1177/10775587211035280 10.1002/14651858.CD009255 10.3399/bjgp11X572445 10.1136/bmjopen-2021-055464 10.1136/bmjopen-2016-013515 10.3399/bjgp13X669149 10.1002/14651858.CD000259.pub3 10.1016/j.jhin.2019.04.018 10.5527/wjn.v3.i4.249",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11851554/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39999320",
@@ -442,10 +442,10 @@
   {
     "pmid": "39979877",
     "doi": "10.1186/s12909-025-06856-x",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11843993/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39954958",
@@ -458,34 +458,34 @@
   {
     "pmid": "39940025",
     "doi": "10.1186/s40780-025-00417-6",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11817219/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39916710",
     "doi": "10.3389/fpubh.2025.1497335 10.1016/S0140-6736(21)02724-0 10.1186/s13012-022-01209-4 10.1016/j.idc.2018.10.009 10.1016/j.ijid.2020.12.087 10.1093/jac/dkab300 10.3390/antibiotics11101418 10.1186/s13756-022-01159-y 10.4269/ajtmh.18-0724 10.1186/s13756-015-0059-2 10.5588/pha.21.0036 10.1136/bmjqs-2013-002444 10.1371/journal.pone.0209847 10.1186/s12960-018-0270-3 10.1016/j.ajic.2016.06.023 10.7196/SAMJ.9650 10.1016/j.ijid.2019.06.002 10.1016/j.jiph.2019.08.016 10.1097/XEB.0000000000000307 10.3390/antibiotics9090556 10.3390/antibiotics9120914 10.1016/j.jbi.2008.08.010 10.1111/tmi.13555 10.1017/ice.2022.116 10.1016/j.scitotenv.2021.150873 10.1016/j.idh.2021.04.003 10.1016/j.jhin.2020.09.002 10.1097/INF.0000000000003318",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.frontiersin.org/journals/public-health/articles/10.3389/fpubh.2025.1497335/pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11799561/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39781234",
     "doi": "10.14745/ccdr.v51i01a06 10.1016/j.eclinm.2021.101221 10.3390/antibiotics10121484 10.1787/18152015 10.1016/j.jamda.2012.04.004 10.1001/jamainternmed.2015.2770 10.1111/jgs.15675 10.3138/jammi.2018-0021 10.1186/s13756-018-0364-7 10.9778/cmajo.20180064 10.1001/jamainternmed.2015.1878 10.1001/jamainternmed.2019.0188 10.1001/jamainternmed.2020.1256 10.1093/jacamr/dlac109 10.1111/jgs.14504 10.1016/j.jamda.2007.05.006 10.1017/ice.2019.9 10.1136/bmjqs-2016-006250 10.1001/jamainternmed.2023.2749 10.1016/j.cmi.2021.06.003 10.1038/s41562-023-01762-y 10.1186/s12877-020-01564-1 10.1016/S0140-6736(16)00215-4 10.1001/jama.2016.0275 10.1016/j.clinthera.2021.09.009 10.14745/ccdr.v48i1112a04 10.1016/j.jclinepi.2015.08.015 10.1086/668429 10.1016/j.ajic.2007.11.007 10.1136/bmjopen-2020-046142 10.1086/501875 10.1136/bmj.38602.586343.55 10.1093/jac/dku115 10.1186/s12877-016-0255-9 10.1111/j.1532-5415.2007.01250.x 10.1046/j.1532-5415.2001.49203.x 10.1093/jac/dkr312 10.1186/1471-2318-14-136 10.1111/jgs.12784 10.1111/jgs.14857 10.1111/jgs.14857 10.1136/bmjoq-2020-001088 10.1007/s11096-005-1191-5 10.1186/s13756-023-01279-z 10.1111/jgs.16632 10.1191/1463423603pc132oa 10.1007/s40266-015-0252-2 10.3390/w11040844 10.4161/viru.21626 10.1186/s12877-022-02977-w 10.1177/0038038509103208 10.1186/1471-2288-13-117",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11709424/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39766516",
     "doi": "10.3390/antibiotics13121126 10.3390/ijerph16010027 10.1371/journal.pone.0251301 10.1186/s12909-022-03580-8 10.3390/antibiotics12061028 10.1016/S0140-6736(21)02724-0 10.1016/S1473-3099(24)00158-0 10.1016/S1473-3099(18)30605-4 10.1016/S1473-3099(13)70318-9 10.1016/j.jiph.2016.08.007 10.1016/j.eimc.2017.12.003 10.7196/SAMJ.2022.v112i10.16397 10.1093/jac/dkae061 10.1093/jacamr/dlad147 10.1002/hsr2.70030 10.1037/0022-3514.84.2.439 10.2196/30243 10.1111/jep.14029 10.3390/antibiotics12030558 10.3390/antibiotics12030457 10.1093/jac/dky150 10.1089/mdr.2018.0010 10.1111/bcp.13491 10.1080/14787210.2020.1796638 10.2471/BLT.17.199687 10.1016/j.cmi.2014.11.015 10.1016/j.jclinepi.2014.11.021 10.1186/s13012-018-0815-9 10.1136/bmj.n1679 10.1007/s11121-017-0806-0 10.1016/j.intell.2023.101751 10.1177/0163278712442536 10.1046/j.1365-2648.1994.20010196.x 10.1007/s10459-010-9222-y 10.1111/j.1547-5069.2007.00161.x 10.20960/nh.03633 10.1177/0013164409355692 10.1007/s11135-022-01415-8 10.1111/j.1742-6723.2010.01352.x 10.3928/01484834-20080501-04 10.12691/ajams-9-1-2 10.1007/s12144-019-00300-2 10.4324/9780429030499 10.1097/00005650-200009002-00007 10.1016/j.rpsm.2016.11.002 10.1016/j.jclinepi.2006.03.012 10.1097/00007632-200012150-00014 10.1016/j.jiph.2012.03.003 10.1016/j.reuma.2008.09.007 10.1177/0013164417728358",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11672510/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39671750",
@@ -498,34 +498,34 @@
   {
     "pmid": "39659641",
     "doi": "10.1093/jacamr/dlae192 10.1016/S0140-6736(21)02724-0 10.4081/idr.2017.6917 10.1080/0158037X.2021.1883577 10.1080/0158037X.2011.608656 10.1136/bmj.b2535 10.1348/000709900158001 10.3390/antibiotics12060951 10.3389/fphar.2023.1327576 10.3390/antibiotics11121829 10.3390/antibiotics11050611 10.15766/mep_2374-8265.10693 10.1017/ash.2023.131 10.1310/hpj4901-32 10.1093/fampra/cmx074 10.1007/s11606-020-06134-0 10.1097/DCC.0000000000000450 10.1093/jpids/pix090 10.1016/j.ajic.2012.04.336 10.4140/TCP.n.2017.700 10.1016/j.ajic.2015.09.026 10.1016/j.ajic.2022.05.001 10.1080/16549716.2017.1327638 10.1093/cid/ciad329 10.1186/s12889-019-6779-0 10.3390/antibiotics11010006 10.1097/CEH.0000000000000383 10.5530/ijper.57.3.108 10.1080/14739879.2015.1106085 10.3928/00220124-20220805-08 10.1093/jac/dky004 10.1016/j.bjid.2016.11.003 10.1016/j.jgar.2020.02.008 10.15766/mep_2374-8265.10754 10.1016/j.idh.2023.03.003 10.3390/pharmacy9040165 10.4102/phcfm.v13i1.3107 10.1017/ash.2023.434 10.1016/j.ajic.2016.07.005 10.2147/IDR.S324865 10.1017/ice.2017.74 10.7257/1053-816X.2021.41.1.21 10.1093/jac/dkx493 10.1093/jacamr/dlaa092 10.1186/s43066-019-0016-5 10.1111/jocn.12684 10.1093/jacamr/dlaa045 10.1002/jgf2.183 10.3855/jidc.15213 10.1093/jac/dky076 10.1002/14651858.CD003539.pub2 10.1016/S1473-3099(09)70305-6 10.1097/MLR.0b013e318178eabd 10.1080/17437199.2011.552061 10.3399/bjgp12X659268 10.3399/bjgp13X669167 10.1016/j.jhin.2020.03.028 10.5116/ijme.59ba.2d47 10.1016/S1473-3099(17)30633-3 10.1136/bmj.n2061 10.1080/17437199.2014.941722 10.1037/a0016939",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11631219/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39605060",
     "doi": "10.1186/s13756-024-01487-1",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11600803/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39596711",
     "doi": "10.3390/antibiotics13111016 10.1016/S0140-6736(21)02724-0 10.1186/s12879-016-1810-x 10.1021/acs.accounts.8b00643 10.1016/S1473-3099(18)30296-2 10.1016/S0140-6736(15)00473-0 10.1093/jac/dkx500 10.1001/jama.2009.1163 10.1345/aph.1L488 10.1093/jacamr/dlac007 10.1186/1472-6963-6-145 10.1136/qshc.2006.018663 10.1093/heapol/czab021 10.1002/14651858.CD003543.pub4 10.1136/bmj.d8173 10.1016/S0140-6736(13)60994-0 10.1371/journal.pgph.0001526 10.1111/tmi.13550 10.3390/antibiotics9080439 10.1016/j.jgar.2021.02.019 10.3390/antibiotics11020199 10.1136/bmjopen-2020-042819 10.1080/14787210.2021.1898946 10.1136/bmjoq-2023-002293 10.1016/j.jgar.2023.07.003 10.2139/ssrn.4418351 10.1186/s12913-018-3343-z 10.1016/S2214-109X(19)30362-6 10.1080/17437199.2016.1151372 10.1080/09544828.2023.2227933 10.1177/2372732214550405 10.1186/1741-7015-11-75 10.1002/14651858.cd004307.pub4 10.1037/0278-6133.19.Suppl1.64 10.1186/s13756-024-01369-6 10.1016/j.jgar.2020.03.009 10.1186/s12913-019-4170-6 10.1016/j.jiph.2023.10.029 10.3390/tropicalmed6020083 10.1080/14787210.2019.1629288 10.1080/21548331.2018.1464872 10.1093/jacamr/dlab008 10.1093/jac/dkab050 10.1186/s13756-018-0299-z 10.1016/j.ijid.2020.07.084 10.1186/s13756-020-00809-3 10.3201/eid2401.171112 10.3390/antibiotics10101167 10.1016/j.cmi.2022.07.022 10.1001/jama.2016.0275 10.1080/14787210.2019.1635455 10.1177/1090198105282412 10.1093/cid/ciad329 10.1136/bmjoq-2017-000217 10.1001/jama.2016.4151 10.1136/bmj.c2096 10.1007/s12144-003-1006-6 10.1001/jama.285.22.2871 10.1080/16549716.2017.1327638",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11591260/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39563932",
     "doi": "10.1017/ash.2024.342 10.15620/cdc:117915",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11574597/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39530345",
@@ -562,34 +562,34 @@
   {
     "pmid": "39493585",
     "doi": "10.1177/17571774241251650",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://journals.sagepub.com/doi/pdf/10.1177/17571774241251650",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11531007/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39456062",
     "doi": "10.1186/s12909-024-06182-8",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11520128/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39434072",
     "doi": "10.1186/s12913-024-11714-5",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11492772/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39425170",
     "doi": "10.1186/s13063-024-08545-4",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11488242/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39368748",
@@ -602,26 +602,26 @@
   {
     "pmid": "39335325",
     "doi": "10.3390/ani14182736 10.1186/s43066-019-0016-5 10.1016/S2542-5196(17)30141-9 10.13140/RG.2.2.16067.35369 10.3390/antibiotics10040364 10.3138/jvme-2023-0105 10.3390/antibiotics8040243 10.3390/antibiotics11010115 10.1371/journal.pone.0235866 10.3390/antibiotics10030332 10.1016/j.onehlt.2021.100366 10.3138/jvme-2023-0050 10.1111/jep.13177 10.4161/viru.23706 10.1186/s13756-022-01062-6 10.7759/cureus.41639 10.5530/ijper.57.3.108 10.1016/j.idc.2014.02.001 10.2147/IDR.S148102 10.3138/jvme-2023-0148 10.1016/j.infpip.2020.100060 10.5005/jp-journals-10045-00266 10.3389/fmicb.2016.00173 10.1002/jobm.202100201 10.1371/journal.pone.0251327 10.56808/2985-1130.3053 10.1038/s41579-023-00936-9 10.1128/AAC.05360-11 10.1016/S0140-6736(15)00473-0 10.1371/journal.pone.0244966 10.1002/14651858.CD000219.pub4 10.1093/fampra/cmx037 10.1001/jamainternmed.2016.3646 10.7326/M18-3640 10.1038/s41372-023-01671-y 10.4300/JGME-D-20-00134.1 10.3390/antibiotics12030542 10.21825/vdt.85302 10.1093/jac/dkw481 10.1016/j.vetmic.2003.09.021 10.1093/jac/dkh332 10.3389/fvets.2023.1254930",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11428580/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39318970",
     "doi": "10.1016/j.euros.2024.08.018",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11421338/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39284176",
     "doi": "10.2196/60099 10.2217/AHE.11.80 10.1016/j.cmi.2014.08.018 10.1086/501712 10.1111/j.1365-2567.2007.02555.x 10.1111/j.1365-2567.2007.02555.x 10.1128/CMR.9.1.1 10.1016/j.jamda.2006.12.002 10.1016/j.mib.2015.11.003 10.2196/45848 10.2807/1560-7917.ES.2018.23.46.1800394 10.14745/ccdr.v48i1112a04 10.1016/j.jamda.2018.05.001 10.1111/jgs.15179 10.1186/1471-2318-14-136 10.1186/1471-2318-14-136 10.1007/s40266-020-00814-6 10.1086/501875 10.1186/s12877-020-1467-6 10.1186/s12877-020-1467-6 10.5334/ijic.5596 10.2196/41792 10.3399/bjgp22X719417 10.1136/bmjopen-2015-009993 10.1093/jac/dku068 10.1136/bmjopen-2015-010822 10.1186/s12875-022-01710-1 10.1080/00325481.2019.1680052 10.1007/s13670-015-0120-2 10.1016/S0140-6736(21)02724-0 10.1016/j.cmi.2015.12.002 10.1136/bmj-2022-072319 10.1016/j.jamda.2014.10.003 10.1111/jgs.17638 10.3390/microorganisms9020390 10.1016/j.ijantimicag.2006.05.010 10.1186/s12877-019-1049-7 10.1186/s12877-019-1049-7 10.1007/s11908-017-0576-7 10.2196/34480 10.1080/02813430510018400",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://s3.ca-central-1.amazonaws.com/assets.jmir.org/assets/preprints/preprint-60099-accepted.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11444125/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39264249",
@@ -634,34 +634,34 @@
   {
     "pmid": "39198928",
     "doi": "10.1186/s13756-024-01451-z 10.1016/s0140-6736(22)02185-7 10.1093/jac/dkq357 10.1093/jacamr/dlad123 10.1002/1098-240x(200008)23:4<334::aid-nur9>3.0.co;2-g 10.1093/intqhc/mzm042 10.1007/s11135-017-0574-8 10.1016/j.ijnurstu.2020.103787 10.1016/j.ijnurstu.2020.103772 10.1111/jocn.16657 10.3390/ijerph18157862 10.1136/bmjqs-2020-012372 10.1111/nin.12577 10.1155/2023/2368500 10.1016/j.jhin.2019.08.001 10.1016/j.ajic.2021.08.029 10.1017/ice.2018.362 10.1016/j.ajic.2020.07.002 10.1016/j.ijnurstu.2022.104186 10.1097/HMR.0000000000000370 10.1371/journal.pone.0234416 10.1186/1472-6963-14-6 10.1016/j.jhin.2021.09.027 10.1186/s12912-021-00579-2 10.1080/13561820.2021.1973975",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://aricjournal.biomedcentral.com/counter/pdf/10.1186/s13756-024-01451-z",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11361204/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39145141",
     "doi": "10.1093/ofid/ofae439",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/ofid/article-pdf/11/8/ofae439/58815355/ofae439.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11322835/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39130924",
     "doi": "10.7759/cureus.64402",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11317027/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39120219",
     "doi": "10.3390/healthcare12151516 10.1186/s13756-016-0149-9 10.1016/j.idh.2021.04.003 10.1016/j.colegn.2020.01.005 10.7748/ns.2018.e11245 10.1016/j.ajic.2020.11.025 10.1017/ice.2018.362 10.1016/j.ajic.2018.09.008 10.1016/j.ijans.2021.100311 10.1016/j.ajic.2017.10.024 10.1097/01.NAJ.0000521974.76835.e0 10.1093/ijpp/riaa011 10.1016/j.ajic.2017.12.016 10.1016/j.jgar.2019.01.031 10.1093/jacamr/dlad008 10.1016/j.ijnurstu.2020.103772 10.1016/j.ajic.2017.01.002 10.1177/23779608221076821 10.1136/bmjopen-2020-042321 10.1016/j.jhin.2020.12.003 10.3396/ijic.v16i1.013.20 10.1002/aorn.13911 10.1177/1474515117710097",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.mdpi.com/2227-9032/12/15/1516/pdf?version=1722390717",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11311588/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39009335",
@@ -674,18 +674,18 @@
   {
     "pmid": "38989026",
     "doi": "10.3389/fmicb.2024.1444502",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2024.1444502/pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11233767/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "38974279",
     "doi": "10.4314/ahs.v23i4.22 10.1136/sbmj.d3207 10.1093/ofid/ofz360.1703 10.1186/s13756-019-0621-4",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.ajol.info/index.php/ahs/article/download/261338/246689",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11225484/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "38969586",
@@ -706,10 +706,10 @@
   {
     "pmid": "38927147",
     "doi": "10.3390/antibiotics13060480 10.3390/antibiotics10121528 10.3390/antibiotics11111555 10.3390/antibiotics10091122 10.3390/antibiotics11060810 10.1056/NEJMcibr1500292 10.12688/wellcomeopenres.15719.2 10.1016/S1473-3099(17)30394-8 10.1016/S1473-3099(13)70318-9 10.1016/j.cmi.2017.08.026 10.1016/j.cmi.2017.07.010 10.1186/1471-2334-12-67 10.1016/S1473-3099(16)00065-7 10.3390/antibiotics10080991 10.3390/antibiotics11081056 10.1016/j.jgar.2020.03.009 10.1093/jac/dku497 10.1186/s13756-020-00809-3 10.1017/ice.2022.241",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.mdpi.com/2079-6382/13/6/480/pdf?version=1716474549",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11201287/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "38825552",
@@ -730,34 +730,34 @@
   {
     "pmid": "38734660",
     "doi": "10.1186/s13756-024-01402-8 10.1186/s13756-023-01251-x 10.1097/ACM.0000000000004565 10.1007/s11606-019-05606-2 10.1080/0142159X.2020.1779205 10.4300/JGME-D-17-00015.1 10.1080/0142159X.2018.1498613",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://aricjournal.biomedcentral.com/counter/pdf/10.1186/s13756-024-01402-8",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11088774/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "41079951",
     "doi": "10.1017/ash.2025.10133",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/7F66D4C115683638E99B1E9BF66021E6/S2732494X25101332a.pdf/div-class-title-antimicrobial-tele-stewardship-strategies-and-their-application-to-the-rural-outpatient-setting-div.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12509144/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40980576",
     "doi": "10.1093/ofid/ofaf532",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/ofid/advance-article-pdf/doi/10.1093/ofid/ofaf532/64170045/ofaf532.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12448488/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40980189",
     "doi": "10.1016/j.rcsop.2025.100652 10.3390/ijms242417204 10.1093/jac/dkz345 10.1001/jama.2016.4151 10.1136/bmj.b2242 10.1186/s12875-023-02223-1 10.1371/journal.pmed.1003139 10.1136/bmjoq-2018-000351 10.1186/s13584-021-00459-9 10.1111/j.1525-1497.2005.0178.x 10.1016/j.japh.2023.03.003 10.17226/25467 10.1016/J.SAPHARM.2019.05.014 10.1089/mdr.2020.0272 10.1016/j.sapharm.2024.04.006 10.1016/J.SAPHARM.2025.03.064 10.1186/s40545-023-00536-1 10.1016/S0140-6736(18)32218-9 10.1002/alr.23173 10.1016/J.AJIC.2019.01.027 10.1093/FAMPRA/CMAF031 10.15386/MPR-2740 10.1007/S15010-024-02420-9/FIGURES/3 10.3390/ANTIBIOTICS13060546/S1 10.37201/req/054.2024 10.1007/s40267-021-00825-2 10.1371/journal.pone.0184420 10.2875/326847 10.4065/mcp.2010.0639 10.1177/1715163517735549 10.1093/cid/ciab159 10.1186/s13063-024-08477-z 10.1136/bmjopen-2022-061023 10.1016/j.sapharm.2018.09.017 10.1016/J.SAPHARM.2025.01.007 10.1016/J.SAPHARM.2024.02.009 10.1089/hs.2014.0083 10.1177/1715163521999417 10.1007/s11096-016-0415-1 10.3399/bjgp13X665206 10.1111/ijpp.12128 10.24926/iip.v8i1.497 10.1016/j.japh.2018.03.003 10.1093/jac/dkw264 10.1017/S1463423617000925 10.1186/s12962-017-0066-7 10.1016/j.japh.2019.07.011 10.1177/1715163518781175 10.1177/1715163519866223 10.1016/S1473-3099(23)00130-5 10.1016/j.rcsop.2023.100331 10.5334/ijic.5612 10.1016/j.sapharm.2017.04.014 10.1007/s11096-021-01304-4 10.1007/s11096-023-01619-4 10.1001/JAMANETWORKOPEN.2024.53684 10.1177/00469580241273228 10.1186/S12875-024-02679-9 10.1016/j.japh.2017.08.010 10.1016/J.SAPHARM.2024.02.005 10.1016/J.JAPH.2018.05.013 10.1007/s11096-018-0675-z 10.1016/S0213-005X(13)70130-7 10.1111/jep.13362 10.5688/ajpe8999 10.3390/pharmacy9010022 10.1016/J.CPTL.2024.04.016 10.1111/BCP.15254 10.3390/antibiotics12091435 10.3390/antibiotics11111529 10.3390/PHARMACY11050135 10.1016/J.JAPH.2023.10.024 10.18549/PharmPract.2020.1.1878 10.1186/s40545-023-00626-0 10.1108/JHOM-12-2012-0237 10.1186/1748-5908-3-3 10.1016/j.ijid.2024.107306 10.1093/ajhp/zxab178 10.2471/BLT.17.199687 10.3390/antibiotics9110786 10.1002/jac5.1136 10.1186/s13012-015-0337-7 10.1001/archinternmed.2009.536 10.1016/j.sapharm.2020.07.031 10.1016/J.SAPHARM.2021.06.026 10.1016/S0140-6736(19)30034-0 10.1211/CP.2018.20204635 10.1007/978-981-15-2993-1_1",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12446664/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "40643641",
@@ -770,10 +770,10 @@
   {
     "pmid": "40487187",
     "doi": "10.1093/jacamr/dlaf102 10.1186/s12960-020-00529-0 10.1186/1472-6963-11-127 10.1177/1527154418797726 10.1002/14651858.CD011227.pub2 10.4321/S1137-6627/2016000100005 10.1016/s0025-7753(04)74618-7 10.1038/nrmicro3432 10.1155/2019/8642628 10.3390/ijerph191710757 10.1016/j.cmi.2023.10.005 10.1007/s00430-022-00749-2 10.1093/jac/dkad267 10.1001/amajethics.2024.479 10.1177/08971900221128851 10.1016/j.clinthera.2024.05.002",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://academic.oup.com/jacamr/article-pdf/7/3/dlaf102/63444308/dlaf102.pdf",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12142308/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "40335064",
@@ -786,18 +786,18 @@
   {
     "pmid": "40035018",
     "doi": "10.1016/j.onehlt.2025.100994 10.1016/S0140-6736(21)02724-0 10.1093/jac/dkw481 10.1111/zph.13032 10.3390/antibiotics9020087 10.1016/j.prevetmed.2011.12.003 10.1186/s13756-018-0341-1 10.1186/s12917-018-1646-2 10.1111/jvim.15083 10.1016/j.prevetmed.2018.07.013 10.3390/antibiotics10020133 10.17037/PUBS.04659562 10.1186/s12875-021-01556-z 10.3389/fpubh.2022.1001282 10.1016/j.socscimed.2021.114523 10.1093/intqhc/mzm042 10.1177/1049732311431898 10.1111/jan.15479 10.1136/vr.104639 10.1002/14651858.CD010907.pub2 10.3389/fvets.2021.719547 10.3390/antibiotics11010047 10.1002/14651858.CD012252.pub2 10.1002/14651858.CD000259.pub3 10.1093/jac/dkv104 10.2460/javma.234.11.1418 10.1111/avj.13145",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11875800/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39988671",
     "doi": "10.1186/s13756-025-01531-8",
-    "pmc_pdf": null,
-    "unpaywall_pdf": "https://aricjournal.biomedcentral.com/counter/pdf/10.1186/s13756-025-01531-8",
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11849391/pdf/",
+    "unpaywall_pdf": null,
     "found": true,
-    "source": "Unpaywall"
+    "source": "PMC"
   },
   {
     "pmid": "39704761",
@@ -810,26 +810,26 @@
   {
     "pmid": "39376650",
     "doi": "10.3389/fmed.2024.1435542 10.1016/j.jinf.2021.02.001 10.1371/journal.pone.0296822 10.1007/s11356-021-16178-2 10.1016/S2542-5196(21)00280-1 10.1016/j.jgar.2023.10.022 10.1186/s40545-022-00484-2 10.3389/fpubh.2022.1010582 10.3390/antibiotics12111583 10.1186/s12866-024-03207-6 10.1186/s13756-022-01159-y 10.3390/ijerph16132385 10.1186/s12913-018-2899-y 10.1186/s40545-020-00207-5 10.1086/660761 10.1016/j.eimc.2012.05.016 10.7860/JCDR/2013/6290.3230 10.1128/JCM.01195-16 10.1016/j.cmi.2018.03.030 10.2147/IDR.S289964 10.1093/jacamr/dlad116 10.1016/j.heliyon.2022.e11378 10.1186/s12889-020-09971-0 10.3390/antibiotics9110759",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11456437/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39370344",
     "doi": "10.1016/j.identj.2024.09.016",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11806321/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39277724",
     "doi": "10.1186/s12887-024-05060-y 10.1016/S0065-2164(03)01012-8 10.5923/j.cmd.20110101.02 10.4103/jfmpc.jfmpc_1097_19 10.1111/ijcp.14652 10.1007/BF02731121 10.1056/NEJMoa1606043 10.1016/j.jsurg.2015.07.011 10.1016/j.jsps.2023.02.009 10.1016/j.farma.2023.03.006 10.1186/s13052-022-01361-z 10.1111/apm.12951 10.1016/j.sapharm.2013.03.004 10.1016/j.drup.2011.01.006 10.3389/fcimb.2022.900848 10.1016/S1473-3099(19)30324-X 10.1111/jep.13165 10.1111/tmi.13555 10.1371/journal.pone.0215484 10.1093/jacamr/dlab183 10.2147/PPA.S328890 10.1093/jacamr/dlac107 10.3923/jms.2022.29.43 10.18549/PharmPract.2018.03.1194 10.1007/s11096-021-01234-1 10.1080/03007995.2018.1544119 10.1086/598183 10.1007/s10803-017-3085-5 10.35552/anujr.a.17.2.639 10.4236/ojepi.2019.94021 10.1177/08971900211033459 10.18549/PharmPract.2015.01.523 10.4103/2279-042X.150057 10.1371/journal.pone.0251301 10.1016/j.puhe.2022.05.020 10.1016/S0277-9536(03)00231-4",
-    "pmc_pdf": null,
+    "pmc_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11401251/pdf/",
     "unpaywall_pdf": null,
-    "found": false,
-    "source": null
+    "found": true,
+    "source": "PMC"
   },
   {
     "pmid": "39197169",
