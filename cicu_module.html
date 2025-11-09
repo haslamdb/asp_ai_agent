@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CICU Antibiotics Training Module - ASP AI Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        main {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .objectives-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .objectives-list li {
+            padding: 0.5rem 0 0.5rem 2rem;
+            position: relative;
+        }
+
+        .objectives-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .level-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .level-btn {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .level-btn.active {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        }
+
+        .scenario-container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: none;
+        }
+
+        .scenario-container.active {
+            display: block;
+        }
+
+        .scenario-title {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .scenario-description {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+
+        .tasks-list {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .tasks-list h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .tasks-list ol {
+            padding-left: 1.5rem;
+        }
+
+        .tasks-list li {
+            margin: 0.5rem 0;
+        }
+
+        .response-area {
+            margin: 1.5rem 0;
+        }
+
+        .response-area textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .feedback-container {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .feedback-container.active {
+            display: block;
+        }
+
+        .ai-response {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+
+        .ai-response h2 {
+            color: #667eea;
+            font-size: 1.6rem;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .ai-response h2:first-child {
+            margin-top: 0;
+        }
+
+        .ai-response h3 {
+            color: #764ba2;
+            font-size: 1.25rem;
+            margin: 1.75rem 0 0.75rem 0;
+            font-weight: 600;
+            background-color: #f8f5fb;
+            padding: 0.5rem 0.75rem;
+            border-left: 4px solid #764ba2;
+        }
+
+        .ai-response strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .ai-response ul {
+            margin: 1rem 0 1.5rem 0;
+            padding-left: 1.5rem;
+            list-style-type: disc;
+        }
+
+        .ai-response li {
+            margin: 0.75rem 0;
+            padding-left: 0.5rem;
+            line-height: 1.7;
+        }
+
+        .ai-response p {
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+
+        .ai-response p:empty {
+            display: none;
+        }
+
+        .hints-container {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .hint {
+            background: white;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .competencies {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .competency-badge {
+            background-color: #764ba2;
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>CICU Antibiotics Training Module</h1>
+                    <p class="subtitle">Reducing Prolonged Broad-Spectrum Antibiotic Use in the Cardiac ICU</p>
+                </div>
+                <a href="index.html" class="back-link">← Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <main>
+            <section class="section">
+                <h2>Clinical Problem</h2>
+                <div class="info-box">
+                    <p>The Cardiac Intensive Care Unit (CICU) frequently uses meropenem and vancomycin for prolonged periods (>7 days) in children with fever, even when all cultures have been negative after 48-72 hours. This represents inappropriate antibiotic use that increases resistance risk, adverse events, and costs.</p>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Learning Objectives</h2>
+                <ul class="objectives-list">
+                    <li>Analyze antibiotic utilization data to identify inappropriate prolonged use patterns</li>
+                    <li>Design an evidence-based intervention to reduce unnecessary broad-spectrum antibiotics</li>
+                    <li>Implement behavioral change strategies to modify prescriber habits</li>
+                    <li>Create metrics to track success and identify areas needing countermeasures</li>
+                </ul>
+            </section>
+
+            <section class="section">
+                <h2>Select Your Difficulty Level</h2>
+                <div class="level-selector">
+                    <button class="level-btn" data-level="beginner">
+                        <strong>Beginner</strong><br>
+                        <small>Data Analysis & Problem ID</small>
+                    </button>
+                    <button class="level-btn" data-level="intermediate">
+                        <strong>Intermediate</strong><br>
+                        <small>Intervention Design</small>
+                    </button>
+                    <button class="level-btn" data-level="advanced">
+                        <strong>Advanced</strong><br>
+                        <small>Implementation & Problem Solving</small>
+                    </button>
+                    <button class="level-btn" data-level="expert">
+                        <strong>Expert</strong><br>
+                        <small>Sustainability & Scale</small>
+                    </button>
+                </div>
+            </section>
+
+            <section class="section scenario-container" id="scenarioSection">
+                <h3 class="scenario-title" id="scenarioTitle">Scenario Title</h3>
+
+                <div class="scenario-description" id="scenarioDescription">
+                    Scenario description will appear here...
+                </div>
+
+                <div class="tasks-list">
+                    <h3>Your Tasks</h3>
+                    <ol id="tasksList">
+                        <li>Tasks will appear here...</li>
+                    </ol>
+                </div>
+
+                <div class="competencies">
+                    <strong>Competencies Being Assessed:</strong>
+                    <div id="competenciesList"></div>
+                </div>
+
+                <div class="response-area">
+                    <h3>Your Response</h3>
+                    <textarea id="userResponse" placeholder="Type your response here... Address each task and explain your reasoning."></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="submitBtn">Submit Response</button>
+                    <button class="btn btn-info" id="hintBtn">Get Hint</button>
+                    <button class="btn btn-secondary" id="metricsBtn">View Metrics</button>
+                    <button class="btn btn-success" id="newScenarioBtn" style="display:none;">Try Next Level</button>
+                </div>
+
+                <div class="hints-container" id="hintsContainer" style="display:none;">
+                    <h3>Hints</h3>
+                    <div id="hintsList"></div>
+                </div>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Processing your response with AI...</p>
+                </div>
+
+                <div class="feedback-container" id="feedbackContainer">
+                    <h3>AI Feedback</h3>
+                    <div class="ai-response" id="aiFeedback"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = 'http://' + window.location.hostname + ':8080';
+
+        // State
+        let currentLevel = 'beginner';
+        let currentScenario = null;
+        let hintsUsed = 0;
+        let sessionId = null;
+
+        // DOM Elements
+        const levelBtns = document.querySelectorAll('.level-btn');
+        const scenarioSection = document.getElementById('scenarioSection');
+        const scenarioTitle = document.getElementById('scenarioTitle');
+        const scenarioDescription = document.getElementById('scenarioDescription');
+        const tasksList = document.getElementById('tasksList');
+        const competenciesList = document.getElementById('competenciesList');
+        const userResponse = document.getElementById('userResponse');
+        const submitBtn = document.getElementById('submitBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const metricsBtn = document.getElementById('metricsBtn');
+        const newScenarioBtn = document.getElementById('newScenarioBtn');
+        const hintsContainer = document.getElementById('hintsContainer');
+        const hintsList = document.getElementById('hintsList');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const aiFeedback = document.getElementById('aiFeedback');
+
+        // Initialize session on load
+        async function initSession() {
+            try {
+                const response = await fetch(`${API_BASE}/api/session/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        name: 'CICU Module User',
+                        institution: 'Training'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    sessionId = data.user_id;
+                    console.log('Session created:', sessionId);
+                }
+            } catch (error) {
+                console.error('Session creation error:', error);
+            }
+        }
+
+        // Load scenario for selected level
+        async function loadScenario(level) {
+            try {
+                const response = await fetch(`${API_BASE}/api/modules/cicu/scenario?level=${level}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load scenario');
+                }
+
+                const data = await response.json();
+                currentScenario = data;
+                displayScenario(data);
+            } catch (error) {
+                console.error('Error loading scenario:', error);
+                // Fallback to static scenarios
+                displayStaticScenario(level);
+            }
+        }
+
+        // Display static scenario (fallback)
+        function displayStaticScenario(level) {
+            const scenarios = {
+                beginner: {
+                    title: 'Data Analysis & Problem Identification',
+                    description: `You've been asked to review CICU antibiotic use data. You find:
+- 65% of patients receive meropenem + vancomycin empirically
+- Average duration: 8.5 days
+- 78% have negative cultures at 48 hours
+- Only 12% have documented de-escalation discussions
+
+How would you approach analyzing this problem and presenting it to CICU leadership?`,
+                    key_tasks: [
+                        'Calculate days of therapy (DOT) per 1000 patient days',
+                        'Identify the gap between guidelines and practice',
+                        'Create a compelling data visualization',
+                        'Draft initial problem statement for leadership'
+                    ],
+                    expected_competencies: ['data_analysis', 'communication', 'problem_identification']
+                },
+                intermediate: {
+                    title: 'Intervention Design & Stakeholder Engagement',
+                    description: `CICU leadership acknowledges the problem but cites several barriers:
+- "These are critically ill cardiac patients - we can't take risks"
+- "Our patients are different from general PICU"
+- "Attendings rotate weekly - hard to maintain consistency"
+- "Fellows are afraid to challenge antibiotic decisions"
+
+Design a multi-faceted intervention addressing these specific barriers.`,
+                    key_tasks: [
+                        'Develop cardiac-specific antibiotic guidelines with stop points',
+                        'Create a 48-hour timeout protocol with clear criteria',
+                        'Design a communication framework for antibiotic discussions',
+                        'Build a champion network including nurses and pharmacists',
+                        'Address the hierarchy/fear issues with psychological safety measures'
+                    ],
+                    expected_competencies: ['behavioral_science', 'change_management', 'protocol_development']
+                },
+                advanced: {
+                    title: 'Implementation & Real-Time Problem Solving',
+                    description: `Your intervention launched 2 months ago. Initial results show:
+- 30% reduction in meropenem+vancomycin starts (good!)
+- But duration only decreased from 8.5 to 7.2 days (not enough)
+- 3 attendings consistently bypass the protocol
+- 1 case of late-onset sepsis has everyone scared
+- Nurses report confusion about who makes de-escalation decisions
+
+How do you adapt your approach to maintain momentum while addressing these challenges?`,
+                    key_tasks: [
+                        'Perform root cause analysis on the late sepsis case',
+                        'Develop targeted interventions for resistant attendings',
+                        'Clarify decision-making roles and responsibilities',
+                        'Create positive reinforcement strategies for early adopters',
+                        'Implement real-time audit and feedback system',
+                        'Address the fear response with data and education'
+                    ],
+                    expected_competencies: ['adaptive_leadership', 'quality_improvement', 'conflict_resolution']
+                },
+                expert: {
+                    title: 'Sustainability, Scale & System-Level Change',
+                    description: `After 6 months, your CICU intervention shows:
+- 45% reduction in inappropriate broad-spectrum use
+- $380,000 in cost savings
+- No increase in sepsis or mortality
+- Improved nurse satisfaction scores
+
+However:
+- The NICU wants to adopt but has different patient population
+- New cardiac surgery fellows arrive who weren't part of initial training
+- Hospital administration wants to make this a quality metric
+- You discover similar issues in step-down units
+- Insurance denials for prolonged antibiotics are increasing
+
+Create a comprehensive plan for sustaining gains, scaling success, and embedding this into the hospital's culture and systems.`,
+                    key_tasks: [
+                        'Develop unit-specific adaptation framework',
+                        'Create onboarding program for rotating staff',
+                        'Design quality metrics and accountability structures',
+                        'Build automated clinical decision support tools',
+                        'Establish antimicrobial stewardship rounds in all ICUs',
+                        'Navigate insurance/financial implications',
+                        'Publish and disseminate findings for broader impact'
+                    ],
+                    expected_competencies: ['systems_thinking', 'strategic_planning', 'sustainability', 'dissemination']
+                }
+            };
+
+            const scenario = scenarios[level];
+            if (scenario) {
+                currentScenario = scenario;
+                displayScenario(scenario);
+            }
+        }
+
+        // Display scenario in UI
+        function displayScenario(scenario) {
+            scenarioTitle.textContent = scenario.title;
+            scenarioDescription.textContent = scenario.description;
+
+            // Populate tasks
+            tasksList.innerHTML = '';
+            scenario.key_tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task;
+                tasksList.appendChild(li);
+            });
+
+            // Populate competencies
+            competenciesList.innerHTML = '';
+            scenario.expected_competencies.forEach(comp => {
+                const badge = document.createElement('span');
+                badge.className = 'competency-badge';
+                badge.textContent = comp.replace(/_/g, ' ');
+                competenciesList.appendChild(badge);
+            });
+
+            // Show scenario section
+            scenarioSection.classList.add('active');
+
+            // Reset hints and feedback
+            hintsUsed = 0;
+            hintsContainer.style.display = 'none';
+            hintsList.innerHTML = '';
+            feedbackContainer.classList.remove('active');
+            userResponse.value = '';
+        }
+
+        // Get hint
+        async function getHint() {
+            try {
+                const response = await fetch(`${API_BASE}/api/modules/cicu/hint?level=${currentLevel}&hint_number=${hintsUsed}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.hint) {
+                        displayHint(data.hint);
+                    }
+                } else {
+                    // Fallback to static hints
+                    displayStaticHint();
+                }
+            } catch (error) {
+                console.error('Error getting hint:', error);
+                displayStaticHint();
+            }
+        }
+
+        // Display static hint (fallback)
+        function displayStaticHint() {
+            const hints = {
+                beginner: [
+                    "Start by calculating DOT/1000 patient days for meropenem and vancomycin separately",
+                    "Compare your CICU rates to national NHSN benchmarks for pediatric ICUs",
+                    "Consider creating a run chart showing daily antibiotic use over time",
+                    "Think about framing the problem in terms of patient safety AND quality"
+                ],
+                intermediate: [
+                    "Consider using the COM-B model (Capability, Opportunity, Motivation) for behavior change",
+                    "Think about how cognitive biases like 'commission bias' affect antibiotic decisions",
+                    "A hard stop at 48-72 hours with required documentation might help",
+                    "Address psychological safety by framing de-escalation as 'optimizing' rather than 'stopping'"
+                ],
+                advanced: [
+                    "The late sepsis case needs careful review - was it truly related to de-escalation?",
+                    "Consider one-on-one academic detailing for resistant attendings",
+                    "Real-time nudges in the EMR at day 3, 5, and 7 might help",
+                    "Positive deviance - highlight and learn from attendings with best practices"
+                ],
+                expert: [
+                    "Think about creating a toolkit for adaptation rather than rigid protocols",
+                    "Consider automated EMR alerts with embedded decision support",
+                    "Quality metrics should be process AND outcome-based with risk adjustment",
+                    "Plan for continuous PDSA cycles rather than one-time implementation"
+                ]
+            };
+
+            const levelHints = hints[currentLevel];
+            if (levelHints && hintsUsed < levelHints.length) {
+                displayHint(levelHints[hintsUsed]);
+            } else {
+                alert('No more hints available for this level!');
+            }
+        }
+
+        // Display hint in UI
+        function displayHint(hintText) {
+            const hintDiv = document.createElement('div');
+            hintDiv.className = 'hint';
+            hintDiv.innerHTML = `<strong>Hint ${hintsUsed + 1}:</strong> ${hintText}`;
+            hintsList.appendChild(hintDiv);
+            hintsContainer.style.display = 'block';
+            hintsUsed++;
+        }
+
+        // Submit response for evaluation
+        async function submitResponse() {
+            const response = userResponse.value.trim();
+            if (!response) {
+                alert('Please enter a response before submitting!');
+                return;
+            }
+
+            loadingIndicator.classList.add('active');
+            feedbackContainer.classList.remove('active');
+
+            try {
+                const apiResponse = await fetch(`${API_BASE}/api/modules/cicu/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        input: response,
+                        level: currentLevel
+                    })
+                });
+
+                if (!apiResponse.ok) {
+                    throw new Error('Failed to get feedback');
+                }
+
+                const data = await apiResponse.json();
+                displayFeedback(data.response || 'Feedback generated successfully!', data);
+            } catch (error) {
+                console.error('Error submitting response:', error);
+                displayFeedback('Error getting AI feedback. Please try again or check your connection.');
+            } finally {
+                loadingIndicator.classList.remove('active');
+            }
+        }
+
+        // Simple markdown to HTML converter
+        function markdownToHTML(markdown) {
+            if (!markdown) return '';
+
+            // First, split into lines for better processing
+            let lines = markdown.split('\n');
+            let html = '';
+            let inList = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+
+                // Skip empty lines but close lists if needed
+                if (!line) {
+                    if (inList) {
+                        html += '</ul>';
+                        inList = false;
+                    }
+                    continue;
+                }
+
+                // Headers
+                if (line.startsWith('### ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += '<h3>' + line.substring(4) + '</h3>';
+                } else if (line.startsWith('## ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += '<h2>' + line.substring(3) + '</h2>';
+                } else if (line.startsWith('# ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    html += '<h1>' + line.substring(2) + '</h1>';
+                }
+                // List items
+                else if (line.startsWith('- ') || line.startsWith('* ')) {
+                    if (!inList) {
+                        html += '<ul>';
+                        inList = true;
+                    }
+                    let itemText = line.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html += '<li>' + itemText + '</li>';
+                }
+                // Regular paragraphs
+                else {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    let paraText = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html += '<p>' + paraText + '</p>';
+                }
+            }
+
+            // Close any open list
+            if (inList) {
+                html += '</ul>';
+            }
+
+            return html;
+        }
+
+        // Display AI feedback
+        function displayFeedback(feedbackText, data = {}) {
+            aiFeedback.innerHTML = markdownToHTML(feedbackText);
+            feedbackContainer.classList.add('active');
+
+            // Show next level button if appropriate
+            if (data.learning_insights && data.learning_insights.current_mastery) {
+                const mastery = data.learning_insights.current_mastery;
+                if (mastery === 'PROFICIENT' || mastery === 'EXPERT') {
+                    newScenarioBtn.style.display = 'inline-block';
+                }
+            }
+        }
+
+        // Show metrics
+        function showMetrics() {
+            alert(`Implementation Metrics Tracker
+
+Process Metrics:
+• 48-hour timeout compliance: Target 90%
+• De-escalation rate when cultures negative: Target 80%
+
+Outcome Metrics:
+• DOT/1000 days: Baseline 850 → Target 600
+• Late-onset sepsis rate: Monitor ≤ 2.1%
+• Monthly cost savings: Target $30,000
+
+Balancing Metrics:
+• CICU mortality rate: No increase from baseline
+• 7-day readmission for infection: Monitor
+• Provider satisfaction: Target >70%`);
+        }
+
+        // Advance to next level
+        function advanceLevel() {
+            const levels = ['beginner', 'intermediate', 'advanced', 'expert'];
+            const currentIdx = levels.indexOf(currentLevel);
+            if (currentIdx < levels.length - 1) {
+                currentLevel = levels[currentIdx + 1];
+                levelBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.level === currentLevel) {
+                        btn.classList.add('active');
+                    }
+                });
+                loadScenario(currentLevel);
+                newScenarioBtn.style.display = 'none';
+            } else {
+                alert('Congratulations! You have completed all levels of this module!');
+            }
+        }
+
+        // Event Listeners
+        levelBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentLevel = btn.dataset.level;
+                levelBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadScenario(currentLevel);
+            });
+        });
+
+        submitBtn.addEventListener('click', submitResponse);
+        hintBtn.addEventListener('click', getHint);
+        metricsBtn.addEventListener('click', showMetrics);
+        newScenarioBtn.addEventListener('click', advanceLevel);
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initSession();
+        });
+    </script>
+</body>
+</html>

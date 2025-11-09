@@ -8,7 +8,7 @@ Integrates:
 - Anthropic Claude API
 """
 
-from flask import Flask, request, jsonify, Response, stream_with_context, session
+from flask import Flask, request, jsonify, Response, stream_with_context, session, send_file
 from flask_cors import CORS
 import requests
 import os
@@ -38,6 +38,9 @@ from adaptive_engine import AdaptiveLearningEngine, MasteryLevel
 from rubric_scorer import RubricScorer, CriterionLevel
 from equity_analytics import EquityAnalytics
 
+# Import CICU module
+from modules.cicu_prolonged_antibiotics_module import CICUAntibioticsModule, DifficultyLevel as CICUDifficultyLevel
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
@@ -49,6 +52,9 @@ adaptive_engine = AdaptiveLearningEngine()
 rubric_scorer = RubricScorer()
 equity_analytics = EquityAnalytics()
 
+# Initialize CICU module
+cicu_module = CICUAntibioticsModule()
+
 # Configuration - load from environment with defaults
 OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
 CITATION_API_PORT = os.environ.get('CITATION_API_PORT', '9998')
@@ -59,6 +65,19 @@ ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 
 # Claude API endpoint
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+
+@app.route('/')
+def index():
+    """Serve the main index page"""
+    return send_file('index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve static files (HTML, CSS, JS)"""
+    try:
+        return send_file(filename)
+    except:
+        return jsonify({'error': 'File not found'}), 404
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -257,6 +276,273 @@ def equity_dashboard():
     # In production, add authentication here
     dashboard_data = equity_analytics.generate_dashboard_data()
     return jsonify(dashboard_data)
+
+@app.route('/api/modules/cicu/scenario', methods=['GET'])
+def get_cicu_scenario():
+    """Get CICU module scenario for specified difficulty level"""
+    level_str = request.args.get('level', 'beginner').lower()
+
+    # Map string to DifficultyLevel enum
+    level_map = {
+        'beginner': CICUDifficultyLevel.BEGINNER,
+        'intermediate': CICUDifficultyLevel.INTERMEDIATE,
+        'advanced': CICUDifficultyLevel.ADVANCED,
+        'expert': CICUDifficultyLevel.EXPERT
+    }
+
+    difficulty_level = level_map.get(level_str, CICUDifficultyLevel.BEGINNER)
+    scenario = cicu_module.get_scenario(difficulty_level)
+
+    return jsonify(scenario)
+
+@app.route('/api/modules/cicu/hint', methods=['GET'])
+def get_cicu_hint():
+    """Get hint for CICU module"""
+    level_str = request.args.get('level', 'beginner').lower()
+    hint_number = request.args.get('hint_number', 0, type=int)
+
+    # Map string to DifficultyLevel enum
+    level_map = {
+        'beginner': CICUDifficultyLevel.BEGINNER,
+        'intermediate': CICUDifficultyLevel.INTERMEDIATE,
+        'advanced': CICUDifficultyLevel.ADVANCED,
+        'expert': CICUDifficultyLevel.EXPERT
+    }
+
+    difficulty_level = level_map.get(level_str, CICUDifficultyLevel.BEGINNER)
+    hint = cicu_module.get_hint(difficulty_level, hint_number)
+
+    if hint:
+        return jsonify({'hint': hint, 'hint_number': hint_number})
+    else:
+        return jsonify({'error': 'No more hints available'}), 404
+
+@app.route('/api/modules/cicu/evaluate', methods=['POST'])
+def evaluate_cicu_response():
+    """Evaluate user response for CICU module"""
+    data = request.json or {}
+    response_text = data.get('response', '')
+    level_str = data.get('level', 'beginner').lower()
+
+    # Map string to DifficultyLevel enum
+    level_map = {
+        'beginner': CICUDifficultyLevel.BEGINNER,
+        'intermediate': CICUDifficultyLevel.INTERMEDIATE,
+        'advanced': CICUDifficultyLevel.ADVANCED,
+        'expert': CICUDifficultyLevel.EXPERT
+    }
+
+    difficulty_level = level_map.get(level_str, CICUDifficultyLevel.BEGINNER)
+    evaluation = cicu_module.evaluate_response(response_text, difficulty_level)
+
+    return jsonify(evaluation)
+
+@app.route('/api/modules/cicu/metrics', methods=['GET'])
+def get_cicu_metrics():
+    """Get implementation metrics tracker for CICU module"""
+    metrics = cicu_module.generate_implementation_tracker()
+    return jsonify(metrics)
+
+@app.route('/api/modules/cicu/countermeasures', methods=['GET'])
+def get_cicu_countermeasures():
+    """Get countermeasure strategies for barriers"""
+    barrier_type = request.args.get('barrier_type', 'provider_resistance')
+    countermeasures = cicu_module.generate_countermeasure_template(barrier_type)
+    return jsonify(countermeasures)
+
+@app.route('/api/modules/cicu/feedback', methods=['POST'])
+def cicu_ai_feedback():
+    """AI-powered CICU feedback using LLM with rubric-based evaluation"""
+    data = request.json or {}
+    user_input = data.get('input', '')
+    level = data.get('level', 'beginner')
+    preferred_model = data.get('model', 'gemma2:27b')  # Default to faster model
+
+    if not user_input:
+        return jsonify({'error': 'No input provided'}), 400
+
+    # Get the scenario and rubrics for this level
+    level_map = {
+        'beginner': CICUDifficultyLevel.BEGINNER,
+        'intermediate': CICUDifficultyLevel.INTERMEDIATE,
+        'advanced': CICUDifficultyLevel.ADVANCED,
+        'expert': CICUDifficultyLevel.EXPERT
+    }
+    difficulty_level = level_map.get(level, CICUDifficultyLevel.BEGINNER)
+    scenario = cicu_module.get_scenario(difficulty_level)
+
+    # Build comprehensive evaluation prompt
+    evaluation_prompt = f"""You are an expert antimicrobial stewardship educator evaluating a fellow's response to a training scenario.
+
+**SCENARIO:**
+{scenario['description']}
+
+**KEY TASKS:**
+{chr(10).join(f"- {task}" for task in scenario['key_tasks'])}
+
+**LEARNER'S RESPONSE:**
+{user_input}
+
+**YOUR EVALUATION TASK:**
+Evaluate this response across 4 competency domains using the rubrics below. For each domain, assign a score (1-5) and provide specific, actionable feedback.
+
+**RUBRIC DOMAINS:**
+
+1. **Data Analysis** (1-5):
+   - 5 (Exemplary): Calculates DOT correctly, uses multiple benchmarks, identifies patterns, creates compelling visualizations
+   - 4 (Proficient): Accurate DOT calculation, uses benchmarks, recognizes gaps, good data presentation
+   - 3 (Developing): Basic DOT calculation, some comparison, identifies obvious issues
+   - 2 (Emerging): Calculation errors, minimal benchmarking, poor pattern recognition
+   - 1 (Not Evident): No meaningful metrics or analysis
+
+2. **Behavioral Intervention** (1-5):
+   - 5 (Exemplary): Identifies cognitive biases, uses behavior change frameworks, creates psychological safety, designs nudges
+   - 4 (Proficient): Identifies biases, applies behavior change principles, addresses hierarchy/fear, uses champions
+   - 3 (Developing): Recognizes barriers, focuses on education, basic communication planning
+   - 2 (Emerging): Minimal behavioral insight, relies on mandates, no psychological factors
+   - 1 (Not Evident): Ignores human factors, policy-only approach, no stakeholder engagement
+
+3. **Implementation Science** (1-5):
+   - 5 (Exemplary): Uses implementation framework (PDSA/RE-AIM), plans sustainability, includes metrics, addresses adaptation
+   - 4 (Proficient): Structured approach, pilot testing, success metrics, considers sustainability
+   - 3 (Developing): Basic implementation plan, limited testing, few metrics
+   - 2 (Emerging): Vague approach, no pilot, unclear metrics
+   - 1 (Not Evident): No implementation plan or metrics
+
+4. **Clinical Decision Making** (1-5):
+   - 5 (Exemplary): Evidence-based guidelines, balances safety/stewardship, context-specific protocols
+   - 4 (Proficient): Uses guidelines appropriately, considers safety, addresses clinical concerns
+   - 3 (Developing): Basic guideline awareness, some safety consideration
+   - 2 (Emerging): Limited clinical reasoning, generic approaches
+   - 1 (Not Evident): No clinical evidence or safety consideration
+
+**OUTPUT FORMAT:**
+Provide your evaluation in this structure:
+
+## Evaluation Summary
+
+**Overall Score:** [Average of 4 domains]/5.0
+
+### Domain Scores:
+- Data Analysis: [score]/5 - [Performance level]
+- Behavioral Intervention: [score]/5 - [Performance level]
+- Implementation Science: [score]/5 - [Performance level]
+- Clinical Decision Making: [score]/5 - [Performance level]
+
+### Strengths:
+- [Specific strength 1]
+- [Specific strength 2]
+- [Specific strength 3]
+
+### Areas for Improvement:
+- [Specific improvement area 1 with actionable advice]
+- [Specific improvement area 2 with actionable advice]
+- [Specific improvement area 3 with actionable advice]
+
+### Specific Feedback:
+[Detailed constructive feedback addressing both what was done well and what needs improvement. Be specific, reference examples from their response, and provide concrete suggestions.]
+
+### Next Steps:
+1. [Actionable next step]
+2. [Actionable next step]
+3. [Actionable next step]
+
+IMPORTANT GUIDANCE:
+- Be constructive and supportive while maintaining high standards
+- If they suggest inappropriate stakeholder engagement (e.g., blaming, confrontation), address this firmly but constructively
+- Highlight what they did well before addressing gaps
+- Provide specific, actionable guidance for improvement
+- Reference evidence-based practices and frameworks where appropriate"""
+
+    # Try to get AI feedback with fallback chain
+    response_data = None
+    model_used = None
+    errors = []
+
+    try:
+        # Try Gemini first (most reliable for now)
+        if GEMINI_API_KEY:
+            try:
+                print(f"Trying Gemini for CICU feedback...")
+                import google.generativeai as genai
+                genai.configure(api_key=GEMINI_API_KEY)
+                # Try newest models first
+                model_name = 'gemini-2.0-flash-exp'
+                model = genai.GenerativeModel(model_name)
+                result = model.generate_content(evaluation_prompt)
+                response_data = result.text
+                model_used = model_name
+                print(f"Gemini succeeded! Response length: {len(response_data)}")
+            except Exception as e:
+                error_msg = f"Gemini failed: {e}"
+                print(error_msg)
+                errors.append(error_msg)
+
+        # Try Ollama if Gemini didn't work and it was requested
+        if not response_data and (preferred_model.startswith('ollama:') or not ':' in preferred_model):
+            try:
+                model_name = preferred_model.replace('ollama:', '') if preferred_model.startswith('ollama:') else preferred_model
+                print(f"Trying Ollama model: {model_name}...")
+
+                ollama_response = requests.post(
+                    f"{OLLAMA_API}/api/chat",
+                    json={
+                        "model": model_name,
+                        "messages": [{"role": "user", "content": evaluation_prompt}],
+                        "stream": False
+                    },
+                    timeout=45  # Generous timeout for evaluation
+                )
+
+                if ollama_response.status_code == 200:
+                    result = ollama_response.json()
+                    response_data = result.get('message', {}).get('content', '')
+                    model_used = f"ollama:{model_name}"
+                    print(f"Ollama succeeded! Response length: {len(response_data)}")
+                else:
+                    error_msg = f"Ollama returned status {ollama_response.status_code}"
+                    print(error_msg)
+                    errors.append(error_msg)
+            except Exception as e:
+                error_msg = f"Ollama failed: {e}"
+                print(error_msg)
+                errors.append(error_msg)
+
+        # Final fallback to Claude if available
+        if not response_data and ANTHROPIC_API_KEY:
+            try:
+                print(f"Trying Claude...")
+                from anthropic import Anthropic
+                client = Anthropic(api_key=ANTHROPIC_API_KEY)
+                message = client.messages.create(
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=2000,
+                    messages=[{"role": "user", "content": evaluation_prompt}]
+                )
+                response_data = message.content[0].text
+                model_used = "claude-3-5-sonnet"
+                print(f"Claude succeeded! Response length: {len(response_data)}")
+            except Exception as e:
+                error_msg = f"Claude failed: {e}"
+                print(error_msg)
+                errors.append(error_msg)
+
+        if response_data:
+            return jsonify({
+                'response': response_data,
+                'model': model_used,
+                'success': True
+            })
+        else:
+            error_summary = '; '.join(errors) if errors else 'No models attempted'
+            print(f"All models failed: {error_summary}")
+            return jsonify({'error': f'All AI models failed: {error_summary}'}), 500
+
+    except Exception as e:
+        print(f"Error in AI feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'AI evaluation failed: {str(e)}'}), 500
 
 @app.route('/api/conversation/process', methods=['POST'])
 def process_conversation():
@@ -781,41 +1067,46 @@ def asp_feedback():
         {'role': 'system', 'content': system_prompt},
         {'role': 'user', 'content': enhanced_input}
     ]
-    
+
+    response_data = None
+    model_used = None
+
     # Try preferred model first, then fall back to best available
     if preferred_model:
         result = chat_with_model(preferred_model, messages)
-        if result[1] == 200:
-            response_data = result[0].get_json()
-            response_data['citations'] = citations
-            return jsonify(response_data)
-    
-    # Try models in order of preference for medical tasks
-    default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
-    model_preference = [
-        'claude:3-sonnet',  # Best for medical reasoning
-        'gemini:2.5-flash',  # Good with search integration
-        f'ollama:{default_model}',  # Local fallback
-    ]
-    
-    response_data = None
-    model_used = None
-    
-    for model_id in model_preference:
-        provider = model_id.split(':')[0]
-        if provider == 'claude' and not ANTHROPIC_API_KEY:
-            continue
-        if provider == 'gemini' and not GEMINI_API_KEY:
-            continue
-        if provider == 'ollama' and check_services().get('ollama', {}).get('status') != 'online':
-            continue
-        
-        result = chat_with_model(model_id, messages)
-        if result[1] == 200:
-            response_data = result[0].get_json()
-            response_data['citations'] = citations
-            model_used = model_id
-            break
+        if isinstance(result, tuple) and len(result) == 2:
+            response_obj, status_code = result
+            if status_code == 200:
+                response_data = response_obj.get_json()
+                response_data['citations'] = citations
+                model_used = preferred_model
+
+    # Try models in order of preference for medical tasks if no response yet
+    if not response_data:
+        default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+        model_preference = [
+            'claude:3-sonnet',  # Best for medical reasoning
+            'gemini:2.5-flash',  # Good with search integration
+            f'ollama:{default_model}',  # Local fallback
+        ]
+
+        for model_id in model_preference:
+            provider = model_id.split(':')[0]
+            if provider == 'claude' and not ANTHROPIC_API_KEY:
+                continue
+            if provider == 'gemini' and not GEMINI_API_KEY:
+                continue
+            if provider == 'ollama' and check_services().get('ollama', {}).get('status') != 'online':
+                continue
+
+            result = chat_with_model(model_id, messages)
+            if isinstance(result, tuple) and len(result) == 2:
+                response_obj, status_code = result
+                if status_code == 200:
+                    response_data = response_obj.get_json()
+                    response_data['citations'] = citations
+                    model_used = model_id
+                    break
     
     if response_data:
         # Process conversation context
@@ -1301,18 +1592,21 @@ if __name__ == '__main__':
     print(f"  Anthropic Claude: {services.get('claude', {}).get('status', 'not_configured')}")
     
     print("\n" + "=" * 60)
-    print("Server running on http://localhost:5000")
+    print("Server running on http://localhost:8080")
     print("=" * 60)
-    
+
     print("\nEndpoints:")
     print("  GET  /health          - Health check")
     print("  GET  /api/models      - List available models")
     print("  POST /api/chat        - Chat with any model")
     print("  POST /api/asp-feedback - ASP-specific feedback")
-    
+    print("  GET  /api/modules/cicu/scenario - CICU scenarios")
+    print("  GET  /api/modules/cicu/hint     - CICU hints")
+    print("  POST /api/modules/cicu/evaluate - CICU evaluation")
+
     print("\nTo use Claude or Gemini, set environment variables:")
     print("  export ANTHROPIC_API_KEY='your-key-here'")
     print("  export GEMINI_API_KEY='your-key-here'")
     print()
-    
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+    app.run(host='0.0.0.0', port=8080, debug=True)
