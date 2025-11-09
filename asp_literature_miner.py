@@ -574,10 +574,12 @@ class OpenAccessFinder:
             response.raise_for_status()
             data = response.json()
 
-            # Try both 'records' and 'result' keys for compatibility
-            records = data.get('records', data.get('result', {}))
-            if pmid in records:
-                pmcid = records[pmid].get('pmcid')
+            # PMC API returns a list of records
+            records = data.get('records', [])
+            if records and len(records) > 0:
+                # First record should match our PMID
+                record = records[0]
+                pmcid = record.get('pmcid')
                 if pmcid:
                     return f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/"
         except Exception as e:

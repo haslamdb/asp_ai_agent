@@ -1,0 +1,36 @@
+ASP Literature Manual Download Summary Report
+================================================================================
+
+Total papers needing manual download: 86
+
+Top 10 Journals (may have institutional subscriptions):
+--------------------------------------------------------------------------------
+    7 papers - JAC-antimicrobial resistance
+    7 papers - Antibiotics (Basel, Switzerland)
+    5 papers - Journal of veterinary medical education
+    4 papers - The Journal of hospital infection
+    3 papers - Open forum infectious diseases
+    3 papers - Antimicrobial stewardship & healthcare epidemiology : ASHE
+    2 papers - Journal of the American Veterinary Medical Association
+    2 papers - BMC medical education
+    2 papers - Clinical therapeutics
+    1 papers - The journal of pediatric pharmacology and therapeutics : JPPT : the official journal of PPAG
+
+================================================================================
+Generated Export Files:
+--------------------------------------------------------------------------------
+  - manual_download_links.txt      : Direct PubMed/DOI links
+  - manual_download_endnote.xml    : Import to EndNote
+  - manual_download.bib            : BibTeX format
+  - librarian_request.csv          : Send to librarian
+  - failed_pmids.txt               : Plain PMID list
+
+================================================================================
+Recommended Actions:
+--------------------------------------------------------------------------------
+1. Check if Cincinnati Children's has subscriptions to top journals
+2. Send librarian_request.csv to medical librarian
+3. Import EndNote XML to reference manager
+4. For high-relevance papers, request via interlibrary loan
+5. Check author webpages/ResearchGate for preprints
+
