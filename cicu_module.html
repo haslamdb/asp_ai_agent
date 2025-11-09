@@ -297,6 +297,39 @@
             line-height: 1.7;
         }
 
+        /* Competency domain highlights */
+        .competency-domain {
+            color: #1a73e8;
+            font-weight: 700;
+            font-size: 1.1em;
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.5rem 0.75rem;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #1a73e8;
+            border-radius: 4px;
+        }
+
+        .domain-data-analysis {
+            border-left-color: #2196f3;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .domain-behavioral {
+            border-left-color: #9c27b0;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        }
+
+        .domain-implementation {
+            border-left-color: #ff9800;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        }
+
+        .domain-clinical {
+            border-left-color: #4caf50;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
         .ai-response p {
             margin: 1rem 0;
             line-height: 1.8;
@@ -776,6 +809,14 @@ Create a comprehensive plan for sustaining gains, scaling success, and embedding
             let html = '';
             let inList = false;
 
+            // Competency domains to highlight
+            const competencyDomains = {
+                'Data Analysis:': 'domain-data-analysis',
+                'Behavioral Intervention:': 'domain-behavioral',
+                'Implementation Science:': 'domain-implementation',
+                'Clinical Decision Making:': 'domain-clinical'
+            };
+
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
@@ -787,6 +828,27 @@ Create a comprehensive plan for sustaining gains, scaling success, and embedding
                     }
                     continue;
                 }
+
+                // Check if line starts with a competency domain
+                let isDomain = false;
+                for (const [domain, cssClass] of Object.entries(competencyDomains)) {
+                    if (line.startsWith(domain)) {
+                        if (inList) { html += '</ul>'; inList = false; }
+                        // Create highlighted domain label
+                        html += '<div class="competency-domain ' + cssClass + '">' + domain.replace(':', '') + '</div>';
+                        // Add remaining text as paragraph
+                        const remainingText = line.substring(domain.length).trim();
+                        if (remainingText) {
+                            let paraText = remainingText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                            html += '<p>' + paraText + '</p>';
+                        }
+                        isDomain = true;
+                        break;
+                    }
+                }
+
+                if (isDomain) continue;
 
                 // Headers
                 if (line.startsWith('### ')) {
@@ -805,13 +867,15 @@ Create a comprehensive plan for sustaining gains, scaling success, and embedding
                         html += '<ul>';
                         inList = true;
                     }
-                    let itemText = line.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    let itemText = line.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                     .replace(/\*(.*?)\*/g, '<em>$1</em>');
                     html += '<li>' + itemText + '</li>';
                 }
                 // Regular paragraphs
                 else {
                     if (inList) { html += '</ul>'; inList = false; }
-                    let paraText = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    let paraText = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                       .replace(/\*(.*?)\*/g, '<em>$1</em>');
                     html += '<p>' + paraText + '</p>';
                 }
             }
