@@ -344,7 +344,7 @@ This module is grounded in:
 
 ## Future Enhancements
 
-### Version 2.0 Planned Features
+### Version 2.0 Potential Features
 - Virtual reality CICU rounds simulation
 - Real-time data dashboard integration
 - Peer learning cohort discussions
@@ -360,9 +360,9 @@ This module is grounded in:
 
 ## Module Authors & Contributors
 
-**Clinical Content Lead:** ASP Medical Director  
-**Educational Design:** Medical Education Specialist  
-**Technical Implementation:** ASP AI Development Team  
+**Clinical Content Lead:** CCHMC ASP Team
+**Educational Design:** Medical Education Specialist(s)  
+**Technical Implementation:** ASP AI Development Team (TBN) 
 **Subject Matter Experts:** CICU Attendings, Clinical Pharmacists, Infection Prevention  
 **Pilot Testers:** Current ASP Fellows
 
