@@ -11,11 +11,10 @@
 
 The Cardiac Intensive Care Unit (CICU) frequently administers meropenem and vancomycin for prolonged periods (>7 days) in pediatric patients with fever, even when all cultures remain negative after 48-72 hours. This practice pattern represents:
 
-- **65%** of CICU patients receiving empiric broad-spectrum coverage
-- **8.5 days** average duration (vs. 3-5 days recommended)
-- **78%** with negative cultures at 48 hours
-- **12%** documented de-escalation discussions
-- **$450,000** estimated annual excess medication costs
+- **large fraction** of CICU patients receiving empiric broad-spectrum coverage
+- **prolonged** average duration (vs. 3-5 days recommended)
+- **almost all patients** with negative cultures at 48 hours
+- **$$$** estimated annual excess medication costs
 - Increased risk of antimicrobial resistance, C. difficile, and adverse drug events
 
 ## Learning Objectives
