@@ -1,12 +1,13 @@
 # ASP AI Agent
 
-AI-powered adaptive educational platform for antimicrobial stewardship fellowship training with support for multiple AI models including Claude, Gemini, and local Ollama models.
+AI-powered adaptive educational platform for antimicrobial stewardship fellowship training with support for multiple AI models including Claude, Gemini, and local Ollama models. The system leverages literature-based recommendations through RAG (Retrieval-Augmented Generation) to provide evidence-backed guidance grounded in current ASP research and guidelines.
 
 ## 🎯 Project Overview
 
 The ASP AI Agent is a comprehensive educational system designed to train the next generation of antimicrobial stewardship leaders. It features adaptive learning modules, real-time feedback, and evidence-based clinical scenarios addressing critical gaps in ASP education.
 
 ### Key Features
+- **Literature-Based Recommendations** - RAG system mines PubMed and retrieves relevant ASP research to provide evidence-backed guidance
 - **Adaptive Learning System** - Personalized difficulty adjustment based on performance
 - **Multi-Turn Conversations** - Context-aware coaching with up to 50 turns of dialogue
 - **Rubric-Based Assessment** - Standardized evaluation across 4 competency domains
