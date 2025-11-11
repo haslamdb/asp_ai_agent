@@ -253,7 +253,7 @@ This project is proprietary and confidential. All rights reserved.
 ## 🆘 Support
 
 - **Technical Issues**: Open a GitHub issue
-- **Module Feedback**: asp-education@institution.edu
+- **Module Feedback**: aspfeedback@cchmc.org or dbhaslam@gmail.com
 - **Setup Help**: See [Setup Guide](./docs/SETUP.md)
 
 ---
