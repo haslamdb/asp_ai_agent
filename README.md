@@ -7,7 +7,7 @@ AI-powered adaptive educational platform for antimicrobial stewardship fellowshi
 The ASP AI Agent is a comprehensive educational system designed to train the next generation of antimicrobial stewardship leaders. It features adaptive learning modules, real-time feedback, and evidence-based clinical scenarios addressing critical gaps in ASP education.
 
 ### Key Features
-- **Literature-Based Recommendations** - Mines PubMed and retrieves relevant ASP research to provide RAG driven, evidence-backed guidance
+- **Literature-Based Recommendations** - Retrieves relevant Pubmed PDF to provide RAG driven, evidence-backed guidance
 - **Adaptive Learning System** - Personalized difficulty adjustment based on performance
 - **Multi-Turn Conversations** - Context-aware coaching with up to 50 turns of dialogue
 - **Rubric-Based Assessment** - Standardized evaluation across 4 competency domains
