@@ -105,9 +105,9 @@ Addresses overuse of meropenem and vancomycin in cardiac ICU settings.
 
 ### Coming Soon
 - NICU Antibiotic Stewardship
-- Emergency Department UTI Management
 - Surgical Prophylaxis Optimization
 - Outpatient Oral Antibiotic Selection
+- Others!
 
 ## 🔧 Core Components
 
