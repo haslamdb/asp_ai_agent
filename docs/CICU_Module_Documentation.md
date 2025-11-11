@@ -376,9 +376,8 @@ This module is grounded in:
 ## Contact & Support
 
 For questions or technical support:
-- Module Support: asp-education@institution.edu
-- Technical Issues: asp-it-support@institution.edu
-- Content Feedback: module-feedback@institution.edu
+- Module Support, Technical Issues, Content Feedback : aspfeedback@cchmc.org
+
 
 ---
 
