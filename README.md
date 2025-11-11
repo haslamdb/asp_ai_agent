@@ -40,7 +40,7 @@ The ASP AI Agent is a comprehensive educational system designed to train the nex
    ./start_local.sh  # Or: python unified_server.py
    ```
 
-5. **Open interface**: Visit `http://localhost:5001`
+5. **Open interface**: Visit `http://localhost:5001` or 'http://192.168.1.163:8080/cicu_module.html'
 
 ## 📂 Project Structure
 
