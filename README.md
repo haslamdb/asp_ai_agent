@@ -449,8 +449,8 @@ This project is proprietary and confidential. All rights reserved.
 
 ## 🆘 Support
 
-- **Technical Issues**: Open a GitHub issue
-- **Module Feedback**: aspfeedback@cchmc.org or dbhaslam@gmail.com
+- **Technical Issues**: dbhaslam@gmail.com
+- **Module Feedback**: aspfeedback@cchmc.org
 - **Setup Help**: See [Setup Guide](./docs/SETUP.md)
 
 ---
