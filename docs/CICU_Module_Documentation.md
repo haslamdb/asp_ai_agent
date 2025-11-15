@@ -13,7 +13,7 @@ The Cardiac Intensive Care Unit (CICU) frequently administers meropenem and vanc
 
 - **large fraction** of CICU patients receiving empiric broad-spectrum coverage
 - **prolonged** average duration (vs. 3-5 days recommended)
-- **almost all patients** with negative cultures at 48 hours
+- **almost all patients** ultimately have negative cultures throughtout therapy
 - **$$$** estimated annual excess medication costs
 - Increased risk of antimicrobial resistance, C. difficile, and adverse drug events
 
