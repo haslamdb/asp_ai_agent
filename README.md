@@ -428,7 +428,7 @@ See [Setup Guide](./docs/SETUP.md) for detailed deployment instructions.
 - Prepare for national deployment
 
 ### National Deployment 🚀 (Year 2+)
-- Deploy to 65 pediatric ID fellowship programs
+- Deploy to pediatric ID fellowship programs
 - Integration with national ASP certification
 - Multi-institutional research collaboration
 - Continuous module expansion
