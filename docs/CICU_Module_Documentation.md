@@ -340,7 +340,7 @@ This module is grounded in:
 - IDSA/SHEA/PIDS Antibiotic Stewardship Guidelines
 - Behavioral economics and implementation science literature
 - Published CICU antibiotic stewardship interventions
-- Quality improvement methodology (IHI Model for Improvement)
+- Quality improvement methodology 
 
 ## Future Enhancements
 
