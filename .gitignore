@@ -79,3 +79,7 @@ models/
 # Backups
 backup-*.tar.gz
 *.backup
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
