@@ -1,0 +1,23 @@
+[Unit]
+Description=ASP AI Agent - Antimicrobial Stewardship Platform
+After=network.target
+
+[Service]
+Type=simple
+User=david
+Group=david
+WorkingDirectory=/home/david/projects/asp_ai_agent
+Environment="PATH=/home/david/miniforge3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+EnvironmentFile=/home/david/projects/asp_ai_agent/.env
+ExecStart=/home/david/miniforge3/bin/python /home/david/projects/asp_ai_agent/unified_server.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/david/projects/asp_ai_agent/logs/asp-ai-agent.log
+StandardError=append:/home/david/projects/asp_ai_agent/logs/asp-ai-agent-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
