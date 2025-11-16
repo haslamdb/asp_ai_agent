@@ -241,8 +241,8 @@
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
         const API_ENDPOINTS = {
-            gemini: isLocal ? 'http://localhost:5000' : 'https://asp-ai-agent.vercel.app/api/gemini',
-            claude: isLocal ? 'http://localhost:5000/claude' : 'https://asp-ai-agent.vercel.app/api/claude'
+            gemini: isLocal ? 'http://localhost:8080' : 'https://asp-ai-agent.vercel.app/api/gemini',
+            claude: isLocal ? 'http://localhost:8080/claude' : 'https://asp-ai-agent.vercel.app/api/claude'
         };
         
         // Basic chat interface functionality
