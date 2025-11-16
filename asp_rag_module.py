@@ -54,10 +54,14 @@ class ASPLiteratureRAG:
             chunk_overlap: Overlap between chunks in tokens (default: 50)
             collection_name: ChromaDB collection name
         """
-        # Set default paths
+        # Set default paths (use persistent storage in production for embeddings)
         project_root = Path(__file__).parent
+        data_dir = Path('/var/app/current/data') if Path('/var/app/current/data').exists() else project_root
+
+        # PDFs stay in the application directory (read-only literature)
         self.pdf_dir = Path(pdf_dir) if pdf_dir else project_root / "asp_literature" / "pdfs"
-        self.embeddings_dir = Path(embeddings_dir) if embeddings_dir else project_root / "asp_literature" / "embeddings"
+        # Embeddings go to persistent storage (generated at runtime)
+        self.embeddings_dir = Path(embeddings_dir) if embeddings_dir else data_dir / "literature_embeddings"
 
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap

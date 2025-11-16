@@ -15,7 +15,9 @@ from enum import Enum
 import os
 
 # Database configuration
-DB_PATH = os.environ.get('ASP_DB_PATH', 'asp_sessions.db')
+# Use persistent storage directory in production (AWS EFS mount point)
+DEFAULT_DB_PATH = '/var/app/current/data/asp_sessions.db' if os.path.exists('/var/app/current/data') else 'asp_sessions.db'
+DB_PATH = os.environ.get('ASP_DB_PATH', DEFAULT_DB_PATH)
 
 class ModuleStatus(Enum):
     """Status for module completion"""

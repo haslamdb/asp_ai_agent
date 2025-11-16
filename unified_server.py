@@ -44,6 +44,10 @@ from modules.cicu_prolonged_antibiotics_module import CICUAntibioticsModule, Dif
 # Import ASP Literature RAG
 from asp_rag_module import ASPLiteratureRAG
 
+# Import Expert Knowledge RAG and Enhanced Feedback Generator
+from expert_knowledge_rag import ExpertKnowledgeRAG
+from enhanced_feedback_generator import EnhancedFeedbackGenerator
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
@@ -66,6 +70,19 @@ try:
 except Exception as e:
     print(f"⚠ Warning: Could not initialize ASP RAG: {e}")
     asp_rag = None
+
+# Initialize Expert Knowledge RAG and Enhanced Feedback Generator
+print("Initializing Expert Knowledge RAG system...")
+try:
+    expert_rag = ExpertKnowledgeRAG()
+    enhanced_feedback_gen = EnhancedFeedbackGenerator()
+    print(f"✓ Expert Knowledge RAG loaded")
+    print(f"  - Expert corrections: {expert_rag.corrections_collection.count()}")
+    print(f"  - Expert exemplars: {expert_rag.exemplars_collection.count()}")
+except Exception as e:
+    print(f"⚠ Warning: Could not initialize Expert RAG: {e}")
+    expert_rag = None
+    enhanced_feedback_gen = None
 
 # Configuration - load from environment with defaults
 OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
@@ -608,6 +625,132 @@ IMPORTANT GUIDANCE:
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'AI evaluation failed: {str(e)}'}), 500
+
+@app.route('/api/feedback/enhanced', methods=['POST'])
+def enhanced_feedback():
+    """
+    Enhanced AI feedback using Expert Knowledge RAG
+
+    Combines literature RAG + expert corrections + exemplar responses
+    for higher quality, expert-validated feedback
+    """
+    if not enhanced_feedback_gen:
+        return jsonify({
+            'error': 'Enhanced feedback system not available',
+            'fallback': True
+        }), 503
+
+    data = request.json or {}
+    user_input = data.get('input', '')
+    module_id = data.get('module_id', 'cicu_prolonged_antibiotics')
+    scenario_id = data.get('scenario_id', 'cicu_beginner_data_analysis')
+    level = data.get('level', 'beginner')
+
+    if not user_input:
+        return jsonify({'error': 'No input provided'}), 400
+
+    try:
+        # Use Enhanced Feedback Generator
+        print(f"Generating enhanced feedback for: {scenario_id} ({level})")
+
+        result = enhanced_feedback_gen.generate_feedback(
+            module_id=module_id,
+            scenario_id=scenario_id,
+            user_response=user_input,
+            difficulty_level=level,
+            use_expert_knowledge=True,
+            use_literature=True
+        )
+
+        # The enhanced_prompt includes expert corrections and exemplars
+        # Now we need to send it to an LLM to generate the actual feedback
+
+        # Try LLMs in order: Claude -> Gemini -> Ollama
+        response_data = None
+        model_used = None
+        errors = []
+
+        # Try Claude first (best quality)
+        if ANTHROPIC_API_KEY:
+            try:
+                print("Trying Claude for enhanced feedback...")
+                from anthropic import Anthropic
+                client = Anthropic(api_key=ANTHROPIC_API_KEY)
+                message = client.messages.create(
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=3000,
+                    messages=[{"role": "user", "content": result['enhanced_prompt']}]
+                )
+                response_data = message.content[0].text
+                model_used = "claude-3.5-sonnet"
+                print(f"Claude succeeded with enhanced feedback!")
+            except Exception as e:
+                errors.append(f"Claude failed: {e}")
+                print(errors[-1])
+
+        # Fallback to Gemini if Claude failed
+        if not response_data and GEMINI_API_KEY:
+            try:
+                print("Trying Gemini for enhanced feedback...")
+                import google.generativeai as genai
+                genai.configure(api_key=GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(result['enhanced_prompt'])
+                response_data = response.text
+                model_used = "gemini-1.5-flash"
+                print(f"Gemini succeeded with enhanced feedback!")
+            except Exception as e:
+                errors.append(f"Gemini failed: {e}")
+                print(errors[-1])
+
+        # Fallback to local Ollama if both failed
+        if not response_data:
+            try:
+                print("Trying Ollama for enhanced feedback...")
+                default_model = os.environ.get('OLLAMA_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+                response = requests.post(
+                    f"{OLLAMA_API}/api/generate",
+                    json={
+                        'model': default_model,
+                        'prompt': result['enhanced_prompt'],
+                        'stream': False
+                    },
+                    timeout=120
+                )
+                if response.status_code == 200:
+                    response_data = response.json().get('response', '')
+                    model_used = f"ollama:{default_model}"
+                    print(f"Ollama succeeded with enhanced feedback!")
+                else:
+                    errors.append(f"Ollama failed: {response.text}")
+            except Exception as e:
+                errors.append(f"Ollama failed: {e}")
+                print(errors[-1])
+
+        if response_data:
+            return jsonify({
+                'success': True,
+                'response': response_data,
+                'model': model_used,
+                'enhanced': True,
+                'sources': result['sources'],
+                'metadata': result['metadata']
+            })
+        else:
+            error_summary = '; '.join(errors) if errors else 'No models attempted'
+            return jsonify({
+                'error': f'All AI models failed: {error_summary}',
+                'success': False
+            }), 500
+
+    except Exception as e:
+        print(f"Error in enhanced feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': f'Enhanced feedback failed: {str(e)}',
+            'success': False
+        }), 500
 
 @app.route('/api/conversation/process', methods=['POST'])
 def process_conversation():
@@ -1665,6 +1808,7 @@ if __name__ == '__main__':
     print("  GET  /api/models      - List available models")
     print("  POST /api/chat        - Chat with any model")
     print("  POST /api/asp-feedback - ASP-specific feedback")
+    print("  POST /api/feedback/enhanced - Enhanced feedback with Expert RAG")
     print("  GET  /api/modules/cicu/scenario - CICU scenarios")
     print("  GET  /api/modules/cicu/hint     - CICU hints")
     print("  POST /api/modules/cicu/evaluate - CICU evaluation")
@@ -1674,4 +1818,8 @@ if __name__ == '__main__':
     print("  export GEMINI_API_KEY='your-key-here'")
     print()
 
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    # Production settings for AWS Elastic Beanstalk
+    port = int(os.environ.get('PORT', 8080))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+
+    app.run(host='0.0.0.0', port=port, debug=debug)
