@@ -47,12 +47,14 @@
                     <h1 class="text-3xl font-bold">ASP Leadership Lab</h1>
                     <p class="mt-1 text-lg opacity-90">Advanced Competency Modules for ID Fellows</p>
                 </div>
+                <a href="/logout" class="text-sm px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                    Logout
+                </a>
                 <!-- AI Model Selector -->
                 <div class="bg-white/10 rounded-lg p-3">
                     <label for="ai-model-select" class="block text-sm font-medium mb-2">AI Model:</label>
                     <select id="ai-model-select" class="bg-white text-gray-900 rounded px-3 py-1 text-sm">
-                        <option value="gemini">Gemini 2.5 Flash</option>
-                        <option value="claude">Claude 3.5 Sonnet</option>
+                        <option value="">Loading models...</option>
                     </select>
                 </div>
             </div>
@@ -175,31 +177,65 @@
 
     <script>
         // === Common Elements & API Config ===
-        // Check if we're running locally (including local network IPs like 192.168.x.x)
+        // Check if we're running on our own server (local or asp-ai-agent.com)
         const isLocal = window.location.hostname === 'localhost' ||
                        window.location.hostname === '127.0.0.1' ||
                        window.location.hostname.startsWith('192.168.') ||
                        window.location.hostname.startsWith('10.') ||
+                       window.location.hostname.includes('asp-ai-agent.com') ||
                        window.location.protocol === 'file:';
 
-        // Use current host for local, Vercel for production
-        const currentHost = `http://${window.location.hostname}:${window.location.port || 8080}`;
+        // Use current host with correct protocol
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+        const currentHost = `${protocol}//${hostname}${port ? ':' + port : ''}`;
 
-        // API endpoints for different models
-        const API_ENDPOINTS = {
-            gemini: isLocal ? currentHost : 'https://asp-ai-agent.vercel.app/api/gemini',
-            claude: isLocal ? `${currentHost}/claude` : 'https://asp-ai-agent.vercel.app/api/claude'
-        };
-        
         // Get current selected model
         const modelSelector = document.getElementById('ai-model-select');
-        let currentModel = 'gemini'; // Default to Gemini
-        
-        // Update API endpoint when model changes
+        let currentModel = null;
+        let availableModels = [];
+
+        // Load available models from API
+        async function loadModels() {
+            try {
+                const response = await fetch(`${currentHost}/api/models`);
+                const data = await response.json();
+                availableModels = data.models;
+
+                // Populate dropdown
+                modelSelector.innerHTML = '';
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.name;
+                    modelSelector.appendChild(option);
+                });
+
+                // Set default model
+                if (data.models.length > 0) {
+                    // Prefer Gemini or Claude if available
+                    const defaultModel = data.models.find(m => m.id.includes('gemini')) ||
+                                       data.models.find(m => m.id.includes('claude')) ||
+                                       data.models[0];
+                    currentModel = defaultModel.id;
+                    modelSelector.value = currentModel;
+                }
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                modelSelector.innerHTML = '<option value="">Failed to load models</option>';
+            }
+        }
+
+        // Update current model when selection changes
         modelSelector.addEventListener('change', (e) => {
             currentModel = e.target.value;
-            console.log(`Switched to ${currentModel} model`);
+            const model = availableModels.find(m => m.id === currentModel);
+            console.log(`Switched to ${model?.name || currentModel}`);
         });
+
+        // Load models on page load
+        loadModels();
         
         // Initialize the Markdown converter with tables enabled
         const markdownConverter = new showdown.Converter({ tables: true });
@@ -344,38 +380,21 @@ Ground your recommendations in real-world evidence.`;
          * Implements retry logic with exponential backoff.
          */
         async function makeApiCall(systemPrompt, userMessage, retries = 3, delay = 1000) {
-            const apiUrl = API_ENDPOINTS[currentModel];
-            
             try {
-                let payload, response;
-                
-                if (currentModel === 'gemini') {
-                    // Gemini API format
-                    payload = {
-                        contents: [{ parts: [{ text: userMessage }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        tools: [{ "google_search": {} }], 
-                    };
-                    
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                } else if (currentModel === 'claude') {
-                    // Claude API format
-                    payload = {
-                        system: systemPrompt,
-                        messages: [{ role: 'user', content: userMessage }],
-                        max_tokens: 4000
-                    };
-                    
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                }
+                // Use unified /api/chat endpoint that works with all models
+                const payload = {
+                    model: currentModel,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userMessage }
+                    ]
+                };
+
+                const response = await fetch(`${currentHost}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
                 if (!response.ok) {
                     // Handle rate limiting (429) and other server errors
@@ -387,28 +406,11 @@ Ground your recommendations in real-world evidence.`;
                 }
 
                 const result = await response.json();
-                
-                // Extract text and sources based on model
-                let text, sources = [];
-                
-                if (currentModel === 'gemini') {
-                    // Gemini response format
-                    text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    // Extract grounding sources from Gemini
-                    const groundingMetadata = result.candidates?.[0]?.groundingMetadata;
-                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                        sources = groundingMetadata.groundingAttributions
-                            .map(attr => attr.web)
-                            .filter(web => web && web.uri && web.title);
-                    }
-                } else if (currentModel === 'claude') {
-                    // Claude response format
-                    text = result.text || result.content?.[0]?.text;
-                    // Note: Claude doesn't have built-in search like Gemini, so sources will be empty
-                    sources = [];
-                }
-                
+
+                // Extract text and sources from unified response
+                const text = result.response || result.text || '';
+                const sources = result.citations || result.sources || [];
+
                 return { text, sources };
 
             } catch (error) {
