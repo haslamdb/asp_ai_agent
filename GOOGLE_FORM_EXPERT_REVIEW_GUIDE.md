@@ -83,11 +83,53 @@ This guide helps you create a Google Form to collect expert corrections of AI fe
 1. Go to https://forms.google.com
 2. Click **"+ Blank"** to create a new form
 3. Name it: **"ASP AI Agent - Expert Feedback Review"**
-4. Add a description:
+4. Add this description:
    ```
-   This form collects expert reviews of AI-generated feedback for the ASP AI Agent.
-   Your input will help improve the quality of feedback provided to fellows.
-   Estimated time: 5-10 minutes per review.
+   EXPERT FEEDBACK REQUEST
+   ASP Fellowship AI Curriculum Development
+
+   BACKGROUND & PURPOSE
+
+   A recent national survey of pediatric infectious diseases fellowship directors
+   (41.5% response rate) found that while 63% of programs have a formal antimicrobial
+   stewardship (AS) curriculum, significant gaps exist in advanced competencies.
+   Program directors expressed low satisfaction with fellows' readiness for leadership
+   roles and identified key training deficits in:
+
+   • Leadership skills
+   • Data analytics
+   • Understanding psychosocial factors of prescribing
+
+   All respondents agreed on the need for a standardized curriculum. These findings
+   support the development of a national, advanced pediatric AS curriculum to
+   complement existing foundational training.
+
+   WHY WE'RE DEVELOPING AN AI-POWERED CURRICULUM
+
+   To address these identified gaps, we are developing an AI-powered adaptive learning
+   platform that provides fellows with individualized feedback on complex ASP scenarios.
+   The AI generates real-time feedback on fellows' responses across four key competency
+   domains: data analysis, behavioral intervention, implementation science, and clinical
+   decision making.
+
+   YOUR ROLE AS AN EXPERT REVIEWER
+
+   You have been selected for this review because of your recognized expertise in
+   antimicrobial stewardship. Your input is critical to ensure the AI feedback is
+   both clinically accurate and pedagogically effective.
+
+   This form collects your expert corrections of AI-generated feedback. Your insights
+   will directly improve the quality of feedback provided to fellows nationwide.
+
+   PUBLICATION & CO-AUTHORSHIP
+
+   We intend to publish a manuscript describing this curriculum development process
+   and its validation. All experts who provide substantive input (defined as reviewing
+   3 or more AI feedback samples) will be offered co-authorship on the manuscript.
+
+   ESTIMATED TIME: 10-15 minutes per review
+
+   Thank you for contributing your expertise to advance ASP fellowship training!
    ```
 
 ### 2. Add Questions

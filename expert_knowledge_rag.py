@@ -91,10 +91,12 @@ class ExpertKnowledgeRAG:
             embeddings_dir: Directory for ChromaDB embeddings (default: asp_literature/expert_embeddings/)
             embedding_model: Sentence transformer model (same as literature RAG for consistency)
         """
-        # Set default paths
+        # Set default paths (use persistent storage in production)
         project_root = Path(__file__).parent
-        self.db_path = db_path or str(project_root / "asp_expert_knowledge.db")
-        self.embeddings_dir = Path(embeddings_dir) if embeddings_dir else project_root / "asp_literature" / "expert_embeddings"
+        data_dir = Path('/var/app/current/data') if Path('/var/app/current/data').exists() else project_root
+
+        self.db_path = db_path or str(data_dir / "asp_expert_knowledge.db")
+        self.embeddings_dir = Path(embeddings_dir) if embeddings_dir else data_dir / "expert_embeddings"
 
         # Ensure directories exist
         self.embeddings_dir.mkdir(parents=True, exist_ok=True)
