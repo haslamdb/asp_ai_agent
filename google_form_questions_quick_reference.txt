@@ -1,0 +1,186 @@
+GOOGLE FORM QUICK REFERENCE - COPY & PASTE QUESTIONS
+====================================================
+
+Form Title: ASP AI Agent - Expert Feedback Review
+
+Form Description:
+This form collects expert reviews of AI-generated feedback for the ASP AI Agent.
+Your input will help improve the quality of feedback provided to fellows.
+Estimated time: 5-10 minutes per review.
+
+====================================================
+QUESTIONS TO ADD (in order):
+====================================================
+
+1. Expert Name
+   Type: Short answer
+   Required: YES
+
+2. Email
+   Type: Short answer
+   Required: YES
+
+3. Institution/Affiliation
+   Type: Short answer
+   Required: NO
+
+4. Module ID
+   Type: Dropdown
+   Required: YES
+   Options:
+   - cicu_prolonged_antibiotics
+
+5. Scenario ID
+   Type: Dropdown
+   Required: YES
+   Options:
+   - cicu_beginner_data_analysis
+   - cicu_beginner_intervention
+   - cicu_intermediate_implementation
+   - cicu_advanced_sustainability
+
+6. Difficulty Level
+   Type: Dropdown
+   Required: YES
+   Options:
+   - beginner
+   - intermediate
+   - advanced
+   - expert
+
+7. Competency Area
+   Type: Dropdown
+   Required: YES
+   Options:
+   - data_analysis
+   - behavioral_intervention
+   - implementation_science
+   - clinical_decision_making
+
+8. Fellow's Original Response
+   Type: Paragraph
+   Required: YES
+   Description: Copy the fellow's response that you're reviewing
+
+9. AI-Generated Feedback
+   Type: Paragraph
+   Required: YES
+   Description: Copy the AI feedback that was provided to the fellow
+
+10. Was the AI feedback medically accurate?
+    Type: Multiple choice
+    Required: YES
+    Options:
+    - Yes
+    - No
+    - Partially
+
+11. Was the AI feedback pedagogically helpful?
+    Type: Multiple choice
+    Required: YES
+    Options:
+    - Yes
+    - No
+    - Partially
+
+12. Accuracy Rating
+    Type: Linear scale (1-5)
+    Required: YES
+    Label for 1: Inaccurate/Harmful
+    Label for 5: Excellent
+
+13. Helpfulness Rating
+    Type: Linear scale (1-5)
+    Required: YES
+    Label for 1: Not helpful
+    Label for 5: Very helpful
+
+14. Expert Correction
+    Type: Paragraph
+    Required: YES
+    Description: What feedback would YOU give instead? Be specific and actionable.
+
+15. Expert Reasoning
+    Type: Paragraph
+    Required: YES
+    Description: Why did you make these changes? What was the AI missing?
+
+16. What did the AI miss?
+    Type: Paragraph
+    Required: YES
+    Description: List the key things the AI overlooked (comma-separated). Example: "Requiring specific formula, Addressing power dynamics, Checking for safety protocols"
+
+17. What did the AI do well?
+    Type: Paragraph
+    Required: NO
+    Description: List things the AI got right (comma-separated)
+
+18. Additional Comments
+    Type: Paragraph
+    Required: NO
+    Description: Any other observations or suggestions for improving the AI feedback?
+
+====================================================
+SETTINGS TO CONFIGURE:
+====================================================
+
+General Settings:
+☐ Collect email addresses (YES)
+☐ Limit to 1 response (optional - your choice)
+☐ Allow response editing (optional)
+
+Presentation Settings:
+☑ Show progress bar
+☑ Shuffle question order (NO - keep in logical order)
+Confirmation message: "Thank you for your expert review! Your feedback will help improve the ASP AI Agent."
+
+====================================================
+SAMPLE INVITATION EMAIL:
+====================================================
+
+Subject: Expert Review Needed - ASP AI Agent Feedback (10 min)
+
+Dear Dr. [Name],
+
+I'm developing an AI-powered teaching tool for antimicrobial stewardship fellowship training. Before we launch, I need expert validation of the AI-generated feedback to ensure it's clinically accurate and pedagogically sound.
+
+Would you be willing to spend 10-15 minutes reviewing 1-2 AI feedback samples?
+
+Review Form: [INSERT YOUR GOOGLE FORM LINK HERE]
+
+What you'll do:
+- Review a fellow's response and the AI feedback they received
+- Rate the AI feedback quality (2 quick ratings)
+- Provide what YOU would say instead
+- Note what the AI missed
+
+Your expertise would really strengthen this tool, and you'll be acknowledged in all related publications.
+
+Thank you for considering!
+
+Best regards,
+[Your Name]
+
+P.S. Your responses are anonymous and will only be used to improve the AI system.
+
+====================================================
+AFTER COLLECTING RESPONSES:
+====================================================
+
+1. Click "Responses" tab in Google Form
+2. Click green Sheets icon to open in Google Sheets
+3. File → Download → Comma-separated values (.csv)
+4. Save as: expert_reviews_YYYY-MM-DD.csv
+5. Import to system:
+
+   python add_expert_knowledge.py corrections expert_reviews_YYYY-MM-DD.csv
+
+====================================================
+EXPECTED CSV HEADERS (must match exactly):
+====================================================
+
+Timestamp,Expert Name,Module ID,Scenario ID,Difficulty Level,Competency Area,User Response,AI Feedback,Expert Correction,Expert Reasoning,What AI Missed,What AI Did Well
+
+If your exported CSV has different headers, rename the first row to match these exactly.
+
+====================================================
