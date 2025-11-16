@@ -39,11 +39,14 @@
                     <h1 class="text-3xl font-bold">ASP AI Agent</h1>
                     <p class="mt-1 text-lg opacity-90">Multi-Model Interface with Local & Cloud AI</p>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-4">
                     <span id="connection-status" class="flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                         <span class="text-sm">Connected</span>
                     </span>
+                    <a href="/logout" class="text-sm px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -104,10 +107,10 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Module Type:</label>
-                    <select id="module-type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="business_case">Business Case Review</option>
-                        <option value="prescriber_psychology">Prescriber Psychology</option>
-                        <option value="general">General ASP Feedback</option>
+                    <select id="module-type" class="w-full px-4 py-3 rounded-lg border-2 border-purple-300 bg-purple-50 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-gray-900 font-medium cursor-pointer hover:bg-purple-100 transition">
+                        <option value="business_case">📊 Business Case Review</option>
+                        <option value="prescriber_psychology">🧠 Prescriber Psychology</option>
+                        <option value="general" selected>💡 General ASP Feedback</option>
                     </select>
                 </div>
                 
@@ -137,8 +140,11 @@
     </main>
 
     <script>
-        // Use current host instead of hardcoded localhost
-        const API_BASE = `http://${window.location.hostname}:${window.location.port || 8080}`;
+        // Use current host with correct protocol
+        const protocol = window.location.protocol; // http: or https:
+        const hostname = window.location.hostname;
+        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+        const API_BASE = `${protocol}//${hostname}${port ? ':' + port : ''}`;
         const converter = new showdown.Converter({ tables: true });
         let currentModel = null;
         let availableModels = [];
@@ -194,12 +200,16 @@
                 
                 // Update models grid
                 updateModelsGrid(data.models);
-                
-                // Set default model if available
+
+                // Set default model - prefer Claude Sonnet 4.5, otherwise first available
                 if (data.models.length > 0) {
-                    currentModel = data.models[0].id;
+                    const claudeSonnet = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('sonnet')
+                    );
+                    const defaultModel = claudeSonnet || data.models[0];
+                    currentModel = defaultModel.id;
                     select.value = currentModel;
-                    updateModelInfo(data.models[0]);
+                    updateModelInfo(defaultModel);
                 }
             } catch (error) {
                 console.error('Failed to load models:', error);
@@ -339,52 +349,93 @@
         async function getASPFeedback() {
             const moduleType = document.getElementById('module-type').value;
             const input = document.getElementById('module-input').value.trim();
-            
-            if (!input || !currentModel) {
-                alert('Please select a model and enter some input');
+
+            console.log('=== ASP Feedback Request ===');
+            console.log('Module Type:', moduleType);
+            console.log('Input length:', input.length);
+            console.log('Current Model:', currentModel);
+            console.log('Available Models:', availableModels.length);
+
+            if (!input) {
+                alert('Please enter some input');
                 return;
             }
-            
+
+            // If no model selected, use first available model
+            if (!currentModel && availableModels.length > 0) {
+                currentModel = availableModels[0].id;
+                document.getElementById('model-select').value = currentModel;
+                console.log('Auto-selected model:', currentModel);
+            }
+
+            if (!currentModel) {
+                alert('No models available. Please refresh the page and try again.');
+                console.error('No models available!');
+                return;
+            }
+
             const feedbackDiv = document.getElementById('asp-feedback');
             const contentDiv = document.getElementById('feedback-content');
             const citationsDiv = document.getElementById('citations');
             const citationsList = document.getElementById('citations-list');
-            
+
             feedbackDiv.classList.remove('hidden');
-            contentDiv.innerHTML = '<div class="spinner mx-auto"></div>';
+            contentDiv.innerHTML = '<div class="flex items-center justify-center"><div class="spinner"></div><span class="ml-3 text-gray-600">Processing your request...</span></div>';
             citationsDiv.classList.add('hidden');
-            
+
+            const requestPayload = {
+                module: moduleType,
+                input: input,
+                model: currentModel
+            };
+            console.log('Request Payload:', requestPayload);
+
             try {
-                const response = await fetch(`${API_BASE}/api/asp-feedback`, {
+                const url = `${API_BASE}/api/asp-feedback`;
+                console.log('Sending request to:', url);
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        module: moduleType,
-                        input: input,
-                        model: currentModel
-                    })
+                    body: JSON.stringify(requestPayload)
                 });
-                
+
+                console.log('Response status:', response.status);
+                console.log('Response OK?:', response.ok);
+
                 const data = await response.json();
-                
+                console.log('Response data:', data);
+
                 if (response.ok) {
-                    contentDiv.innerHTML = converter.makeHtml(data.response);
-                    
+                    if (data.response) {
+                        contentDiv.innerHTML = converter.makeHtml(data.response);
+                        console.log('Success! Response received');
+                    } else {
+                        contentDiv.innerHTML = `<p class="text-yellow-600">No response content received from server</p>`;
+                        console.warn('No response content in data:', data);
+                    }
+
                     // Show citations if available
                     if (data.citations && data.citations.length > 0) {
                         citationsDiv.classList.remove('hidden');
                         citationsList.innerHTML = '';
                         data.citations.forEach(cite => {
                             const li = document.createElement('li');
-                            li.innerHTML = `<strong>${cite.title}</strong> (${cite.year}) - Relevance: ${cite.score.toFixed(2)}`;
+                            li.innerHTML = `<strong>${cite.title}</strong> (${cite.year || 'N/A'}) - Relevance: ${cite.score?.toFixed(2) || 'N/A'}`;
                             citationsList.appendChild(li);
                         });
+                        console.log('Citations displayed:', data.citations.length);
                     }
                 } else {
-                    contentDiv.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+                    const errorMsg = data.error || `Server returned status ${response.status}`;
+                    contentDiv.innerHTML = `<p class="text-red-600"><strong>Error:</strong> ${errorMsg}</p>`;
+                    console.error('API Error:', errorMsg, data);
                 }
             } catch (error) {
-                contentDiv.innerHTML = `<p class="text-red-600">Failed to get feedback: ${error.message}</p>`;
+                const errorMsg = `Failed to get feedback: ${error.message}`;
+                contentDiv.innerHTML = `<p class="text-red-600"><strong>Request Failed:</strong> ${error.message}</p>
+                    <p class="text-sm text-gray-600 mt-2">Check browser console for details</p>`;
+                console.error('Fetch Error:', error);
             }
         }
     </script>

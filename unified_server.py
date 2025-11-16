@@ -8,8 +8,9 @@ Integrates:
 - Anthropic Claude API
 """
 
-from flask import Flask, request, jsonify, Response, stream_with_context, session, send_file
+from flask import Flask, request, jsonify, Response, stream_with_context, session, send_file, redirect, url_for
 from flask_cors import CORS
+from flask_login import LoginManager, login_required, current_user
 import requests
 import os
 import json
@@ -25,6 +26,10 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Import authentication models and routes
+from auth_models import db, User, UserSession as AuthUserSession, UserProgress as AuthUserProgress
+from auth_routes import auth_bp
 
 # Import session management
 from session_manager import (
@@ -50,6 +55,27 @@ from enhanced_feedback_generator import EnhancedFeedbackGenerator
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'asp-ai-agent-secret-key-change-in-production')
+
+# Configure database
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///asp_ai_agent.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database
+db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Register authentication blueprint
+app.register_blueprint(auth_bp)
+
 CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*', 'file://*', 'https://haslamdb.github.io'], supports_credentials=True)
 
 # Initialize all managers
@@ -97,8 +123,10 @@ ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 
 @app.route('/')
 def index():
-    """Serve the main index page"""
-    return send_file('index.html')
+    """Redirect to login or dashboard"""
+    if current_user.is_authenticated:
+        return redirect('/dashboard')
+    return redirect('/login')
 
 @app.route('/<path:filename>')
 def serve_static(filename):
@@ -116,6 +144,8 @@ def health_check():
         'timestamp': datetime.now().isoformat(),
         'services': check_services()
     })
+
+# Old logout routes removed - now handled by auth_bp
 
 @app.route('/api/session/create', methods=['POST'])
 def create_session():
@@ -1831,25 +1861,53 @@ if __name__ == '__main__':
     print("=" * 60)
     print("Unified AI Server for ASP AI Agent")
     print("=" * 60)
-    
+
+    # Create database tables on first run
+    with app.app_context():
+        db.create_all()
+        print("\n✓ Database initialized")
+
+        # Check if admin user exists, create if not
+        admin = User.query.filter_by(is_admin=True).first()
+        if not admin:
+            print("  Creating default admin user...")
+            admin = User(
+                email='admin@asp-ai-agent.com',
+                full_name='Admin User',
+                is_admin=True,
+                is_active=True,
+                email_verified=True
+            )
+            admin.set_password('admin123')  # Change this in production!
+            db.session.add(admin)
+            db.session.commit()
+            print(f"  ✓ Admin user created: admin@asp-ai-agent.com / admin123")
+            print(f"    WARNING: Change this password immediately!")
+
     print("\nChecking services...")
     services = check_services()
-    
+
     print("\nAvailable Services:")
     print(f"  Ollama: {services.get('ollama', {}).get('status', 'offline')}")
     if services.get('ollama', {}).get('models'):
         for model in services['ollama']['models']:
             print(f"    - {model}")
-    
+
     print(f"  Citation Assistant: {services.get('citation_assistant', {}).get('status', 'offline')}")
     print(f"  Google Gemini: {services.get('gemini', {}).get('status', 'not_configured')}")
     print(f"  Anthropic Claude: {services.get('claude', {}).get('status', 'not_configured')}")
-    
+
     print("\n" + "=" * 60)
     print("Server running on http://localhost:8080")
     print("=" * 60)
 
-    print("\nEndpoints:")
+    print("\nAuthentication Endpoints:")
+    print("  GET  /login           - User login page")
+    print("  GET  /signup          - User registration page")
+    print("  GET  /dashboard       - User dashboard (requires login)")
+    print("  GET  /logout          - User logout")
+
+    print("\nAPI Endpoints:")
     print("  GET  /health          - Health check")
     print("  GET  /api/models      - List available models")
     print("  POST /api/chat        - Chat with any model")
