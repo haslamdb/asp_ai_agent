@@ -916,26 +916,72 @@ def claude_endpoint():
     system_prompt = data.get('system', '')
     messages = data.get('messages', [])
     max_tokens = data.get('max_tokens', 4000)
-    
+
     if not messages:
         return jsonify({'error': 'Messages are required'}), 400
-    
+
     try:
         # Use Claude 3.5 Sonnet as default
         result = claude_chat('3-sonnet', messages, system_prompt)
-        
-        if result[1] == 200:
-            response_data = result[0].get_json()
-            # Transform to match expected frontend format
+
+        # Check if result is a tuple (error case) or Response (success case)
+        if isinstance(result, tuple):
+            return result  # Error response
+        else:
+            # Success - transform response to match expected frontend format
+            response_data = result.get_json()
             return jsonify({
                 'text': response_data.get('response', ''),
                 'model': response_data.get('model', ''),
                 'usage': response_data.get('usage', {})
             })
-        else:
-            return result
     except Exception as e:
         return jsonify({'error': f'Claude endpoint error: {str(e)}'}), 500
+
+@app.route('/gemini', methods=['POST'])
+@app.route('/', methods=['POST'])
+def gemini_endpoint():
+    """Direct Gemini endpoint for frontend compatibility (also handles root /)"""
+    data = request.json
+    system_prompt = data.get('systemInstruction', {}).get('parts', [{}])[0].get('text', '')
+    contents = data.get('contents', [])
+
+    if not contents:
+        return jsonify({'error': 'Contents are required'}), 400
+
+    # Convert Gemini format to standard messages format
+    messages = []
+    for content in contents:
+        parts = content.get('parts', [])
+        text = parts[0].get('text', '') if parts else ''
+        messages.append({
+            'role': 'user' if content.get('role', 'user') == 'user' else 'assistant',
+            'content': text
+        })
+
+    try:
+        # Use Gemini 2.0 Flash as default
+        result = gemini_chat('gemini-2.0-flash-exp', messages, system_prompt)
+
+        # Check if result is a tuple (error case) or Response (success case)
+        if isinstance(result, tuple):
+            return result  # Error response
+        else:
+            # Success - transform response to match expected frontend format
+            response_data = result.get_json()
+            return jsonify({
+                'candidates': [{
+                    'content': {
+                        'parts': [{
+                            'text': response_data.get('response', '')
+                        }]
+                    }
+                }],
+                'model': response_data.get('model', ''),
+                'usage': response_data.get('usage', {})
+            })
+    except Exception as e:
+        return jsonify({'error': f'Gemini endpoint error: {str(e)}'}), 500
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
