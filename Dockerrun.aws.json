@@ -1,0 +1,14 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "271003379980.dkr.ecr.us-east-2.amazonaws.com/asp-ai-agent:latest",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 8080,
+      "HostPort": 8080
+    }
+  ],
+  "Logging": "/var/log/nginx"
+}
