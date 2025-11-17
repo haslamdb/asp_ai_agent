@@ -40,10 +40,20 @@
                     <p class="mt-1 text-lg opacity-90">Multi-Model Interface with Local & Cloud AI</p>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-2">
+                        <label class="text-sm font-medium">AI Model:</label>
+                        <select id="model-select" class="bg-white text-gray-900 rounded px-2 py-1 text-sm">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <button id="refresh-models" class="text-sm hover:opacity-80">🔄</button>
+                    </div>
                     <span id="connection-status" class="flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                         <span class="text-sm">Connected</span>
                     </span>
+                    <a href="/dashboard" class="text-sm px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        ← Back to Dashboard
+                    </a>
                     <a href="/logout" class="text-sm px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
                         Logout
                     </a>
@@ -52,36 +62,19 @@
         </div>
     </header>
 
-    <!-- Model Selection Bar -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700">Select Model:</label>
-                    <select id="model-select" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <option value="">Loading models...</option>
-                    </select>
-                    <button id="refresh-models" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        🔄 Refresh
-                    </button>
-                </div>
-                <div id="model-info" class="text-sm text-gray-600"></div>
-            </div>
-            
-            <!-- Selected Model Display -->
-            <div id="models-grid" class="mt-4 max-w-md">
-                <!-- Selected model badge will be shown here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <!-- ASP Module Tester -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">ASP Module Tester</h2>
-            
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">ASP Module Tester</h2>
+                <!-- Selected Model Display -->
+                <div id="models-grid" class="flex items-center">
+                    <!-- Selected model badge will be shown here -->
+                </div>
+            </div>
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Module Type:</label>
@@ -104,7 +97,7 @@
                     <textarea id="module-input" rows="3"
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
                         placeholder="Enter your question or response..."
-                        onkeypress="if(event.key==='Enter' && event.ctrlKey) sendASPMessage()"></textarea>
+                        onkeydown="if(event.key==='Enter' && event.ctrlKey) { event.preventDefault(); sendASPMessage(); }"></textarea>
                     <div class="flex justify-between items-center">
                         <span class="text-xs text-gray-500">Press Ctrl+Enter to send</span>
                         <div class="space-x-2">
@@ -150,8 +143,10 @@
         // Use current host with correct protocol
         const protocol = window.location.protocol; // http: or https:
         const hostname = window.location.hostname;
-        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
-        const API_BASE = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+        const port = window.location.port;
+        // Include port in URL if it's not a standard port
+        const portSuffix = (port && port !== '80' && port !== '443') ? ':' + port : '';
+        const API_BASE = `${protocol}//${hostname}${portSuffix}`;
         const converter = new showdown.Converter({ tables: true });
         let currentModel = null;
         let availableModels = [];
@@ -190,12 +185,18 @@
 
         async function loadModels() {
             try {
+                console.log('Loading models from:', `${API_BASE}/api/models`);
                 const response = await fetch(`${API_BASE}/api/models`);
                 const data = await response.json();
                 availableModels = data.models;
-                
+                console.log('Models loaded:', data.models.length);
+
                 // Update select dropdown
                 const select = document.getElementById('model-select');
+                if (!select) {
+                    console.error('model-select element not found!');
+                    return;
+                }
                 select.innerHTML = '<option value="">Choose a model...</option>';
                 
                 data.models.forEach(model => {
@@ -213,7 +214,6 @@
                     const defaultModel = claudeSonnet || data.models[0];
                     currentModel = defaultModel.id;
                     select.value = currentModel;
-                    updateModelInfo(defaultModel);
                     // Update models grid to show only selected model
                     updateModelsGrid(data.models, currentModel);
                 }
@@ -275,7 +275,6 @@
             currentModel = e.target.value;
             const model = availableModels.find(m => m.id === currentModel);
             if (model) {
-                updateModelInfo(model);
                 updateModelsGrid(availableModels, currentModel);
             }
         });
