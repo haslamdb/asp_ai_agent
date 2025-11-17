@@ -5,9 +5,10 @@ Handles user accounts, authentication, and session tracking
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 import bcrypt
 import json
+import secrets
 
 db = SQLAlchemy()
 
@@ -29,6 +30,10 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
     email_verified = db.Column(db.Boolean, default=False)
+
+    # Email verification
+    verification_token = db.Column(db.String(100), unique=True)
+    verification_token_expires = db.Column(db.DateTime)
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -58,6 +63,29 @@ class User(UserMixin, db.Model):
         """Update last login timestamp"""
         self.last_login = datetime.utcnow()
         db.session.commit()
+
+    def generate_verification_token(self):
+        """Generate a new email verification token"""
+        self.verification_token = secrets.token_urlsafe(32)
+        self.verification_token_expires = datetime.utcnow() + timedelta(hours=24)
+        return self.verification_token
+
+    def verify_email(self):
+        """Mark email as verified and clear token"""
+        self.email_verified = True
+        self.verification_token = None
+        self.verification_token_expires = None
+        db.session.commit()
+
+    def is_verification_token_valid(self, token):
+        """Check if verification token is valid and not expired"""
+        if not self.verification_token or not self.verification_token_expires:
+            return False
+        if self.verification_token != token:
+            return False
+        if datetime.utcnow() > self.verification_token_expires:
+            return False
+        return True
 
     def to_dict(self):
         """Convert user to dictionary (excluding sensitive data)"""
