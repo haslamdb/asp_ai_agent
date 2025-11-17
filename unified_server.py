@@ -1355,15 +1355,23 @@ def asp_feedback():
     response_data = None
     model_used = None
 
-    # Try preferred model first, then fall back to best available
+    # Use the same code path as /api/chat for consistency
     if preferred_model:
-        result = chat_with_model(preferred_model, messages)
-        if isinstance(result, tuple) and len(result) == 2:
-            response_obj, status_code = result
-            if status_code == 200:
-                response_data = response_obj.get_json()
-                response_data['citations'] = citations
-                model_used = preferred_model
+        print(f"DEBUG: Trying preferred model: {preferred_model}")
+        try:
+            # Call unified_chat directly instead of chat_with_model
+            chat_request_data = {'model': preferred_model, 'messages': messages}
+            with app.test_request_context('/api/chat', method='POST', json=chat_request_data):
+                result = unified_chat()
+                if isinstance(result, tuple) and len(result) == 2:
+                    response_obj, status_code = result
+                    if status_code == 200:
+                        response_data = json.loads(response_obj.get_data(as_text=True))
+                        response_data['citations'] = citations
+                        model_used = preferred_model
+                        print(f"DEBUG: Success with preferred model")
+        except Exception as e:
+            print(f"DEBUG: Exception with preferred model: {e}")
 
     # Try models in order of preference for medical tasks if no response yet
     if not response_data:
@@ -1383,14 +1391,22 @@ def asp_feedback():
             if provider == 'ollama' and check_services().get('ollama', {}).get('status') != 'online':
                 continue
 
-            result = chat_with_model(model_id, messages)
-            if isinstance(result, tuple) and len(result) == 2:
-                response_obj, status_code = result
-                if status_code == 200:
-                    response_data = response_obj.get_json()
-                    response_data['citations'] = citations
-                    model_used = model_id
-                    break
+            print(f"DEBUG: Trying fallback model: {model_id}")
+            try:
+                # Call unified_chat directly instead of chat_with_model
+                chat_request_data = {'model': model_id, 'messages': messages}
+                with app.test_request_context('/api/chat', method='POST', json=chat_request_data):
+                    result = unified_chat()
+                    if isinstance(result, tuple) and len(result) == 2:
+                        response_obj, status_code = result
+                        if status_code == 200:
+                            response_data = json.loads(response_obj.get_data(as_text=True))
+                            response_data['citations'] = citations
+                            model_used = model_id
+                            print(f"DEBUG: Success with fallback model {model_id}")
+                            break
+            except Exception as e:
+                print(f"DEBUG: Exception with fallback model {model_id}: {e}")
     
     if response_data:
         # Process conversation context

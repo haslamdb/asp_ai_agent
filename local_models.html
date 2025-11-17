@@ -68,40 +68,18 @@
                 <div id="model-info" class="text-sm text-gray-600"></div>
             </div>
             
-            <!-- Available Models Display -->
-            <div id="models-grid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                <!-- Model badges will be inserted here -->
+            <!-- Selected Model Display -->
+            <div id="models-grid" class="mt-4 max-w-md">
+                <!-- Selected model badge will be shown here -->
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- Chat Interface -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chat with AI Models</h2>
-            
-            <div id="chat-messages" class="border rounded-lg p-4 h-96 overflow-y-auto mb-4 bg-gray-50">
-                <div class="text-gray-500 text-center py-8">
-                    Select a model and start chatting...
-                </div>
-            </div>
-            
-            <div class="flex space-x-2">
-                <input type="text" id="chat-input" 
-                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Type your message here..."
-                    onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()">
-                <button onclick="sendMessage()" 
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    Send
-                </button>
-            </div>
-        </div>
 
         <!-- ASP Module Tester -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">ASP Module Tester</h2>
             
             <div class="space-y-4">
@@ -114,29 +92,58 @@
                     </select>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Input:</label>
-                    <textarea id="module-input" rows="6" 
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Enter your business case, prescriber scenario, or ASP question..."></textarea>
+                <!-- Conversation History -->
+                <div id="asp-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto mb-4 bg-gray-50">
+                    <div class="text-gray-500 text-center py-8">
+                        Select a module type and start your conversation...
+                    </div>
                 </div>
-                
-                <button onclick="getASPFeedback()" 
-                    class="w-full px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    Get Expert Feedback
-                </button>
-                
-                <div id="asp-feedback" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="font-semibold text-gray-900 mb-2">Feedback:</h3>
-                    <div id="feedback-content" class="prose prose-sm max-w-none"></div>
-                    <div id="citations" class="hidden mt-4 pt-4 border-t">
-                        <h4 class="font-semibold text-gray-900 mb-2">Supporting Literature:</h4>
-                        <ul id="citations-list" class="text-sm space-y-1"></ul>
+
+                <!-- Input Area -->
+                <div class="flex flex-col space-y-2">
+                    <textarea id="module-input" rows="3"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        placeholder="Enter your question or response..."
+                        onkeypress="if(event.key==='Enter' && event.ctrlKey) sendASPMessage()"></textarea>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Press Ctrl+Enter to send</span>
+                        <div class="space-x-2">
+                            <button onclick="clearASPConversation()"
+                                class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm">
+                                Clear Chat
+                            </button>
+                            <button onclick="sendASPMessage()"
+                                class="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                Send Message
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
+        <!-- Chat Interface -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chat with AI Models</h2>
+
+            <div id="chat-messages" class="border rounded-lg p-4 h-48 overflow-y-auto mb-4 bg-gray-50">
+                <div class="text-gray-500 text-center py-8">
+                    Select a model and start chatting...
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input"
+                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="Type your message here..."
+                    onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()">
+                <button onclick="sendMessage()"
+                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Send
+                </button>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -197,9 +204,6 @@
                     option.textContent = model.name;
                     select.appendChild(option);
                 });
-                
-                // Update models grid
-                updateModelsGrid(data.models);
 
                 // Set default model - prefer Claude Sonnet 4.5, otherwise first available
                 if (data.models.length > 0) {
@@ -210,6 +214,8 @@
                     currentModel = defaultModel.id;
                     select.value = currentModel;
                     updateModelInfo(defaultModel);
+                    // Update models grid to show only selected model
+                    updateModelsGrid(data.models, currentModel);
                 }
             } catch (error) {
                 console.error('Failed to load models:', error);
@@ -218,33 +224,34 @@
             }
         }
 
-        function updateModelsGrid(models) {
+        function updateModelsGrid(models, selectedModelId) {
             const grid = document.getElementById('models-grid');
             grid.innerHTML = '';
-            
-            models.forEach(model => {
-                const badge = document.createElement('div');
-                badge.className = 'model-badge p-3 rounded-lg border cursor-pointer ' +
-                    (model.local ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300');
-                badge.onclick = () => selectModel(model);
-                
-                const emoji = model.provider === 'ollama' ? '🦙' :
-                             model.provider === 'anthropic' ? '🤖' :
-                             model.provider === 'google' ? '🔮' :
-                             model.provider === 'citation_assistant' ? '📚' : '🤖';
-                
-                badge.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-2xl">${emoji}</span>
-                        <div class="flex-1">
-                            <div class="font-medium text-sm">${model.name}</div>
-                            <div class="text-xs text-gray-600">${model.local ? 'Local' : 'Cloud'}</div>
-                        </div>
+
+            // Only show the selected model
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model) return;
+
+            const badge = document.createElement('div');
+            badge.className = 'model-badge p-3 rounded-lg border ' +
+                (model.local ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300');
+
+            const emoji = model.provider === 'ollama' ? '🦙' :
+                         model.provider === 'anthropic' ? '🤖' :
+                         model.provider === 'google' ? '🔮' :
+                         model.provider === 'citation_assistant' ? '📚' : '🤖';
+
+            badge.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">${emoji}</span>
+                    <div class="flex-1">
+                        <div class="font-medium text-sm">${model.name}</div>
+                        <div class="text-xs text-gray-600">${model.local ? 'Local' : 'Cloud'}</div>
                     </div>
-                `;
-                
-                grid.appendChild(badge);
-            });
+                </div>
+            `;
+
+            grid.appendChild(badge);
         }
 
         function selectModel(model) {
@@ -267,7 +274,10 @@
         document.getElementById('model-select').addEventListener('change', (e) => {
             currentModel = e.target.value;
             const model = availableModels.find(m => m.id === currentModel);
-            if (model) updateModelInfo(model);
+            if (model) {
+                updateModelInfo(model);
+                updateModelsGrid(availableModels, currentModel);
+            }
         });
 
         document.getElementById('refresh-models').addEventListener('click', loadModels);
@@ -276,14 +286,14 @@
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if (!message || !currentModel) return;
-            
+
             // Add user message to chat
             addChatMessage('user', message);
             input.value = '';
-            
+
             // Show typing indicator
-            const typingId = addChatMessage('assistant', '<div class="spinner"></div>', true);
-            
+            const typingId = addChatMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Thinking...</span></div>', true);
+
             try {
                 const response = await fetch(`${API_BASE}/api/chat`, {
                     method: 'POST',
@@ -293,15 +303,25 @@
                         messages: [{ role: 'user', content: message }]
                     })
                 });
-                
+
                 const data = await response.json();
-                
-                // Remove typing indicator
-                document.getElementById(typingId)?.remove();
-                
+
+                // Always remove typing indicator first - try multiple methods to ensure removal
+                const typingElement = document.getElementById(typingId);
+                if (typingElement) {
+                    typingElement.remove();
+                }
+                // Also remove any lingering "Thinking..." messages
+                const chatMessages = document.getElementById('chat-messages');
+                const thinkingMessages = chatMessages.querySelectorAll('.spinner');
+                thinkingMessages.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
+                });
+
                 if (response.ok) {
                     addChatMessage('assistant', data.response);
-                    
+
                     // Show citations if available
                     if (data.citations && data.citations.length > 0) {
                         let citationsHtml = '<div class="mt-2 text-xs text-gray-600">Sources: ';
@@ -310,13 +330,24 @@
                             if (i < data.citations.length - 1) citationsHtml += ', ';
                         });
                         citationsHtml += '</div>';
-                        addChatMessage('system', citationsHtml);
+                        addChatMessage('system', citationsHtml, true);
                     }
                 } else {
                     addChatMessage('error', `Error: ${data.error}`);
                 }
             } catch (error) {
-                document.getElementById(typingId)?.remove();
+                // Make sure to remove typing indicator on error too
+                const typingElement = document.getElementById(typingId);
+                if (typingElement) {
+                    typingElement.remove();
+                }
+                // Also remove any lingering spinners
+                const chatMessages = document.getElementById('chat-messages');
+                const thinkingMessages = chatMessages.querySelectorAll('.spinner');
+                thinkingMessages.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
+                });
                 addChatMessage('error', `Failed to send message: ${error.message}`);
             }
         }
@@ -327,11 +358,11 @@
             const messageId = 'msg-' + Date.now();
             messageDiv.id = messageId;
             messageDiv.className = 'mb-4 p-3 rounded-lg ' +
-                (role === 'user' ? 'bg-indigo-100 ml-auto max-w-xs md:max-w-md' :
-                 role === 'error' ? 'bg-red-100' :
-                 role === 'system' ? 'bg-gray-100 text-center' :
-                 'bg-gray-100 mr-auto max-w-xs md:max-w-md');
-            
+                (role === 'user' ? 'bg-indigo-100 ml-auto max-w-[90%]' :
+                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
+                 role === 'system' ? 'bg-gray-100 text-center max-w-[90%]' :
+                 'bg-gray-100 mr-auto max-w-[90%]');
+
             if (isHtml) {
                 messageDiv.innerHTML = content;
             } else if (role === 'assistant' && !content.includes('<div')) {
@@ -339,25 +370,57 @@
             } else {
                 messageDiv.textContent = content;
             }
-            
+
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            
+
             return messageId;
         }
 
-        async function getASPFeedback() {
+        // ASP Module conversation history
+        let aspConversationHistory = [];
+
+        function getSystemPrompt(moduleType) {
+            if (moduleType === 'business_case') {
+                return `You are a senior hospital administrator (CFO/CMO) reviewing an ASP business case. Focus on ROI calculations, stakeholder engagement strategies, and measurable outcomes. Be skeptical but constructive. Ground feedback in real-world ASP literature.`;
+            } else if (moduleType === 'prescriber_psychology') {
+                return `You are an expert in behavioral science and prescriber psychology for ASP. Analyze cognitive biases (commission bias, omission bias, availability heuristic). Suggest evidence-based communication strategies like academic detailing and motivational interviewing.`;
+            } else {
+                return `You are an ASP expert providing feedback on antimicrobial stewardship. Focus on evidence-based practices and implementation strategies.`;
+            }
+        }
+
+        function addASPMessage(role, content) {
+            const conversationDiv = document.getElementById('asp-conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
+                (role === 'user' ? 'bg-purple-100 ml-auto max-w-[90%]' :
+                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
+                 'bg-gray-100 mr-auto max-w-[90%]');
+
+            if (role === 'assistant') {
+                messageDiv.innerHTML = converter.makeHtml(content);
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            conversationDiv.appendChild(messageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        }
+
+        function clearASPConversation() {
+            aspConversationHistory = [];
+            const conversationDiv = document.getElementById('asp-conversation');
+            conversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">Conversation cleared. Start a new discussion...</div>';
+        }
+
+        async function sendASPMessage() {
             const moduleType = document.getElementById('module-type').value;
             const input = document.getElementById('module-input').value.trim();
-
-            console.log('=== ASP Feedback Request ===');
-            console.log('Module Type:', moduleType);
-            console.log('Input length:', input.length);
-            console.log('Current Model:', currentModel);
-            console.log('Available Models:', availableModels.length);
+            const inputElement = document.getElementById('module-input');
 
             if (!input) {
-                alert('Please enter some input');
+                alert('Please enter a message');
                 return;
             }
 
@@ -365,77 +428,63 @@
             if (!currentModel && availableModels.length > 0) {
                 currentModel = availableModels[0].id;
                 document.getElementById('model-select').value = currentModel;
-                console.log('Auto-selected model:', currentModel);
             }
 
             if (!currentModel) {
-                alert('No models available. Please refresh the page and try again.');
-                console.error('No models available!');
+                alert('No models available. Please refresh the page.');
                 return;
             }
 
-            const feedbackDiv = document.getElementById('asp-feedback');
-            const contentDiv = document.getElementById('feedback-content');
-            const citationsDiv = document.getElementById('citations');
-            const citationsList = document.getElementById('citations-list');
+            // Add user message to conversation
+            addASPMessage('user', input);
+            aspConversationHistory.push({ role: 'user', content: input });
+            inputElement.value = '';
 
-            feedbackDiv.classList.remove('hidden');
-            contentDiv.innerHTML = '<div class="flex items-center justify-center"><div class="spinner"></div><span class="ml-3 text-gray-600">Processing your request...</span></div>';
-            citationsDiv.classList.add('hidden');
-
-            const requestPayload = {
-                module: moduleType,
-                input: input,
-                model: currentModel
-            };
-            console.log('Request Payload:', requestPayload);
+            // Show thinking indicator
+            addASPMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Thinking...</span></div>');
 
             try {
-                const url = `${API_BASE}/api/asp-feedback`;
-                console.log('Sending request to:', url);
+                // Build messages with system prompt and conversation history
+                const chatMessages = [
+                    { role: 'system', content: getSystemPrompt(moduleType) },
+                    ...aspConversationHistory
+                ];
 
-                const response = await fetch(url, {
+                const response = await fetch(`${API_BASE}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestPayload)
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: chatMessages
+                    })
                 });
 
-                console.log('Response status:', response.status);
-                console.log('Response OK?:', response.ok);
-
                 const data = await response.json();
-                console.log('Response data:', data);
 
-                if (response.ok) {
-                    if (data.response) {
-                        contentDiv.innerHTML = converter.makeHtml(data.response);
-                        console.log('Success! Response received');
-                    } else {
-                        contentDiv.innerHTML = `<p class="text-yellow-600">No response content received from server</p>`;
-                        console.warn('No response content in data:', data);
-                    }
+                // Remove thinking indicator
+                const conversationDiv = document.getElementById('asp-conversation');
+                const spinners = conversationDiv.querySelectorAll('.spinner');
+                spinners.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
+                });
 
-                    // Show citations if available
-                    if (data.citations && data.citations.length > 0) {
-                        citationsDiv.classList.remove('hidden');
-                        citationsList.innerHTML = '';
-                        data.citations.forEach(cite => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${cite.title}</strong> (${cite.year || 'N/A'}) - Relevance: ${cite.score?.toFixed(2) || 'N/A'}`;
-                            citationsList.appendChild(li);
-                        });
-                        console.log('Citations displayed:', data.citations.length);
-                    }
+                if (response.ok && data.response) {
+                    // Add AI response to conversation
+                    addASPMessage('assistant', data.response);
+                    aspConversationHistory.push({ role: 'assistant', content: data.response });
                 } else {
-                    const errorMsg = data.error || `Server returned status ${response.status}`;
-                    contentDiv.innerHTML = `<p class="text-red-600"><strong>Error:</strong> ${errorMsg}</p>`;
-                    console.error('API Error:', errorMsg, data);
+                    addASPMessage('error', `Error: ${data.error || 'Unknown error'}`);
                 }
             } catch (error) {
-                const errorMsg = `Failed to get feedback: ${error.message}`;
-                contentDiv.innerHTML = `<p class="text-red-600"><strong>Request Failed:</strong> ${error.message}</p>
-                    <p class="text-sm text-gray-600 mt-2">Check browser console for details</p>`;
-                console.error('Fetch Error:', error);
+                // Remove thinking indicator
+                const conversationDiv = document.getElementById('asp-conversation');
+                const spinners = conversationDiv.querySelectorAll('.spinner');
+                spinners.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
+                });
+                addASPMessage('error', `Failed to send message: ${error.message}`);
             }
         }
     </script>

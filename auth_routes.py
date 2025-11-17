@@ -455,12 +455,12 @@ DASHBOARD_TEMPLATE = '''
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Quick Links</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a href="/agent_models.html" class="group block p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 rounded-lg hover:border-indigo-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
+                <a href="/local_models.html" class="group block p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-indigo-900 group-hover:text-indigo-600">ASP Leadership Lab</h3>
-                        <span class="text-2xl group-hover:scale-110 transition-transform">📊</span>
+                        <h3 class="font-bold text-lg text-blue-900 group-hover:text-blue-600">Multi-Model Interface</h3>
+                        <span class="text-2xl group-hover:scale-110 transition-transform">🤖</span>
                     </div>
-                    <p class="text-sm text-indigo-700">Business Case & Prescriber Psychology modules</p>
+                    <p class="text-sm text-blue-700">Compare and test different AI models</p>
                 </a>
                 <a href="/asp_ai_agent.html" class="group block p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg hover:border-purple-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
@@ -469,12 +469,12 @@ DASHBOARD_TEMPLATE = '''
                     </div>
                     <p class="text-sm text-purple-700">General ASP training and Q&A</p>
                 </a>
-                <a href="/local_models.html" class="group block p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
+                <a href="/agent_models.html" class="group block p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 rounded-lg hover:border-indigo-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-blue-900 group-hover:text-blue-600">Multi-Model Interface</h3>
-                        <span class="text-2xl group-hover:scale-110 transition-transform">🤖</span>
+                        <h3 class="font-bold text-lg text-indigo-900 group-hover:text-indigo-600">ASP Leadership Lab</h3>
+                        <span class="text-2xl group-hover:scale-110 transition-transform">📊</span>
                     </div>
-                    <p class="text-sm text-blue-700">Compare and test different AI models</p>
+                    <p class="text-sm text-indigo-700">Business Case & Prescriber Psychology modules</p>
                 </a>
                 <a href="/cicu_module.html" class="group block p-6 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 rounded-lg hover:border-green-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
