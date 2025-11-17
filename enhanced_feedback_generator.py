@@ -476,7 +476,32 @@ The AAP recommends against this approach [1], and recent studies show [2].
 
 Note: Each reference MUST be numbered (1., 2., 3., etc.) and placed on its own line.
 
-Provide your answer now using this formatting style.
+**CRITICAL FORMATTING REQUIREMENTS FOR REFERENCES:**
+You MUST follow this EXACT format for the references section:
+
+1. Add a blank line before the references
+2. Use this EXACT heading format: ## **References**
+3. Number EACH reference starting with "1. ", "2. ", etc.
+4. Each reference on its own line
+
+Example of CORRECT references formatting:
+```
+[previous content]
+
+## **References**
+1. First citation here.
+2. Second citation here.
+3. Third citation here.
+```
+
+DO NOT format references like this (INCORRECT):
+```
+References
+First citation here.
+Second citation here.
+```
+
+Provide your answer now using this formatting style. Remember to NUMBER your references!
 """
 
         return prompt
