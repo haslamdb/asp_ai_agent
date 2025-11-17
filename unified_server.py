@@ -690,10 +690,25 @@ def enhanced_feedback():
         # Use Enhanced Feedback Generator
         print(f"Generating enhanced feedback for: {scenario_id} ({level}) with RAG type: {rag_type}, mode: {mode}")
 
+        # Build context-aware input by including recent conversation history
+        # This helps RAG retrieval understand the full context
+        context_aware_input = user_input
+        if conversation_history and len(conversation_history) > 1:
+            # Include last 2-3 exchanges for context (limit to avoid too much text)
+            recent_history = conversation_history[-5:]  # Last 5 messages (2-3 exchanges)
+            context_parts = []
+            for msg in recent_history[:-1]:  # Exclude current message (already in user_input)
+                role_label = "User" if msg['role'] == 'user' else "Assistant"
+                context_parts.append(f"{role_label}: {msg['content'][:200]}...")  # Truncate to 200 chars
+
+            if context_parts:
+                context_summary = "\n".join(context_parts)
+                context_aware_input = f"Previous conversation context:\n{context_summary}\n\nCurrent question: {user_input}"
+
         result = enhanced_feedback_gen.generate_feedback(
             module_id=module_id,
             scenario_id=scenario_id,
-            user_response=user_input,
+            user_response=context_aware_input,
             difficulty_level=level,
             use_expert_knowledge=use_expert_knowledge,
             use_literature=use_literature,

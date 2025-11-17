@@ -457,10 +457,10 @@ DASHBOARD_TEMPLATE = '''
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <a href="/local_models.html" class="group block p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-blue-900 group-hover:text-blue-600">Multi-Model Interface</h3>
+                        <h3 class="font-bold text-lg text-blue-900 group-hover:text-blue-600">ASP Response Tuning</h3>
                         <span class="text-2xl group-hover:scale-110 transition-transform">🤖</span>
                     </div>
-                    <p class="text-sm text-blue-700">Compare and test different AI models</p>
+                    <p class="text-sm text-blue-700">Compare AI Models and Evidence Enhancement</p>
                 </a>
                 <a href="/asp_ai_agent.html" class="group block p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg hover:border-purple-500 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between mb-2">
