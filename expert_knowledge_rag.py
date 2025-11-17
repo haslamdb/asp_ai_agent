@@ -361,18 +361,24 @@ Commentary: {exemplar.expert_commentary}
         # Generate query embedding
         query_embedding = self.encoder.encode(query_text)
 
-        # Build filter
-        where_filter = {}
+        # Build filter - ChromaDB requires $and for multiple conditions
+        where_filter = None
+        conditions = []
         if competency_area:
-            where_filter['competency_area'] = competency_area
+            conditions.append({"competency_area": competency_area})
         if difficulty_level:
-            where_filter['difficulty_level'] = difficulty_level
+            conditions.append({"difficulty_level": difficulty_level})
+
+        if len(conditions) > 1:
+            where_filter = {"$and": conditions}
+        elif len(conditions) == 1:
+            where_filter = conditions[0]
 
         # Search ChromaDB
         results = self.corrections_collection.query(
             query_embeddings=[query_embedding.tolist()],
             n_results=n_results,
-            where=where_filter if where_filter else None
+            where=where_filter
         )
 
         # Fetch full details from SQLite
@@ -421,14 +427,15 @@ Commentary: {exemplar.expert_commentary}
         query_text = f"Scenario: {scenario_id}"
         query_embedding = self.encoder.encode(query_text)
 
-        where_filter = {}
+        # Build filter - ChromaDB format
+        where_filter = None
         if mastery_level:
-            where_filter['mastery_level'] = mastery_level
+            where_filter = {"mastery_level": mastery_level}
 
         results = self.exemplars_collection.query(
             query_embeddings=[query_embedding.tolist()],
             n_results=n_results,
-            where=where_filter if where_filter else None
+            where=where_filter
         )
 
         # Fetch full details

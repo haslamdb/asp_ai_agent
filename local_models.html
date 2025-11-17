@@ -47,6 +47,15 @@
                         </select>
                         <button id="refresh-models" class="text-sm hover:opacity-80">🔄</button>
                     </div>
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-2">
+                        <label class="text-sm font-medium">RAG Source:</label>
+                        <select id="rag-select" class="bg-white text-gray-900 rounded px-2 py-1 text-sm">
+                            <option value="none">None</option>
+                            <option value="literature">📚 Literature</option>
+                            <option value="expert">👨‍⚕️ Expert Knowledge</option>
+                            <option value="both" selected>🔬 Both</option>
+                        </select>
+                    </div>
                     <span id="connection-status" class="flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                         <span class="text-sm">Connected</span>
@@ -115,25 +124,18 @@
             </div>
         </div>
 
-        <!-- Chat Interface -->
+        <!-- RAG-Enhanced ASP Module Responses -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chat with AI Models</h2>
-
-            <div id="chat-messages" class="border rounded-lg p-4 h-48 overflow-y-auto mb-4 bg-gray-50">
-                <div class="text-gray-500 text-center py-8">
-                    Select a model and start chatting...
-                </div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Evidence-Enhanced Response</h2>
+                <span class="text-sm text-gray-600 italic">Uses selected knowledge sources for enhanced feedback</span>
             </div>
 
-            <div class="flex space-x-2">
-                <input type="text" id="chat-input"
-                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Type your message here..."
-                    onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()">
-                <button onclick="sendMessage()"
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    Send
-                </button>
+            <!-- Conversation History -->
+            <div id="rag-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto mb-4 bg-gray-50">
+                <div class="text-gray-500 text-center py-8">
+                    RAG-enhanced responses will appear here after you send a message above...
+                </div>
             </div>
         </div>
 
@@ -281,103 +283,9 @@
 
         document.getElementById('refresh-models').addEventListener('click', loadModels);
 
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message || !currentModel) return;
-
-            // Add user message to chat
-            addChatMessage('user', message);
-            input.value = '';
-
-            // Show typing indicator
-            const typingId = addChatMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Thinking...</span></div>', true);
-
-            try {
-                const response = await fetch(`${API_BASE}/api/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: currentModel,
-                        messages: [{ role: 'user', content: message }]
-                    })
-                });
-
-                const data = await response.json();
-
-                // Always remove typing indicator first - try multiple methods to ensure removal
-                const typingElement = document.getElementById(typingId);
-                if (typingElement) {
-                    typingElement.remove();
-                }
-                // Also remove any lingering "Thinking..." messages
-                const chatMessages = document.getElementById('chat-messages');
-                const thinkingMessages = chatMessages.querySelectorAll('.spinner');
-                thinkingMessages.forEach(spinner => {
-                    const parent = spinner.closest('.mb-4');
-                    if (parent) parent.remove();
-                });
-
-                if (response.ok) {
-                    addChatMessage('assistant', data.response);
-
-                    // Show citations if available
-                    if (data.citations && data.citations.length > 0) {
-                        let citationsHtml = '<div class="mt-2 text-xs text-gray-600">Sources: ';
-                        data.citations.forEach((cite, i) => {
-                            citationsHtml += `<span class="font-medium">[${i+1}] ${cite.title}</span>`;
-                            if (i < data.citations.length - 1) citationsHtml += ', ';
-                        });
-                        citationsHtml += '</div>';
-                        addChatMessage('system', citationsHtml, true);
-                    }
-                } else {
-                    addChatMessage('error', `Error: ${data.error}`);
-                }
-            } catch (error) {
-                // Make sure to remove typing indicator on error too
-                const typingElement = document.getElementById(typingId);
-                if (typingElement) {
-                    typingElement.remove();
-                }
-                // Also remove any lingering spinners
-                const chatMessages = document.getElementById('chat-messages');
-                const thinkingMessages = chatMessages.querySelectorAll('.spinner');
-                thinkingMessages.forEach(spinner => {
-                    const parent = spinner.closest('.mb-4');
-                    if (parent) parent.remove();
-                });
-                addChatMessage('error', `Failed to send message: ${error.message}`);
-            }
-        }
-
-        function addChatMessage(role, content, isHtml = false) {
-            const messagesDiv = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            const messageId = 'msg-' + Date.now();
-            messageDiv.id = messageId;
-            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
-                (role === 'user' ? 'bg-indigo-100 ml-auto max-w-[90%]' :
-                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
-                 role === 'system' ? 'bg-gray-100 text-center max-w-[90%]' :
-                 'bg-gray-100 mr-auto max-w-[90%]');
-
-            if (isHtml) {
-                messageDiv.innerHTML = content;
-            } else if (role === 'assistant' && !content.includes('<div')) {
-                messageDiv.innerHTML = converter.makeHtml(content);
-            } else {
-                messageDiv.textContent = content;
-            }
-
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            return messageId;
-        }
-
-        // ASP Module conversation history
+        // ASP Module conversation histories
         let aspConversationHistory = [];
+        let ragConversationHistory = [];
 
         function getSystemPrompt(moduleType) {
             if (moduleType === 'business_case') {
@@ -409,8 +317,30 @@
 
         function clearASPConversation() {
             aspConversationHistory = [];
+            ragConversationHistory = [];
             const conversationDiv = document.getElementById('asp-conversation');
             conversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">Conversation cleared. Start a new discussion...</div>';
+            // Also clear RAG conversation
+            const ragConversationDiv = document.getElementById('rag-conversation');
+            ragConversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">RAG-enhanced responses will appear here after you send a message above...</div>';
+        }
+
+        function addRAGMessage(role, content) {
+            const conversationDiv = document.getElementById('rag-conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
+                (role === 'user' ? 'bg-green-100 ml-auto max-w-[90%]' :
+                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
+                 'bg-gray-100 mr-auto max-w-[90%]');
+
+            if (role === 'assistant') {
+                messageDiv.innerHTML = converter.makeHtml(content);
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            conversationDiv.appendChild(messageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
         }
 
         async function sendASPMessage() {
@@ -472,6 +402,58 @@
                     // Add AI response to conversation
                     addASPMessage('assistant', data.response);
                     aspConversationHistory.push({ role: 'assistant', content: data.response });
+
+                    // Also get RAG-enhanced response if RAG is enabled
+                    const ragType = document.getElementById('rag-select').value;
+                    if (ragType !== 'none') {
+                        // Add user message to RAG conversation history
+                        ragConversationHistory.push({ role: 'user', content: input });
+                        addRAGMessage('user', input);
+                        addRAGMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Generating RAG-enhanced response...</span></div>');
+
+                        try {
+                            const ragResponse = await fetch(`${API_BASE}/api/feedback/enhanced`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    input: input,
+                                    module_id: 'asp_module',
+                                    scenario_id: moduleType,
+                                    level: 'intermediate',
+                                    rag_type: ragType,
+                                    mode: 'qa',
+                                    conversation_history: ragConversationHistory
+                                })
+                            });
+
+                            const ragData = await ragResponse.json();
+
+                            // Remove thinking indicator from RAG
+                            const ragConversationDiv = document.getElementById('rag-conversation');
+                            const ragSpinners = ragConversationDiv.querySelectorAll('.spinner');
+                            ragSpinners.forEach(spinner => {
+                                const parent = spinner.closest('.mb-4');
+                                if (parent) parent.remove();
+                            });
+
+                            if (ragResponse.ok && ragData.response) {
+                                addRAGMessage('assistant', ragData.response);
+                                // Add assistant response to RAG conversation history
+                                ragConversationHistory.push({ role: 'assistant', content: ragData.response });
+                            } else {
+                                addRAGMessage('error', `RAG Error: ${ragData.error || 'Unknown error'}`);
+                            }
+                        } catch (ragError) {
+                            // Remove thinking indicator from RAG on error
+                            const ragConversationDiv = document.getElementById('rag-conversation');
+                            const ragSpinners = ragConversationDiv.querySelectorAll('.spinner');
+                            ragSpinners.forEach(spinner => {
+                                const parent = spinner.closest('.mb-4');
+                                if (parent) parent.remove();
+                            });
+                            addRAGMessage('error', `Failed to get RAG response: ${ragError.message}`);
+                        }
+                    }
                 } else {
                     addASPMessage('error', `Error: ${data.error || 'Unknown error'}`);
                 }

@@ -53,7 +53,8 @@ class EnhancedFeedbackGenerator:
         difficulty_level: str,
         competency_areas: List[str] = None,
         use_expert_knowledge: bool = True,
-        use_literature: bool = True
+        use_literature: bool = True,
+        mode: str = "evaluation"
     ) -> Dict:
         """
         Generate comprehensive feedback using all available knowledge sources
@@ -61,11 +62,12 @@ class EnhancedFeedbackGenerator:
         Args:
             module_id: e.g., 'cicu_prolonged_antibiotics'
             scenario_id: e.g., 'cicu_beginner_data_analysis'
-            user_response: Fellow's response text
+            user_response: Fellow's response text (evaluation mode) or question (qa mode)
             difficulty_level: 'beginner', 'intermediate', 'advanced', 'expert'
             competency_areas: List of competencies to evaluate
             use_expert_knowledge: Whether to retrieve expert corrections/exemplars
             use_literature: Whether to retrieve relevant research papers
+            mode: 'evaluation' (assess student response) or 'qa' (answer question directly)
 
         Returns:
             Dict with feedback, sources, and metadata
@@ -152,7 +154,8 @@ class EnhancedFeedbackGenerator:
             competency_areas=competency_areas,
             expert_corrections=expert_corrections,
             expert_exemplars=expert_exemplars,
-            literature_results=literature_results
+            literature_results=literature_results,
+            mode=mode
         )
 
         # ====================================================================
@@ -192,7 +195,8 @@ class EnhancedFeedbackGenerator:
         competency_areas: List[str],
         expert_corrections: List[Dict],
         expert_exemplars: List[Dict],
-        literature_results: List[Dict]
+        literature_results: List[Dict],
+        mode: str = "evaluation"
     ) -> str:
         """
         Build comprehensive prompt with all retrieved knowledge
@@ -204,6 +208,16 @@ class EnhancedFeedbackGenerator:
         - Evidence from literature
         """
 
+        # Switch between QA mode and evaluation mode
+        if mode == "qa":
+            return self._build_qa_prompt(
+                user_response=user_response,
+                expert_corrections=expert_corrections,
+                expert_exemplars=expert_exemplars,
+                literature_results=literature_results
+            )
+
+        # Otherwise, use evaluation mode (original behavior)
         prompt = f"""You are Dr. Sarah Martinez, a pediatric infectious disease physician and
 antimicrobial stewardship program director with 15 years of experience teaching
 ID fellows. You have a warm but rigorous teaching style that pushes learners
@@ -331,6 +345,138 @@ Structure your feedback as follows:
 [Brief summary and encouragement]
 
 Provide your evaluation now.
+"""
+
+        return prompt
+
+    def _build_qa_prompt(
+        self,
+        user_response: str,
+        expert_corrections: List[Dict],
+        expert_exemplars: List[Dict],
+        literature_results: List[Dict]
+    ) -> str:
+        """
+        Build prompt for Q&A mode - directly answer clinical questions with RAG enhancement
+
+        Args:
+            user_response: The clinical question to answer
+            expert_corrections: Retrieved expert knowledge
+            expert_exemplars: Retrieved exemplar responses
+            literature_results: Retrieved literature citations
+
+        Returns:
+            Prompt string for Q&A mode
+        """
+
+        prompt = f"""You are Dr. Sarah Martinez, a pediatric infectious disease physician and
+antimicrobial stewardship program director with 15 years of clinical experience.
+
+# CLINICAL QUESTION
+{user_response}
+
+---
+
+# KNOWLEDGE BASE TO INFORM YOUR ANSWER
+"""
+
+        # Add expert knowledge section
+        if expert_corrections or expert_exemplars:
+            prompt += """
+## Expert Knowledge
+
+"""
+            if expert_corrections:
+                prompt += f"Based on {len(expert_corrections)} expert correction(s) from similar cases:\n\n"
+                for i, corr in enumerate(expert_corrections[:2], 1):
+                    prompt += f"""**Expert Insight {i}:**
+- Context: {corr.get('scenario_id', 'N/A')}
+- Key points: {', '.join(corr.get('what_ai_missed', [])[:3])}
+- Expert guidance: {corr.get('expert_correction', '')[:250]}...
+
+"""
+
+            if expert_exemplars:
+                prompt += f"\nExemplary clinical approaches ({len(expert_exemplars)} example(s)):\n\n"
+                for i, ex in enumerate(expert_exemplars[:2], 1):
+                    prompt += f"""**Exemplar {i}:**
+- {ex.get('response_text', '')[:200]}...
+- What makes this approach strong: {', '.join(ex.get('what_makes_it_good', [])[:2])}
+
+"""
+
+        # Add literature section
+        if literature_results:
+            prompt += f"""
+## Relevant Clinical Literature
+
+Recent antimicrobial stewardship research ({len(literature_results)} citation(s)):
+
+"""
+            for i, paper in enumerate(literature_results, 1):
+                prompt += f"""**Citation {i}** (PMID: {paper.get('pmid', 'N/A')}):
+{paper.get('text', 'N/A')[:300]}...
+Source: {paper.get('filename', 'N/A')}
+
+"""
+
+        # Add task instructions
+        prompt += """
+---
+
+# YOUR TASK
+
+Provide a direct, evidence-based answer to the clinical question above.
+
+## Content Requirements:
+1. **Answer the question directly** - Start with a clear, actionable answer
+2. **Reference the evidence** - Cite the expert knowledge and literature provided above
+3. **Provide clinical context** - Explain the rationale and any important nuances
+4. **Note limitations** - Mention any important caveats or situations where the answer might differ
+5. **Be practical** - Focus on actionable clinical guidance
+
+## Formatting Requirements:
+Use clean, professional markdown formatting:
+
+- Start with a **clear direct answer** (use bold for emphasis on key recommendation)
+- Use **bullet points** for lists of considerations, alternatives, or key points
+- Use **numbered lists** for sequential steps or hierarchical information
+- Add **section headings** (##) for major topic changes if needed
+- **CRITICAL**: Format references as a numbered list (1., 2., 3., etc.) under a "## **References**" heading
+- **IMPORTANT**: Add a blank line before the References section
+- Each reference MUST start with its number followed by a period (e.g., "1. Author...", "2. Author...")
+- Reference numbers must match in-text citations (e.g., [1], [2])
+- Use **bold** for important clinical terms or recommendations
+- Keep paragraphs concise and scannable
+
+**Example structure:**
+```
+**Direct Answer:** No, this approach is not recommended due to [rationale].
+
+**Clinical Context:**
+- Key point 1
+- Key point 2
+- Key point 3
+
+**Evidence:**
+The AAP recommends against this approach [1], and recent studies show [2].
+
+**Important Considerations:**
+- Caution 1
+- Caution 2
+
+**Alternative Approaches:**
+- Option 1
+- Option 2
+
+## **References**
+1. American Academy of Pediatrics. (2020). Title of guideline. Journal, 123(4), 567-890.
+2. Author, A. et al. (2021). Title of study. Journal Name, 45(2), 123-145.
+```
+
+Note: Each reference MUST be numbered (1., 2., 3., etc.) and placed on its own line.
+
+Provide your answer now using this formatting style.
 """
 
         return prompt

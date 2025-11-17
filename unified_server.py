@@ -675,21 +675,29 @@ def enhanced_feedback():
     module_id = data.get('module_id', 'cicu_prolonged_antibiotics')
     scenario_id = data.get('scenario_id', 'cicu_beginner_data_analysis')
     level = data.get('level', 'beginner')
+    rag_type = data.get('rag_type', 'both')  # 'none', 'literature', 'expert', 'both'
+    mode = data.get('mode', 'evaluation')  # 'evaluation' or 'qa'
+    conversation_history = data.get('conversation_history', [])  # Previous conversation
 
     if not user_input:
         return jsonify({'error': 'No input provided'}), 400
 
+    # Map rag_type to boolean flags
+    use_literature = rag_type in ['literature', 'both']
+    use_expert_knowledge = rag_type in ['expert', 'both']
+
     try:
         # Use Enhanced Feedback Generator
-        print(f"Generating enhanced feedback for: {scenario_id} ({level})")
+        print(f"Generating enhanced feedback for: {scenario_id} ({level}) with RAG type: {rag_type}, mode: {mode}")
 
         result = enhanced_feedback_gen.generate_feedback(
             module_id=module_id,
             scenario_id=scenario_id,
             user_response=user_input,
             difficulty_level=level,
-            use_expert_knowledge=True,
-            use_literature=True
+            use_expert_knowledge=use_expert_knowledge,
+            use_literature=use_literature,
+            mode=mode
         )
 
         # The enhanced_prompt includes expert corrections and exemplars
@@ -706,10 +714,22 @@ def enhanced_feedback():
                 print("Trying Claude for enhanced feedback...")
                 from anthropic import Anthropic
                 client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
+                # Build messages array with conversation history
+                messages = []
+                # Add previous conversation history (excluding the current message which is already in user_input)
+                if conversation_history:
+                    # Only include history up to the last assistant message
+                    for msg in conversation_history[:-1]:  # Exclude current user message (already added)
+                        messages.append({"role": msg['role'], "content": msg['content']})
+
+                # Add current message with enhanced prompt
+                messages.append({"role": "user", "content": result['enhanced_prompt']})
+
                 message = client.messages.create(
                     model="claude-3-5-sonnet-20241022",
                     max_tokens=3000,
-                    messages=[{"role": "user", "content": result['enhanced_prompt']}]
+                    messages=messages
                 )
                 response_data = message.content[0].text
                 model_used = "claude-3.5-sonnet"
