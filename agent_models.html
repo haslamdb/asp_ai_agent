@@ -47,9 +47,14 @@
                     <h1 class="text-3xl font-bold">ASP Leadership Lab</h1>
                     <p class="mt-1 text-lg opacity-90">Advanced Competency Modules for ID Fellows</p>
                 </div>
-                <a href="/logout" class="text-sm px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
-                    Logout
-                </a>
+                <div class="flex gap-3">
+                    <a href="/dashboard" class="text-sm px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        ← Back to Dashboard
+                    </a>
+                    <a href="/logout" class="text-sm px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        Logout
+                    </a>
+                </div>
                 <!-- AI Model Selector -->
                 <div class="bg-white/10 rounded-lg p-3">
                     <label for="ai-model-select" class="block text-sm font-medium mb-2">AI Model:</label>
@@ -212,12 +217,12 @@
                     modelSelector.appendChild(option);
                 });
 
-                // Set default model
+                // Set default model - prefer Claude Sonnet 4.5
                 if (data.models.length > 0) {
-                    // Prefer Gemini or Claude if available
-                    const defaultModel = data.models.find(m => m.id.includes('gemini')) ||
-                                       data.models.find(m => m.id.includes('claude')) ||
-                                       data.models[0];
+                    const claudeSonnet = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('sonnet')
+                    );
+                    const defaultModel = claudeSonnet || data.models[0];
                     currentModel = defaultModel.id;
                     modelSelector.value = currentModel;
                 }
