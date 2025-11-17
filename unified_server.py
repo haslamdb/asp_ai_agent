@@ -130,10 +130,47 @@ def index():
 
 @app.route('/<path:filename>')
 def serve_static(filename):
-    """Serve static files (HTML, CSS, JS)"""
+    """Serve static files (HTML, CSS, JS) - SECURITY HARDENED"""
+    import os
+    from pathlib import Path
+
+    # SECURITY: Block access to sensitive files
+    dangerous_extensions = {'.env', '.git', '.py', '.pyc', '.pyo', '.db', '.sqlite', '.sqlite3',
+                          '.ini', '.conf', '.key', '.pem', '.log', '.sh', '.sql', '.bak'}
+    dangerous_patterns = {'.git/', '__pycache__/', '.env', 'config.py', 'settings.py'}
+
+    # Check file extension
+    file_ext = Path(filename).suffix.lower()
+    if file_ext in dangerous_extensions:
+        return jsonify({'error': 'Access denied'}), 403
+
+    # Check for dangerous patterns in path
+    filename_lower = filename.lower()
+    for pattern in dangerous_patterns:
+        if pattern in filename_lower:
+            return jsonify({'error': 'Access denied'}), 403
+
+    # SECURITY: Only allow serving .html, .css, .js, .png, .jpg, .jpeg, .gif, .svg, .ico files
+    allowed_extensions = {'.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'}
+    if file_ext not in allowed_extensions:
+        return jsonify({'error': 'File type not allowed'}), 403
+
+    # SECURITY: Prevent directory traversal
     try:
-        return send_file(filename)
-    except:
+        # Resolve to absolute path and ensure it's within the project directory
+        project_root = os.path.abspath(os.path.dirname(__file__))
+        requested_path = os.path.abspath(os.path.join(project_root, filename))
+
+        # Ensure the requested path is within project root
+        if not requested_path.startswith(project_root):
+            return jsonify({'error': 'Access denied'}), 403
+
+        # Check if file exists and is a file (not directory)
+        if not os.path.isfile(requested_path):
+            return jsonify({'error': 'File not found'}), 404
+
+        return send_file(requested_path)
+    except Exception as e:
         return jsonify({'error': 'File not found'}), 404
 
 @app.route('/health', methods=['GET'])
