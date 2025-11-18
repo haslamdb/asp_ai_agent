@@ -383,6 +383,7 @@ LOGIN_TEMPLATE = '''
             {% endif %}
 
             <form method="POST" action="/login" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input type="email" name="email" value="{{ email or '' }}" required
@@ -447,6 +448,7 @@ SIGNUP_TEMPLATE = '''
             {% endif %}
 
             <form method="POST" action="/signup" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
@@ -699,6 +701,7 @@ VERIFICATION_PENDING_TEMPLATE = '''
             </div>
 
             <form method="POST" action="/resend-verification" class="mb-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="email" value="{{ email }}">
                 <button type="submit"
                         class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
@@ -793,6 +796,7 @@ VERIFICATION_EXPIRED_TEMPLATE = '''
                 Click below to receive a new verification email at <strong>{{ email }}</strong>
             </p>
             <form method="POST" action="/resend-verification">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="user_id" value="{{ user_id }}">
                 <button type="submit"
                         class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-200 font-semibold mb-4">
@@ -829,6 +833,7 @@ VERIFICATION_REQUIRED_TEMPLATE = '''
                 Check your inbox at <strong>{{ email }}</strong> for the verification link.
             </p>
             <form method="POST" action="/resend-verification">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="user_id" value="{{ user_id }}">
                 <button type="submit"
                         class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-200 font-semibold mb-4">

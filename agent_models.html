@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASP Leadership Lab</title>
+
+    <!-- CSRF Protection -->
+    <meta name="csrf-token" id="csrf-token">
+    <script src="/csrf_helper.js"></script>
+    <script>
+        // Fetch and set CSRF token on page load
+        (async function() {
+            try {
+                const response = await fetch('/api/csrf-token');
+                const data = await response.json();
+                document.getElementById('csrf-token').setAttribute('content', data.csrf_token);
+                console.log('CSRF token loaded');
+            } catch (error) {
+                console.error('Failed to load CSRF token:', error);
+            }
+        })();
+    </script>
+
     <!-- Load Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Load Showdown Markdown-to-HTML converter -->
