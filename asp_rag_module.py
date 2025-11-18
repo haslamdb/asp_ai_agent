@@ -78,28 +78,31 @@ class PDFMetadataExtractor:
         # Tier 1: PDF embedded metadata
         embedded_meta = self._extract_from_pdf_metadata(pdf_path)
         metadata.update({k: v for k, v in embedded_meta.items() if v})
-        
-        # Check if we have minimum required fields
-        if metadata['title'] and metadata['year']:
+
+        # Check if we have minimum required fields AND quality title
+        if metadata['title'] and metadata['year'] and self._is_quality_title(metadata['title']):
             metadata['extraction_method'] = 'embedded_metadata'
             return metadata
-        
+
         # Tier 2: First-page text parsing
         if text is None:
             text = self._extract_text_from_pdf(pdf_path)
-        
+
         parsed_meta = self._extract_from_first_page(text)
         metadata.update({k: v for k, v in parsed_meta.items() if v and not metadata[k]})
-        
-        # Check if we have minimum required fields
-        if metadata['title'] and metadata['year']:
+
+        # Check if we have minimum required fields AND quality title
+        if metadata['title'] and metadata['year'] and self._is_quality_title(metadata['title']):
             metadata['extraction_method'] = 'text_parsing'
             return metadata
-        
-        # Tier 3: LLM extraction (fallback)
-        if self.use_llm_fallback and (not metadata['title'] or not metadata['year']):
+
+        # Tier 3: LLM extraction (ALWAYS use for poor quality titles)
+        if self.use_llm_fallback:
+            if text is None:
+                text = self._extract_text_from_pdf(pdf_path)
             llm_meta = self._extract_with_llm(text[:4000])  # First ~2 pages
-            metadata.update({k: v for k, v in llm_meta.items() if v and not metadata[k]})
+            # LLM takes precedence over garbage titles
+            metadata.update({k: v for k, v in llm_meta.items() if v})
             if metadata['title']:
                 metadata['extraction_method'] = 'llm'
         
@@ -110,6 +113,42 @@ class PDFMetadataExtractor:
         
         return metadata
     
+    def _is_quality_title(self, title: str) -> bool:
+        """
+        Check if extracted title looks like a real paper title (not garbage/headers)
+
+        Returns False if title contains common indicators of bad extraction:
+        - URLs or DOIs
+        - Page numbers
+        - Journal website headers
+        - Copyright notices
+        - "www." or "http"
+        """
+        if not title or len(title) < 10:
+            return False
+
+        title_lower = title.lower()
+
+        # Bad indicators
+        bad_patterns = [
+            'www.', 'http', '.com', '.org', '.edu',
+            'doi.org', '◆', '•',
+            'volume', 'number', 'page',
+            'copyright ©', 'all rights reserved',
+            'for personal use only',
+            'no other uses without permission',
+            'this is an open access article'
+        ]
+
+        for pattern in bad_patterns:
+            if pattern in title_lower:
+                return False
+
+        # Good indicator: title should have some lowercase letters (not all caps header)
+        has_mixed_case = any(c.islower() for c in title) and any(c.isupper() for c in title)
+
+        return has_mixed_case or len(title.split()) > 5
+
     def _extract_text_from_pdf(self, pdf_path: Path) -> str:
         """Extract text from PDF first 2 pages for metadata"""
         if not pypdf:
