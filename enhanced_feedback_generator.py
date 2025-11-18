@@ -121,24 +121,43 @@ class EnhancedFeedbackGenerator:
         if use_literature and self.literature_rag:
             print("→ Retrieving relevant literature...")
 
-            # Generate queries based on difficulty level and module
-            literature_queries = self._generate_literature_queries(
-                module_id, difficulty_level
-            )
+            # Use the actual user question/response as the primary search query
+            # This is much more effective than generic module-based queries
+            primary_query = user_response[:500]  # Limit length for embedding
 
-            for query in literature_queries[:2]:  # Limit to avoid too much context
-                try:
-                    results = self.literature_rag.search(query, n_results=2)
-                    literature_results.extend(results)
-                except:
-                    pass
+            try:
+                # Primary search using user's actual question
+                results = self.literature_rag.search(primary_query, n_results=3, min_similarity=0.5)
+                literature_results.extend(results)
+            except Exception as e:
+                print(f"  Warning: Primary search failed: {e}")
 
-            # Deduplicate by PMID
+            # If we didn't find enough results, try module-based fallback queries
+            if len(literature_results) < 2:
+                literature_queries = self._generate_literature_queries(
+                    module_id, difficulty_level
+                )
+                for query in literature_queries[:1]:  # Just one fallback query
+                    try:
+                        results = self.literature_rag.search(query, n_results=2, min_similarity=0.4)
+                        literature_results.extend(results)
+                    except:
+                        pass
+
+            # Deduplicate by PMID (but only if PMID exists)
             seen_pmids = set()
+            seen_filenames = set()
             unique_results = []
             for result in literature_results:
-                if result['pmid'] not in seen_pmids:
-                    seen_pmids.add(result['pmid'])
+                pmid = result.get('pmid', '')
+                filename = result.get('filename', '')
+
+                # Use PMID if available, otherwise use filename
+                if pmid and pmid not in seen_pmids:
+                    seen_pmids.add(pmid)
+                    unique_results.append(result)
+                elif not pmid and filename not in seen_filenames:
+                    seen_filenames.add(filename)
                     unique_results.append(result)
             literature_results = unique_results[:3]  # Keep top 3
 
@@ -414,9 +433,30 @@ Recent antimicrobial stewardship research ({len(literature_results)} citation(s)
 
 """
             for i, paper in enumerate(literature_results, 1):
-                prompt += f"""**Citation {i}** (PMID: {paper.get('pmid', 'N/A')}):
+                # Build proper citation info
+                title = paper.get('title', 'Unknown title')
+                authors = paper.get('first_author', 'Unknown author')
+                year = paper.get('year', 'n.d.')
+                journal = paper.get('journal', 'Unknown journal')
+                pmid = paper.get('pmid', '')
+                doi = paper.get('doi', '')
+
+                # Create citation line
+                citation_line = f"{authors}. {title}"
+                if journal:
+                    citation_line += f". {journal}"
+                if year:
+                    citation_line += f". {year}"
+                if pmid:
+                    citation_line += f". PMID: {pmid}"
+                elif doi:
+                    citation_line += f". doi: {doi}"
+
+                prompt += f"""**Citation {i}:**
+**Full Reference:** {citation_line}
+
+**Relevant Excerpt:**
 {paper.get('text', 'N/A')[:300]}...
-Source: {paper.get('filename', 'N/A')}
 
 """
         else:
@@ -489,10 +529,25 @@ Use clean, professional markdown formatting:
 - Use **bullet points** for lists of considerations, alternatives, or key points
 - Use **numbered lists** for sequential steps or hierarchical information
 - Add **section headings** (##) for major topic changes if needed
-- **CRITICAL**: Format references as a numbered list (1., 2., 3., etc.) under a "## **References**" heading
-- **IMPORTANT**: Add a blank line before the References section
-- Each reference MUST start with its number followed by a period (e.g., "1. Author...", "2. Author...")
+
+### References Section Formatting:
+- **CRITICAL**: Create a "## References" section at the end of your response
+- Format references as a numbered list (1., 2., 3., etc.)
+- Add a blank line before the References section
+- **USE THE "Full Reference" information provided in the literature section above**
+- Copy the EXACT citation text from "Full Reference:" - do NOT modify it
+- Each reference starts with its number followed by a period (e.g., "1. Author. Title. Journal. Year.")
 - Reference numbers must match in-text citations (e.g., [1], [2])
+- DO NOT include "Source: filename.pdf" - use the full bibliographic citation instead
+
+**Example References Section:**
+```
+## References
+
+1. Smith J. Antimicrobial Stewardship in Critical Care. Critical Care Medicine. 2018. PMID: 12345678
+2. Jones A. Post-Streptococcal Complications. American Family Physician. 2019.
+```
+
 - Use **bold** for important clinical terms or recommendations
 - Keep paragraphs concise and scannable
 
