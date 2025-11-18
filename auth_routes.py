@@ -366,7 +366,7 @@ LOGIN_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
@@ -426,7 +426,7 @@ SIGNUP_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-2xl w-full">
@@ -523,7 +523,7 @@ LOGOUT_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logged Out - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
@@ -548,7 +548,7 @@ DASHBOARD_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen">
     <nav class="bg-white shadow-lg">
@@ -641,10 +641,10 @@ DASHBOARD_TEMPLATE = '''
         <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
             <h3 class="text-sm font-bold text-blue-900 mb-2">🔒 Privacy Notice</h3>
             <p class="text-sm text-blue-800">
-                <strong>What we don't store:</strong> Chat histories are not stored, nor are your responses to questions in the training modules.
+                <strong>What is not stored:</strong> Chat histories are not stored, nor are any responses submitted to questions in the training modules.
             </p>
             <p class="text-sm text-blue-800 mt-2">
-                <strong>What we do store:</strong> Your progress through the ASP curriculum and scores achieved on each module
+                <strong>What is stored:</strong> Your progress through the ASP curriculum and scores achieved on each module
                 are saved in the ASP AI Agent database to track your learning journey. You may retake any module at any time,
                 which will update your previous scores for that module.
             </p>
@@ -661,7 +661,7 @@ VERIFICATION_PENDING_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Your Email - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-lg w-full">
@@ -722,7 +722,7 @@ VERIFICATION_SUCCESS_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verified - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
@@ -749,7 +749,7 @@ VERIFICATION_ERROR_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verification Error - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
@@ -779,7 +779,7 @@ VERIFICATION_EXPIRED_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link Expired - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
@@ -815,7 +815,7 @@ VERIFICATION_REQUIRED_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification Required - ASP AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
