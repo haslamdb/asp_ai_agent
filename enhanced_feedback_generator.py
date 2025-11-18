@@ -483,13 +483,19 @@ Provide a direct, evidence-based answer to the clinical question above.
 
 ## Content Requirements:
 1. **Answer the question directly** - Start with a clear, actionable answer
-2. **Reference the evidence** - Cite the expert knowledge and literature provided above
-3. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer:
+2. **Provide comprehensive detail** - Write 400-600 words with thorough clinical context
+3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc.
+4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer:
    - Example: "[This reference was not provided in the question prompt]"
    - Example: "Note: Due to the lack of specific literature provided, this response relies on general principles of antimicrobial stewardship and [topic]."
-4. **Provide clinical context** - Explain the rationale and any important nuances
-5. **Note limitations** - Mention any important caveats or situations where the answer might differ
-6. **Be practical** - Focus on actionable clinical guidance
+5. **Provide detailed clinical context** - Include:
+   - Pathophysiology or mechanism
+   - Diagnostic considerations
+   - Treatment rationale and options
+   - Key clinical decision points
+   - Risk factors and complications
+6. **Note limitations** - Mention any important caveats or situations where the answer might differ
+7. **Be practical** - Focus on actionable clinical guidance with specific recommendations
 
 ## ⚠️ CRITICAL RULE - Academic Honesty (READ CAREFULLY):
 
@@ -530,53 +536,70 @@ Use clean, professional markdown formatting:
 - Use **numbered lists** for sequential steps or hierarchical information
 - Add **section headings** (##) for major topic changes if needed
 
-### References Section Formatting:
-- **CRITICAL**: Create a "## References" section at the end of your response
-- Format references as a numbered list (1., 2., 3., etc.)
-- Add a blank line before the References section
+### References Section Formatting (CRITICAL):
+- **REQUIRED**: Create a "## **References**" section at the end (note the bold asterisks)
+- Format as a numbered list with each reference on a new line
+- Add TWO blank lines before the References section
 - **USE THE "Full Reference" information provided in the literature section above**
-- Copy the EXACT citation text from "Full Reference:" - do NOT modify it
-- Each reference starts with its number followed by a period (e.g., "1. Author. Title. Journal. Year.")
+- Copy the complete citation from "Full Reference:" - do NOT truncate or modify it
+- Each reference MUST start with its number followed by a period: "1. ", "2. ", "3. "
 - Reference numbers must match in-text citations (e.g., [1], [2])
-- DO NOT include "Source: filename.pdf" - use the full bibliographic citation instead
+- DO NOT include "Source: filename.pdf" or partial URLs
+- Include the complete journal name, year, and identifiers (PMID/DOI if present)
 
-**Example References Section:**
+**CORRECT Reference Format:**
 ```
-## References
+## **References**
 
-1. Smith J. Antimicrobial Stewardship in Critical Care. Critical Care Medicine. 2018. PMID: 12345678
-2. Jones A. Post-Streptococcal Complications. American Family Physician. 2019.
+1. Jones A, Smith B. Post-Streptococcal Reactive Arthritis: Diagnostic Challenges. The Permanente Journal. 2019. doi:10.7812/TPP/18.304
+2. Williams C. Group A Streptococcal Pharyngitis: Diagnosis and Treatment. American Family Physician. 2018;97(8):517-526.
 ```
+
+**INCORRECT formats (DO NOT USE):**
+❌ "References" (not bold)
+❌ "Source: p517.pdf" (filename instead of citation)
+❌ Incomplete citations without journal or year
+❌ URLs or partial journal website addresses
 
 - Use **bold** for important clinical terms or recommendations
 - Keep paragraphs concise and scannable
 
-**Example structure:**
+**Example structure for a comprehensive response (400-600 words):**
 ```
-**Direct Answer:** No, this approach is not recommended due to [rationale].
+**Direct Answer:** [Clear, actionable answer to the question]
 
 **Clinical Context:**
-- Key point 1
-- Key point 2
-- Key point 3
 
-**Evidence:**
-The AAP recommends against this approach [1], and recent studies show [2].
+[2-3 paragraphs providing detailed background, pathophysiology, and clinical significance. Explain WHY this matters clinically and what mechanisms are at play.]
 
-**Important Considerations:**
-- Caution 1
-- Caution 2
+**Evidence and Recommendations:**
+
+[2-3 paragraphs discussing the evidence base, citing the literature provided. Include specific recommendations with citations [1], [2]. Discuss diagnostic criteria, treatment approaches, and clinical decision points.]
+
+**Key Clinical Considerations:**
+
+- **Diagnostic Workup:** [Detailed explanation of what tests/evaluations are needed]
+- **Treatment Approach:** [Specific treatment recommendations with rationale]
+- **Monitoring:** [What to watch for and when to reassess]
+- **Risk Factors:** [Who is at higher risk and why]
+- **Complications:** [What complications to watch for]
+
+**Patient-Specific Factors:**
+
+[Discuss how patient characteristics (age, comorbidities, etc.) might change management]
 
 **Alternative Approaches:**
-- Option 1
-- Option 2
+
+[When applicable, discuss alternative management strategies]
+
 
 ## **References**
-1. American Academy of Pediatrics. (2020). Title of guideline. Journal, 123(4), 567-890.
-2. Author, A. et al. (2021). Title of study. Journal Name, 45(2), 123-145.
+
+1. [Complete citation from Full Reference provided above - copy exactly]
+2. [Complete citation from Full Reference provided above - copy exactly]
 ```
 
-Note: Each reference MUST be numbered (1., 2., 3., etc.) and placed on its own line.
+Note: Aim for 400-600 words of detailed, clinically useful content before the references section.
 
 **CRITICAL FORMATTING REQUIREMENTS FOR REFERENCES:**
 You MUST follow this EXACT format for the references section:
