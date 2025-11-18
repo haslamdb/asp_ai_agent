@@ -657,7 +657,155 @@ class ASPLiteratureRAG:
         )
 
         print(f"✅ Indexing complete! {len(all_chunks)} chunks indexed")
-    
+
+    def index_new_pdfs_and_transfer(self, transferred_subdir: str = "transferred") -> int:
+        """
+        Index only NEW PDFs and move them to a transferred subdirectory after indexing.
+        This prevents re-indexing the same PDFs multiple times.
+
+        Args:
+            transferred_subdir: Name of subdirectory to move processed PDFs
+
+        Returns:
+            Number of new PDFs indexed
+        """
+        import shutil
+
+        # Create transferred directory if it doesn't exist
+        transferred_dir = self.pdf_dir / transferred_subdir
+        transferred_dir.mkdir(exist_ok=True)
+
+        # Get existing paper IDs from collection
+        existing_ids = set()
+        try:
+            results = self.collection.get(limit=10000, include=['metadatas'])
+            for meta in results['metadatas']:
+                if 'paper_id' in meta:
+                    existing_ids.add(meta['paper_id'])
+        except:
+            pass
+
+        print(f"📊 Found {len(existing_ids)} already-indexed papers in collection")
+
+        # Find new PDFs (not yet indexed)
+        pdf_files = list(self.pdf_dir.glob("*.pdf"))
+        new_pdfs = []
+
+        for pdf_path in pdf_files:
+            # Generate paper ID to check if already indexed
+            text_sample = self.extract_text_from_pdf(pdf_path)[:2000]  # Just sample for ID
+            metadata_sample = {'title': '', 'pmid': ''}  # Will be extracted properly later
+            paper_id = self._generate_paper_id(pdf_path, metadata_sample)
+
+            if paper_id not in existing_ids:
+                new_pdfs.append(pdf_path)
+
+        if not new_pdfs:
+            print("✓ No new PDFs to index")
+            return 0
+
+        print(f"\n📚 Found {len(new_pdfs)} NEW PDFs to index:")
+        for pdf in new_pdfs:
+            print(f"   - {pdf.name}")
+
+        # Index new PDFs
+        all_chunks = []
+        all_metadata = []
+        all_ids = []
+        processed_pdfs = []
+
+        for idx, pdf_path in enumerate(new_pdfs, 1):
+            print(f"\n   [{idx}/{len(new_pdfs)}] Processing: {pdf_path.name}")
+
+            try:
+                # Extract text
+                text = self.extract_text_from_pdf(pdf_path)
+                if not text.strip():
+                    print(f"       Warning: No text extracted, skipping")
+                    continue
+
+                # Extract metadata
+                print(f"       Extracting metadata...")
+                paper_metadata = self.metadata_extractor.extract_metadata(pdf_path, text)
+                print(f"       ✓ Method: {paper_metadata.get('extraction_method', 'unknown')}")
+                if paper_metadata.get('title'):
+                    print(f"       ✓ Title: {paper_metadata['title'][:60]}...")
+
+                # Generate unique paper ID
+                paper_id = self._generate_paper_id(pdf_path, paper_metadata)
+
+                # Chunk text
+                chunks = self.chunk_text(text)
+                print(f"       Created {len(chunks)} chunks")
+
+                # Prepare for insertion
+                for chunk_idx, chunk in enumerate(chunks):
+                    chunk_id = f"{paper_id}_chunk_{chunk_idx}"
+                    all_chunks.append(chunk)
+
+                    chunk_metadata = {
+                        "filename": pdf_path.name,
+                        "paper_id": paper_id,
+                        "chunk_index": chunk_idx,
+                        "total_chunks": len(chunks),
+                        "title": paper_metadata.get('title') or '',
+                        "first_author": paper_metadata.get('first_author') or '',
+                        "year": str(paper_metadata.get('year')) if paper_metadata.get('year') else '',
+                        "journal": paper_metadata.get('journal') or '',
+                        "doi": paper_metadata.get('doi') or '',
+                        "pmid": paper_metadata.get('pmid') or '',
+                        "authors_json": json.dumps(paper_metadata.get('authors', [])),
+                        "volume": paper_metadata.get('volume') or '',
+                        "pages": paper_metadata.get('pages') or '',
+                        "extraction_method": paper_metadata.get('extraction_method') or ''
+                    }
+
+                    all_metadata.append(chunk_metadata)
+                    all_ids.append(chunk_id)
+
+                processed_pdfs.append(pdf_path)
+
+            except Exception as e:
+                print(f"       ✗ Error processing {pdf_path.name}: {e}")
+                continue
+
+        if not all_chunks:
+            print("\n   No chunks to index!")
+            return 0
+
+        # Compute embeddings and store
+        print(f"\n🔄 Computing embeddings for {len(all_chunks)} chunks...")
+        embeddings = self.embedding_model.encode(
+            all_chunks,
+            show_progress_bar=True,
+            batch_size=32
+        )
+
+        print(f"💾 Storing in ChromaDB...")
+        self.collection.add(
+            documents=all_chunks,
+            embeddings=embeddings.tolist(),
+            metadatas=all_metadata,
+            ids=all_ids
+        )
+
+        print(f"✅ Indexing complete! {len(all_chunks)} chunks indexed")
+
+        # Move processed PDFs to transferred directory
+        print(f"\n📁 Moving {len(processed_pdfs)} indexed PDFs to {transferred_dir}...")
+        for pdf_path in processed_pdfs:
+            try:
+                dest = transferred_dir / pdf_path.name
+                shutil.move(str(pdf_path), str(dest))
+                print(f"   ✓ Moved: {pdf_path.name}")
+            except Exception as e:
+                print(f"   ✗ Error moving {pdf_path.name}: {e}")
+
+        print(f"\n✅ Complete! Indexed {len(processed_pdfs)} new PDFs")
+        print(f"   Total chunks in collection: {self.collection.count()}")
+
+        return len(processed_pdfs)
+
     def _generate_paper_id(self, pdf_path: Path, metadata: Dict) -> str:
         """
         Generate unique paper ID (backward compatible with PMID-based naming)

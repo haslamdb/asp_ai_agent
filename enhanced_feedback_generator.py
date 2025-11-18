@@ -178,7 +178,7 @@ class EnhancedFeedbackGenerator:
             },
             'expert_corrections': expert_corrections,
             'expert_exemplars': expert_exemplars,
-            'literature_results': literature_results,
+            'literature_sources': literature_results,  # Renamed for consistency
             'metadata': {
                 'module_id': module_id,
                 'scenario_id': scenario_id,
@@ -419,7 +419,20 @@ Recent antimicrobial stewardship research ({len(literature_results)} citation(s)
 Source: {paper.get('filename', 'N/A')}
 
 """
+        else:
+            # NO LITERATURE CASE - Be explicit
+            prompt += """
+## Relevant Clinical Literature
 
+**⚠️ NO SPECIFIC LITERATURE WAS PROVIDED FOR THIS QUESTION.**
+
+The indexed literature database does not contain papers directly addressing this specific clinical question.
+
+**YOU MUST NOT CREATE ANY CITATIONS OR REFERENCES.**
+**DO NOT include a "References" section in your response.**
+**State clearly that this answer is based on general clinical principles, not the indexed literature.**
+"""
+        
         # Add task instructions
         prompt += """
 ---
@@ -431,9 +444,43 @@ Provide a direct, evidence-based answer to the clinical question above.
 ## Content Requirements:
 1. **Answer the question directly** - Start with a clear, actionable answer
 2. **Reference the evidence** - Cite the expert knowledge and literature provided above
-3. **Provide clinical context** - Explain the rationale and any important nuances
-4. **Note limitations** - Mention any important caveats or situations where the answer might differ
-5. **Be practical** - Focus on actionable clinical guidance
+3. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer:
+   - Example: "[This reference was not provided in the question prompt]"
+   - Example: "Note: Due to the lack of specific literature provided, this response relies on general principles of antimicrobial stewardship and [topic]."
+4. **Provide clinical context** - Explain the rationale and any important nuances
+5. **Note limitations** - Mention any important caveats or situations where the answer might differ
+6. **Be practical** - Focus on actionable clinical guidance
+
+## ⚠️ CRITICAL RULE - Academic Honesty (READ CAREFULLY):
+
+**YOU ARE ABSOLUTELY FORBIDDEN FROM FABRICATING OR INVENTING CITATIONS.**
+
+RULES YOU MUST FOLLOW:
+1. **ONLY cite literature from the "Relevant Clinical Literature" section above**
+2. **IF that section says "NO SPECIFIC LITERATURE WAS PROVIDED"**, then you MUST:
+   - **DO NOT CREATE A "REFERENCES" SECTION AT ALL**
+   - State prominently: "Note: This response is based on general clinical principles. The indexed literature database does not contain papers directly addressing this specific question."
+   - Do NOT create fake references
+   - Do NOT cite journals, guidelines, or studies not explicitly provided above
+   - Do NOT mention ANY journal names, PMIDs, DOIs, or publication years
+3. **IF the provided literature exists but doesn't directly answer the question**, state:
+   - "Note: The available literature addresses related topics but not this specific question. This response draws on general antimicrobial stewardship principles."
+4. **NEVER EVER** create references with:
+   - Fake author names
+   - Fake journal names  
+   - Fake publication years
+   - Fake page numbers
+   - Fake PMIDs or DOIs
+
+**EXAMPLES OF FORBIDDEN BEHAVIOR (DO NOT DO THIS):**
+❌ BAD: "American Academy of Pediatrics. (2020). Pediatric Rheumatology. Journal of Pediatrics, 123(4), 567-890."
+❌ BAD: "Smith et al. (2021) found that..."
+
+**EXAMPLES OF CORRECT BEHAVIOR:**
+✅ GOOD: "Note: Due to the lack of specific literature provided, this response relies on general principles of antimicrobial stewardship."
+✅ GOOD: "The available literature discusses related antimicrobial topics but not this specific condition. General clinical principles suggest..."
+
+**IF YOU VIOLATE THIS RULE, THE ENTIRE RESPONSE WILL BE CONSIDERED ACADEMICALLY DISHONEST.**
 
 ## Formatting Requirements:
 Use clean, professional markdown formatting:

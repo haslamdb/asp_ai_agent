@@ -194,6 +194,11 @@ def health_check():
 # HTML Page Routes (Protected)
 # ============================================================================
 
+@app.route('/csrf_helper.js')
+def csrf_helper_js():
+    """Serve CSRF helper JavaScript (required for CSRF protection)"""
+    return send_file('csrf_helper.js', mimetype='application/javascript')
+
 @app.route('/asp_ai_agent.html')
 @login_required
 def asp_ai_agent_page():
