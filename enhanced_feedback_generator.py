@@ -127,19 +127,20 @@ class EnhancedFeedbackGenerator:
 
             try:
                 # Primary search using user's actual question
-                results = self.literature_rag.search(primary_query, n_results=3, min_similarity=0.5)
+                # INCREASED: n_results from 3 to 6, decreased similarity from 0.5 to 0.35
+                results = self.literature_rag.search(primary_query, n_results=6, min_similarity=0.35)
                 literature_results.extend(results)
             except Exception as e:
                 print(f"  Warning: Primary search failed: {e}")
 
             # If we didn't find enough results, try module-based fallback queries
-            if len(literature_results) < 2:
+            if len(literature_results) < 3:
                 literature_queries = self._generate_literature_queries(
                     module_id, difficulty_level
                 )
                 for query in literature_queries[:1]:  # Just one fallback query
                     try:
-                        results = self.literature_rag.search(query, n_results=2, min_similarity=0.4)
+                        results = self.literature_rag.search(query, n_results=3, min_similarity=0.35)
                         literature_results.extend(results)
                     except:
                         pass
@@ -159,7 +160,7 @@ class EnhancedFeedbackGenerator:
                 elif not pmid and filename not in seen_filenames:
                     seen_filenames.add(filename)
                     unique_results.append(result)
-            literature_results = unique_results[:3]  # Keep top 3
+            literature_results = unique_results[:6]  # Keep top 6
 
             print(f"  ✓ Found {len(literature_results)} relevant papers")
 
@@ -436,27 +437,66 @@ Recent antimicrobial stewardship research ({len(literature_results)} citation(s)
                 # Build proper citation info
                 title = paper.get('title', 'Unknown title')
                 authors = paper.get('first_author', 'Unknown author')
+                if paper.get('authors'):
+                    try:
+                        # Try to format authors better if list available
+                        author_list = paper.get('authors')
+                        if isinstance(author_list, str):
+                            author_list = json.loads(author_list)
+                        
+                        if len(author_list) > 0:
+                            first_auth = author_list[0]
+                            if ',' in first_auth:
+                                authors = first_auth.split(',')[0]
+                            else:
+                                authors = first_auth.split(' ')[-1]
+                            
+                            if len(author_list) > 1:
+                                authors += " et al"
+                    except:
+                        pass
+
                 year = paper.get('year', 'n.d.')
                 journal = paper.get('journal', 'Unknown journal')
                 pmid = paper.get('pmid', '')
                 doi = paper.get('doi', '')
+                volume = paper.get('volume', '')
+                pages = paper.get('pages', '')
 
-                # Create citation line
-                citation_line = f"{authors}. {title}"
-                if journal:
-                    citation_line += f". {journal}"
-                if year:
-                    citation_line += f". {year}"
+                # Create citation line (AMA style-ish)
+                citation_parts = []
+                if authors and authors != 'Unknown author':
+                    citation_parts.append(f"{authors}")
+                
+                if title and title != 'Unknown title':
+                    citation_parts.append(f"{title}")
+                elif paper.get('filename'):
+                    citation_parts.append(f"{paper['filename']}")
+                
+                if journal and journal != 'Unknown journal':
+                    citation_parts.append(f"{journal}")
+                    
+                if year and year != 'n.d.':
+                    citation_parts.append(str(year))
+                
+                if volume:
+                    if pages:
+                        citation_parts.append(f"{volume}:{pages}")
+                    else:
+                        citation_parts.append(f"{volume}")
+                
                 if pmid:
-                    citation_line += f". PMID: {pmid}"
+                    citation_parts.append(f"PMID: {pmid}")
                 elif doi:
-                    citation_line += f". doi: {doi}"
+                    citation_parts.append(f"doi: {doi}")
 
-                prompt += f"""**Citation {i}:**
+                citation_line = ". ".join(citation_parts)
+
+                prompt += f"""**Source [{i}]:**
 **Full Reference:** {citation_line}
 
 **Relevant Excerpt:**
-{paper.get('text', 'N/A')[:300]}...
+{paper.get('text', 'N/A')[:350]}...
 
 """
         else:
@@ -484,10 +524,8 @@ Provide a direct, evidence-based answer to the clinical question above.
 ## Content Requirements:
 1. **Answer the question directly** - Start with a clear, actionable answer
 2. **Provide comprehensive detail** - Write 400-600 words with thorough clinical context
-3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc.
-4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer:
-   - Example: "[This reference was not provided in the question prompt]"
-   - Example: "Note: Due to the lack of specific literature provided, this response relies on general principles of antimicrobial stewardship and [topic]."
+3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc. CORRESPONDING to the Source numbers above.
+4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer.
 5. **Provide detailed clinical context** - Include:
    - Pathophysiology or mechanism
    - Diagnostic considerations
@@ -503,28 +541,9 @@ Provide a direct, evidence-based answer to the clinical question above.
 
 RULES YOU MUST FOLLOW:
 1. **ONLY cite literature from the "Relevant Clinical Literature" section above**
-2. **IF that section says "NO SPECIFIC LITERATURE WAS PROVIDED"**, then you MUST:
-   - **DO NOT CREATE A "REFERENCES" SECTION AT ALL**
-   - State prominently: "Note: This response is based on general clinical principles. The indexed literature database does not contain papers directly addressing this specific question."
-   - Do NOT create fake references
-   - Do NOT cite journals, guidelines, or studies not explicitly provided above
-   - Do NOT mention ANY journal names, PMIDs, DOIs, or publication years
-3. **IF the provided literature exists but doesn't directly answer the question**, state:
-   - "Note: The available literature addresses related topics but not this specific question. This response draws on general antimicrobial stewardship principles."
-4. **NEVER EVER** create references with:
-   - Fake author names
-   - Fake journal names  
-   - Fake publication years
-   - Fake page numbers
-   - Fake PMIDs or DOIs
-
-**EXAMPLES OF FORBIDDEN BEHAVIOR (DO NOT DO THIS):**
-❌ BAD: "American Academy of Pediatrics. (2020). Pediatric Rheumatology. Journal of Pediatrics, 123(4), 567-890."
-❌ BAD: "Smith et al. (2021) found that..."
-
-**EXAMPLES OF CORRECT BEHAVIOR:**
-✅ GOOD: "Note: Due to the lack of specific literature provided, this response relies on general principles of antimicrobial stewardship."
-✅ GOOD: "The available literature discusses related antimicrobial topics but not this specific condition. General clinical principles suggest..."
+2. **IF that section says "NO SPECIFIC LITERATURE WAS PROVIDED"**, then you MUST NOT create a references section.
+3. **IF the provided literature exists**, you MUST use the exact "Full Reference" strings provided.
+4. **NEVER EVER** create references with fake author names, journals, or PMIDs.
 
 **IF YOU VIOLATE THIS RULE, THE ENTIRE RESPONSE WILL BE CONSIDERED ACADEMICALLY DISHONEST.**
 
@@ -551,8 +570,8 @@ Use clean, professional markdown formatting:
 ```
 ## **References**
 
-1. Jones A, Smith B. Post-Streptococcal Reactive Arthritis: Diagnostic Challenges. The Permanente Journal. 2019. doi:10.7812/TPP/18.304
-2. Williams C. Group A Streptococcal Pharyngitis: Diagnosis and Treatment. American Family Physician. 2018;97(8):517-526.
+1. Jones A, Smith B. Post-Streptococcal Reactive Arthritis. The Permanente Journal. 2019. doi:10.7812/TPP/18.304
+2. Williams C. Group A Streptococcal Pharyngitis. American Family Physician. 2018;97(8):517-526.
 ```
 
 **INCORRECT formats (DO NOT USE):**
@@ -570,18 +589,18 @@ Use clean, professional markdown formatting:
 
 **Clinical Context:**
 
-[2-3 paragraphs providing detailed background, pathophysiology, and clinical significance. Explain WHY this matters clinically and what mechanisms are at play.]
+[2-3 paragraphs providing detailed background, pathophysiology, and clinical significance.]
 
 **Evidence and Recommendations:**
 
-[2-3 paragraphs discussing the evidence base, citing the literature provided. Include specific recommendations with citations [1], [2]. Discuss diagnostic criteria, treatment approaches, and clinical decision points.]
+[2-3 paragraphs discussing the evidence base, citing the literature provided. Include specific recommendations with citations [1], [2].]
 
 **Key Clinical Considerations:**
 
-- **Diagnostic Workup:** [Detailed explanation of what tests/evaluations are needed]
-- **Treatment Approach:** [Specific treatment recommendations with rationale]
-- **Monitoring:** [What to watch for and when to reassess]
-- **Risk Factors:** [Who is at higher risk and why]
+- **Diagnostic Workup:** [Detailed explanation]
+- **Treatment Approach:** [Specific treatment recommendations]
+- **Monitoring:** [What to watch for]
+- **Risk Factors:** [Who is at higher risk]
 - **Complications:** [What complications to watch for]
 
 **Patient-Specific Factors:**
