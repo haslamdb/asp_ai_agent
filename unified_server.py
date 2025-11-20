@@ -1006,11 +1006,13 @@ def check_services():
     
     # Check Citation Assistant
     try:
-        resp = requests.get(f"{CITATION_API}/api/stats", timeout=2)
+        resp = requests.get(f"{CITATION_API}/api/health", timeout=2)
         if resp.status_code == 200:
+            health_data = resp.json()
             services['citation_assistant'] = {
                 'status': 'online',
-                'stats': resp.json()
+                'collection_size': health_data.get('collection_size', 0),
+                'version': health_data.get('version', 'unknown')
             }
         else:
             services['citation_assistant'] = {'status': 'offline'}

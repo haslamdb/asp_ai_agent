@@ -128,7 +128,7 @@ class EnhancedFeedbackGenerator:
             try:
                 # Primary search using user's actual question
                 # INCREASED: n_results from 3 to 6, decreased similarity from 0.5 to 0.35
-                results = self.literature_rag.search(primary_query, n_results=6, min_similarity=0.35)
+                results = self.literature_rag.search(primary_query, n_results=20, min_similarity=0.35)
                 literature_results.extend(results)
             except Exception as e:
                 print(f"  Warning: Primary search failed: {e}")
@@ -140,7 +140,7 @@ class EnhancedFeedbackGenerator:
                 )
                 for query in literature_queries[:1]:  # Just one fallback query
                     try:
-                        results = self.literature_rag.search(query, n_results=3, min_similarity=0.35)
+                        results = self.literature_rag.search(query, n_results=10, min_similarity=0.35)
                         literature_results.extend(results)
                     except:
                         pass
@@ -160,7 +160,7 @@ class EnhancedFeedbackGenerator:
                 elif not pmid and filename not in seen_filenames:
                     seen_filenames.add(filename)
                     unique_results.append(result)
-            literature_results = unique_results[:6]  # Keep top 6
+            literature_results = unique_results[:8]  # Keep top 8
 
             print(f"  ✓ Found {len(literature_results)} relevant papers")
 
@@ -434,68 +434,13 @@ Recent antimicrobial stewardship research ({len(literature_results)} citation(s)
 
 """
             for i, paper in enumerate(literature_results, 1):
-                # Build proper citation info
-                title = paper.get('title', 'Unknown title')
-                authors = paper.get('first_author', 'Unknown author')
-                if paper.get('authors'):
-                    try:
-                        # Try to format authors better if list available
-                        author_list = paper.get('authors')
-                        if isinstance(author_list, str):
-                            author_list = json.loads(author_list)
-                        
-                        if len(author_list) > 0:
-                            first_auth = author_list[0]
-                            if ',' in first_auth:
-                                authors = first_auth.split(',')[0]
-                            else:
-                                authors = first_auth.split(' ')[-1]
-                            
-                            if len(author_list) > 1:
-                                authors += " et al"
-                    except:
-                        pass
-
-                year = paper.get('year', 'n.d.')
-                journal = paper.get('journal', 'Unknown journal')
                 pmid = paper.get('pmid', '')
-                doi = paper.get('doi', '')
-                volume = paper.get('volume', '')
-                pages = paper.get('pages', '')
-
-                # Create citation line (AMA style-ish)
-                citation_parts = []
-                if authors and authors != 'Unknown author':
-                    citation_parts.append(f"{authors}")
+                paper_id = paper.get('paper_id', f"doc_{i}") # Use paper_id or generated ID if no PMID
                 
-                if title and title != 'Unknown title':
-                    citation_parts.append(f"{title}")
-                elif paper.get('filename'):
-                    citation_parts.append(f"{paper['filename']}")
-                
-                if journal and journal != 'Unknown journal':
-                    citation_parts.append(f"{journal}")
-                    
-                if year and year != 'n.d.':
-                    citation_parts.append(str(year))
-                
-                if volume:
-                    if pages:
-                        citation_parts.append(f"{volume}:{pages}")
-                    else:
-                        citation_parts.append(f"{volume}")
-                
-                if pmid:
-                    citation_parts.append(f"PMID: {pmid}")
-                elif doi:
-                    citation_parts.append(f"doi: {doi}")
-
-                citation_line = ". ".join(citation_parts)
-
                 prompt += f"""**Source [{i}]:**
-**Full Reference:** {citation_line}
-
-**Relevant Excerpt:**
+**PMID/ID:** {pmid if pmid else paper_id}
+**Title:** {paper.get('title', 'Unknown title')}
+**Excerpt:**
 {paper.get('text', 'N/A')[:350]}...
 
 """
@@ -523,7 +468,7 @@ Provide a direct, evidence-based answer to the clinical question above.
 
 ## Content Requirements:
 1. **Answer the question directly** - Start with a clear, actionable answer
-2. **Provide comprehensive detail** - Write 400-600 words with thorough clinical context
+2. **Provide comprehensive detail** - Write 800-1000 words with thorough clinical context
 3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc. CORRESPONDING to the Source numbers above.
 4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer.
 5. **Provide detailed clinical context** - Include:
@@ -542,7 +487,7 @@ Provide a direct, evidence-based answer to the clinical question above.
 RULES YOU MUST FOLLOW:
 1. **ONLY cite literature from the "Relevant Clinical Literature" section above**
 2. **IF that section says "NO SPECIFIC LITERATURE WAS PROVIDED"**, then you MUST NOT create a references section.
-3. **IF the provided literature exists**, you MUST use the exact "Full Reference" strings provided.
+3. **IF the provided literature exists**, you MUST use the exact "PMID/ID" strings provided.
 4. **NEVER EVER** create references with fake author names, journals, or PMIDs.
 
 **IF YOU VIOLATE THIS RULE, THE ENTIRE RESPONSE WILL BE CONSIDERED ACADEMICALLY DISHONEST.**
@@ -557,43 +502,45 @@ Use clean, professional markdown formatting:
 
 ### References Section Formatting (CRITICAL):
 - **REQUIRED**: Create a "## **References**" section at the end (note the bold asterisks)
+- **DO NOT** use bullet points for the references. They **MUST** be a numbered list.
 - Format as a numbered list with each reference on a new line
 - Add TWO blank lines before the References section
-- **USE THE "Full Reference" information provided in the literature section above**
-- Copy the complete citation from "Full Reference:" - do NOT truncate or modify it
+- **USE THE "PMID/ID" information provided in the literature section above.**
+- Copy the complete PMID/ID from "PMID/ID:" - do NOT truncate or modify it.
 - Each reference MUST start with its number followed by a period: "1. ", "2. ", "3. "
 - Reference numbers must match in-text citations (e.g., [1], [2])
 - DO NOT include "Source: filename.pdf" or partial URLs
-- Include the complete journal name, year, and identifiers (PMID/DOI if present)
+- ONLY list the PMID/ID as the reference.
 
 **CORRECT Reference Format:**
 ```
 ## **References**
 
-1. Jones A, Smith B. Post-Streptococcal Reactive Arthritis. The Permanente Journal. 2019. doi:10.7812/TPP/18.304
-2. Williams C. Group A Streptococcal Pharyngitis. American Family Physician. 2018;97(8):517-526.
+1. PMID: 12345678
+2. PMID: 87654321
+3. doc_3
 ```
 
 **INCORRECT formats (DO NOT USE):**
 ❌ "References" (not bold)
 ❌ "Source: p517.pdf" (filename instead of citation)
-❌ Incomplete citations without journal or year
+❌ Incomplete citations with authors, titles, journals.
 ❌ URLs or partial journal website addresses
 
 - Use **bold** for important clinical terms or recommendations
 - Keep paragraphs concise and scannable
 
-**Example structure for a comprehensive response (400-600 words):**
+**Example structure for a comprehensive response (800-1000 words):**
 ```
 **Direct Answer:** [Clear, actionable answer to the question]
 
 **Clinical Context:**
 
-[2-3 paragraphs providing detailed background, pathophysiology, and clinical significance.]
+[3-4 paragraphs providing detailed background, pathophysiology, and clinical significance. Be comprehensive.]
 
 **Evidence and Recommendations:**
 
-[2-3 paragraphs discussing the evidence base, citing the literature provided. Include specific recommendations with citations [1], [2].]
+[3-4 paragraphs discussing the evidence base in depth, citing the literature provided. Include specific recommendations with citations [1], [2]. Analyze the evidence strength.]
 
 **Key Clinical Considerations:**
 
@@ -614,39 +561,9 @@ Use clean, professional markdown formatting:
 
 ## **References**
 
-1. [Complete citation from Full Reference provided above - copy exactly]
-2. [Complete citation from Full Reference provided above - copy exactly]
-```
-
-Note: Aim for 400-600 words of detailed, clinically useful content before the references section.
-
-**CRITICAL FORMATTING REQUIREMENTS FOR REFERENCES:**
-You MUST follow this EXACT format for the references section:
-
-1. Add a blank line before the references
-2. Use this EXACT heading format: ## **References**
-3. Number EACH reference starting with "1. ", "2. ", etc.
-4. Each reference on its own line
-
-Example of CORRECT references formatting:
-```
-[previous content]
-
-## **References**
-1. First citation here.
-2. Second citation here.
-3. Third citation here.
-```
-
-DO NOT format references like this (INCORRECT):
-```
-References
-First citation here.
-Second citation here.
-```
-
-Provide your answer now using this formatting style. Remember to NUMBER your references!
-"""
+1. [PMID/ID from Source 1]
+2. [PMID/ID from Source 2]
+```"""
 
         return prompt
 
