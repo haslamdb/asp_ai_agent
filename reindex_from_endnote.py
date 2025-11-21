@@ -191,6 +191,9 @@ def reindex_with_endnote(incremental: bool = True):
     # INCREASED CONTEXT: Larger chunks, larger overlap
     CHUNK_SIZE = 600  # Increased from 512
     OVERLAP = 100     # Increased from 50
+    rag.chunk_size = CHUNK_SIZE
+    rag.chunk_overlap = OVERLAP
+    rag.text_splitter = rag._build_text_splitter()
     
     print(f"   Chunking settings: Size={CHUNK_SIZE}, Overlap={OVERLAP}")
 
@@ -249,7 +252,7 @@ def reindex_with_endnote(incremental: bool = True):
                 paper_id = rag._generate_paper_id(pdf_path, meta)
             
             # Chunk text with new parameters
-            chunks = rag.chunk_text(text, chunk_size=CHUNK_SIZE, overlap=OVERLAP)
+            chunks = rag.chunk_text(text)
             print(f"       Created {len(chunks)} chunks")
             
             # Create chunk objects
@@ -308,7 +311,7 @@ def reindex_with_endnote(incremental: bool = True):
         batch_meta = all_metadata[i:end_idx]
         batch_ids = all_ids[i:end_idx]
         
-        embeddings = rag.embedding_model.encode(batch_chunks)
+        embeddings = rag.embedding_model.encode(batch_chunks, normalize_embeddings=True)
         
         rag.collection.add(
             documents=batch_chunks,

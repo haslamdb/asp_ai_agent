@@ -10,13 +10,16 @@ flask-wtf==1.2.1
 flask-limiter==3.5.0
 bcrypt==4.1.2
 requests==2.31.0
-# Core ML dependencies
-numpy==1.24.4
+packaging==23.2
+# Core ML dependencies (1.26+ required for Python 3.12)
+numpy==1.26.4
 # Sentence transformers and dependencies
-torch==2.1.0
-sentence-transformers==2.2.2
+torch==2.2.2
+sentence-transformers==2.5.1
 # ChromaDB with specific version
 chromadb==0.4.22
 # Other dependencies
 pypdf==3.17.0
 pandas==2.1.4
+langchain-text-splitters==0.0.1
+tiktoken==0.7.0

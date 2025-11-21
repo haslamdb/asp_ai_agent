@@ -32,9 +32,12 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'API key not configured' });
         }
         
+        // Get model from request body or use default
+        const model = req.body.model || 'gemini-2.5-flash';
+
         // Forward the request to Gemini API
         const geminiResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {

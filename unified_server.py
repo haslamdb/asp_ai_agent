@@ -158,9 +158,11 @@ OLLAMA_API = f"http://localhost:{OLLAMA_API_PORT}"
 CITATION_API = f"http://localhost:{CITATION_API_PORT}"
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
-# Claude API endpoint
+# API endpoints
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 @app.route('/api/csrf-token', methods=['GET'])
 def get_csrf_token():
@@ -747,12 +749,12 @@ IMPORTANT GUIDANCE:
                 from anthropic import Anthropic
                 client = Anthropic(api_key=ANTHROPIC_API_KEY)
                 message = client.messages.create(
-                    model="claude-3-5-sonnet-20241022",
+                    model="claude-haiku-4-5",
                     max_tokens=2000,
                     messages=[{"role": "user", "content": evaluation_prompt}]
                 )
                 response_data = message.content[0].text
-                model_used = "claude-3-5-sonnet"
+                model_used = "claude-haiku-4.5"
                 print(f"Claude succeeded! Response length: {len(response_data)}")
             except Exception as e:
                 error_msg = f"Claude failed: {e}"
@@ -881,12 +883,12 @@ def enhanced_feedback():
                 messages.append({"role": "user", "content": result['enhanced_prompt']})
 
                 message = client.messages.create(
-                    model="claude-3-5-sonnet-20241022",
-                    max_tokens=3000,
+                    model="claude-haiku-4-5",
+                    max_tokens=8000,
                     messages=messages
                 )
                 response_data = message.content[0].text
-                model_used = "claude-3.5-sonnet"
+                model_used = "claude-haiku-4.5"
                 print(f"Claude succeeded with enhanced feedback!")
             except Exception as e:
                 errors.append(f"Claude failed: {e}")
@@ -1026,7 +1028,10 @@ def check_services():
     services['claude'] = {
         'status': 'configured' if ANTHROPIC_API_KEY else 'not_configured'
     }
-    
+    services['openai'] = {
+        'status': 'configured' if OPENAI_API_KEY else 'not_configured'
+    }
+
     return services
 
 @app.route('/api/models', methods=['GET'])
@@ -1067,41 +1072,49 @@ def list_models():
     if ANTHROPIC_API_KEY:
         models.extend([
             {
-                'id': 'claude:3-opus',
-                'name': 'Claude 4.1 Opus',
+                'id': 'claude:4.1-opus',
+                'name': 'Claude Opus 4.1',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
-                'description': 'Most capable Claude model for complex tasks'
+                'description': 'Most powerful Claude model for complex reasoning and coding'
             },
             {
-                'id': 'claude:3-sonnet',
-                'name': 'Claude 4.5 Sonnet',
+                'id': 'claude:4.5-sonnet',
+                'name': 'Claude Sonnet 4.5',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
-                'description': 'Balanced performance and cost'
+                'description': 'Best for coding, agents, and computer use - most aligned frontier model'
             },
             {
-                'id': 'claude:3-haiku',
-                'name': 'Claude 4.5 Haiku',
+                'id': 'claude:4.5-haiku',
+                'name': 'Claude Haiku 4.5',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
-                'description': 'Fast and efficient for simple tasks'
+                'description': 'Fast and cost-effective - Sonnet 4 performance at 1/3 cost and 2x speed'
             }
         ])
-    
+
     # Add Gemini if configured
     if GEMINI_API_KEY:
         models.extend([
+            {
+                'id': 'gemini:3-pro',
+                'name': 'Gemini 3 Pro',
+                'provider': 'google',
+                'type': 'llm',
+                'local': False,
+                'description': 'Latest Gemini 3 - multimodal reasoning with 1M token context window'
+            },
             {
                 'id': 'gemini:2.5-flash',
                 'name': 'Gemini 2.5 Flash',
                 'provider': 'google',
                 'type': 'llm',
                 'local': False,
-                'description': 'Latest Gemini model with multimodal capabilities'
+                'description': 'Fast and efficient multimodal model'
             },
             {
                 'id': 'gemini:2.5-pro',
@@ -1110,6 +1123,51 @@ def list_models():
                 'type': 'llm',
                 'local': False,
                 'description': 'Advanced reasoning with large context window'
+            }
+        ])
+
+    # Add OpenAI models if configured
+    if OPENAI_API_KEY:
+        models.extend([
+            {
+                'id': 'openai:5.1-instant',
+                'name': 'GPT-5.1 Instant',
+                'provider': 'openai',
+                'type': 'llm',
+                'local': False,
+                'description': 'Warmer, more conversational with adaptive reasoning - most used model'
+            },
+            {
+                'id': 'openai:5.1-thinking',
+                'name': 'GPT-5.1 Thinking',
+                'provider': 'openai',
+                'type': 'llm',
+                'local': False,
+                'description': 'Adapts thinking time precisely - 2x faster on simple tasks'
+            },
+            {
+                'id': 'openai:4o',
+                'name': 'GPT-4o',
+                'provider': 'openai',
+                'type': 'llm',
+                'local': False,
+                'description': 'Multimodal flagship - processes text, images, and audio'
+            },
+            {
+                'id': 'openai:4o-mini',
+                'name': 'GPT-4o Mini',
+                'provider': 'openai',
+                'type': 'llm',
+                'local': False,
+                'description': 'Fast and cost-effective - 60% cheaper than GPT-3.5 Turbo'
+            },
+            {
+                'id': 'openai:4-turbo',
+                'name': 'GPT-4 Turbo',
+                'provider': 'openai',
+                'type': 'llm',
+                'local': False,
+                'description': '128k context window - faster and cheaper for large documents'
             }
         ])
     
@@ -1127,8 +1185,8 @@ def claude_endpoint():
         return jsonify({'error': 'Messages are required'}), 400
 
     try:
-        # Use Claude 3.5 Sonnet as default
-        result = claude_chat('3-sonnet', messages, system_prompt)
+        # Use Claude Haiku 4.5 as default
+        result = claude_chat('4.5-haiku', messages, system_prompt)
 
         # Check if result is a tuple (error case) or Response (success case)
         if isinstance(result, tuple):
@@ -1249,6 +1307,8 @@ def chat():
             return claude_chat(model_name, messages or [{'role': 'user', 'content': query}], system_prompt, temperature)
         elif provider == 'gemini':
             return gemini_chat(model_name, messages or [{'role': 'user', 'content': query}], system_prompt)
+        elif provider == 'openai':
+            return openai_chat(model_name, messages or [{'role': 'user', 'content': query}], system_prompt, temperature)
         else:
             return jsonify({'error': f'Unknown provider: {provider}'}), 400
     except Exception as e:
@@ -1294,15 +1354,11 @@ def claude_chat(model: str, messages: List[Dict], system_prompt: str = '', tempe
     try:
         # Map model names to Claude model IDs
         model_map = {
-            '3-opus': 'claude-opus-4-1',  # Claude 4.1 Opus
             '4.1-opus': 'claude-opus-4-1',
-            '3-sonnet': 'claude-sonnet-4-5',
-            '3-haiku': 'claude-haiku-4-5',
-            '3.5-sonnet': 'claude-sonnet-4-5',
             '4.5-sonnet': 'claude-sonnet-4-5',
             '4.5-haiku': 'claude-haiku-4-5'
         }
-        
+
         claude_model = model_map.get(model, 'claude-sonnet-4-5')
         
         # Prepare messages for Claude API
@@ -1411,12 +1467,17 @@ def gemini_chat(model: str, messages: List[Dict], system_prompt: str = '') -> tu
     try:
         # Map model names
         model_map = {
-            '2.0-flash': 'gemini-2.5-flash',
+            # Gemini 3 (latest)
+            '3-pro': 'gemini-3-pro-preview',
+            '3': 'gemini-3-pro-preview',
+            # Gemini 2.5 family
             '2.5-flash': 'gemini-2.5-flash',
-            '1.5-pro': 'gemini-2.5-pro',
-            '2.5-pro': 'gemini-2.5-pro'
+            '2.5-pro': 'gemini-2.5-pro',
+            # Legacy
+            '2.0-flash': 'gemini-2.0-flash-exp',
+            '1.5-pro': 'gemini-1.5-pro'
         }
-        
+
         gemini_model = model_map.get(model, 'gemini-2.5-flash')
         
         # Convert messages to Gemini format
@@ -1472,6 +1533,73 @@ def gemini_chat(model: str, messages: List[Dict], system_prompt: str = '') -> tu
             return jsonify({'error': f'Gemini error: {response.text}'}), response.status_code
     except Exception as e:
         return jsonify({'error': f'Gemini error: {str(e)}'}), 500
+
+def openai_chat(model: str, messages: List[Dict], system_prompt: str = '', temperature: float = 0.7) -> tuple:
+    """Handle OpenAI/ChatGPT API chat"""
+    if not OPENAI_API_KEY:
+        return jsonify({'error': 'OpenAI API key not configured'}), 400
+
+    try:
+        # Map model names to OpenAI model IDs
+        model_map = {
+            '4o': 'gpt-4o',
+            '4o-mini': 'gpt-4o-mini',
+            '4-turbo': 'gpt-4-turbo',
+            '5.1-instant': 'gpt-5.1-chat-latest',
+            '5.1-thinking': 'gpt-5.1',
+            '5.1': 'gpt-5.1-chat-latest'  # Default to instant
+        }
+
+        openai_model = model_map.get(model, 'gpt-4o')
+
+        # Prepare messages for OpenAI API (supports system messages natively)
+        openai_messages = []
+
+        # Add system prompt if provided
+        if system_prompt:
+            openai_messages.append({
+                'role': 'system',
+                'content': system_prompt
+            })
+
+        # Add conversation messages
+        for msg in messages:
+            openai_messages.append({
+                'role': msg['role'],
+                'content': msg['content']
+            })
+
+        # Prepare the request
+        request_data = {
+            'model': openai_model,
+            'messages': openai_messages,
+            'temperature': temperature
+        }
+
+        response = requests.post(
+            OPENAI_API_URL,
+            headers={
+                'Authorization': f'Bearer {OPENAI_API_KEY}',
+                'Content-Type': 'application/json'
+            },
+            json=request_data,
+            timeout=60
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            return jsonify({
+                'response': result['choices'][0]['message']['content'],
+                'model': f'openai:{model}',
+                'provider': 'openai',
+                'local': False,
+                'usage': result.get('usage', {})
+            })
+        else:
+            error_detail = response.json() if response.text else {'error': response.text}
+            return jsonify({'error': f'OpenAI API error: {error_detail}'}), response.status_code
+    except Exception as e:
+        return jsonify({'error': f'OpenAI error: {str(e)}'}), 500
 
 @app.route('/api/asp-feedback', methods=['POST'])
 @limiter.limit("20 per minute")  # Stricter limit for expensive LLM calls

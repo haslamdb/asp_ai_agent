@@ -26,6 +26,8 @@ except ImportError:
 from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+import torch
 
 
 class PDFMetadataExtractor:
@@ -289,7 +291,8 @@ class PDFMetadataExtractor:
                 return metadata
             
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            # Use latest Gemini model for metadata extraction
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             prompt = f"""Extract bibliographic metadata from this academic paper text. Return ONLY a JSON object with these fields:
 {{
@@ -463,7 +466,7 @@ class ASPLiteratureRAG:
         self,
         pdf_dir: str = None,
         embeddings_dir: str = None,
-        embedding_model: str = "pritamdeka/S-PubMedBert-MS-MARCO",
+        embedding_model: str = "BAAI/bge-large-en",
         chunk_size: int = 512,
         chunk_overlap: int = 50,
         collection_name: str = "asp_literature"
@@ -491,6 +494,7 @@ class ASPLiteratureRAG:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.collection_name = collection_name
+        self.text_splitter = self._build_text_splitter()
 
         # Ensure directories exist
         self.embeddings_dir.mkdir(parents=True, exist_ok=True)
@@ -501,7 +505,16 @@ class ASPLiteratureRAG:
 
         # Initialize embedding model
         print(f"   Loading embedding model: {embedding_model}")
-        self.embedding_model = SentenceTransformer(embedding_model)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        trust_remote = "BAAI" in embedding_model or "bge" in embedding_model.lower()
+        self.embedding_model = SentenceTransformer(
+            embedding_model,
+            device=device,
+            trust_remote_code=trust_remote
+        )
+        # Recommended for BGE models
+        if hasattr(self.embedding_model, "max_seq_length"):
+            self.embedding_model.max_seq_length = max(self.embedding_model.max_seq_length, self.chunk_size)
         print(f"   ✓ Model loaded (embedding dim: {self.embedding_model.get_sentence_embedding_dimension()})")
 
         # Initialize ChromaDB
@@ -554,46 +567,32 @@ class ASPLiteratureRAG:
 
         return '\n'.join(text)
 
-    def chunk_text(self, text: str, chunk_size: int = None, overlap: int = None) -> List[str]:
+    def _build_text_splitter(self) -> RecursiveCharacterTextSplitter:
         """
-        Chunk text into overlapping segments
-        Simple sentence-based chunking
+        Create a token-aware text splitter that respects tables/bullets.
+        Falls back to character-based splitting if tiktoken encoder is unavailable.
         """
-        chunk_size = chunk_size or self.chunk_size
-        overlap = overlap or self.chunk_overlap
+        try:
+            splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                model_name="gpt-3.5-turbo",
+                chunk_size=self.chunk_size,
+                chunk_overlap=self.chunk_overlap,
+            )
+            print(f"   ✓ Using tiktoken-based splitter (chunk={self.chunk_size}, overlap={self.chunk_overlap})")
+            return splitter
+        except Exception as exc:
+            print(f"   ⚠ Warning: Token splitter unavailable ({exc}); using character-based fallback")
+            return RecursiveCharacterTextSplitter(
+                chunk_size=self.chunk_size,
+                chunk_overlap=self.chunk_overlap,
+                length_function=len
+            )
 
-        # Split into sentences (simple regex)
-        sentences = re.split(r'[.!?]\s+', text)
-
-        chunks = []
-        current_chunk = []
-        current_length = 0
-
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if not sentence:
-                continue
-
-            # Estimate tokens (rough: ~1.3 chars per token for English)
-            sentence_tokens = len(sentence) // 1.3
-
-            if current_length + sentence_tokens > chunk_size and current_chunk:
-                # Save current chunk
-                chunks.append(' '.join(current_chunk))
-
-                # Start new chunk with overlap (keep last few sentences)
-                overlap_sentences = int(len(current_chunk) * (overlap / chunk_size))
-                current_chunk = current_chunk[-overlap_sentences:] if overlap_sentences > 0 else []
-                current_length = sum(len(s) // 1.3 for s in current_chunk)
-
-            current_chunk.append(sentence)
-            current_length += sentence_tokens
-
-        # Add final chunk
-        if current_chunk:
-            chunks.append(' '.join(current_chunk))
-
-        return chunks
+    def chunk_text(self, text: str) -> List[str]:
+        """Chunk text using the configured splitter"""
+        if not self.text_splitter:
+            self.text_splitter = self._build_text_splitter()
+        return self.text_splitter.split_text(text)
 
     def index_pdfs(self, force_reindex: bool = False):
         """
@@ -684,7 +683,8 @@ class ASPLiteratureRAG:
         embeddings = self.embedding_model.encode(
             all_chunks,
             show_progress_bar=True,
-            batch_size=32
+            batch_size=32,
+            normalize_embeddings=True
         )
 
         print(f"💾 Storing in ChromaDB...")
@@ -817,7 +817,8 @@ class ASPLiteratureRAG:
         embeddings = self.embedding_model.encode(
             all_chunks,
             show_progress_bar=True,
-            batch_size=32
+            batch_size=32,
+            normalize_embeddings=True
         )
 
         print(f"💾 Storing in ChromaDB...")
@@ -848,22 +849,22 @@ class ASPLiteratureRAG:
     def _generate_paper_id(self, pdf_path: Path, metadata: Dict) -> str:
         """
         Generate unique paper ID (backward compatible with PMID-based naming)
-        
+
         Args:
             pdf_path: Path to PDF file
             metadata: Extracted metadata
-        
+
         Returns:
             Unique paper ID string
         """
         # Try PMID from filename (backward compatibility)
         if pdf_path.stem.isdigit() and len(pdf_path.stem) == 8:
             return f"pmid_{pdf_path.stem}"
-        
+
         # Try PMID from metadata
         if metadata.get('pmid'):
             return f"pmid_{metadata['pmid']}"
-        
+
         # Generate semantic ID from metadata
         author = metadata.get('first_author', 'unknown')
         if author and author != 'unknown':
@@ -871,9 +872,11 @@ class ASPLiteratureRAG:
             author = re.sub(r'[^a-z]', '', author)  # Remove non-letters
         else:
             author = 'unknown'
-        
-        year = metadata.get('year', 'nodate')
-        
+
+        year = metadata.get('year')
+        if year is None or year == '':
+            year = 'nodate'
+
         # Extract keyword from title
         title = metadata.get('title', '')
         if title:
@@ -882,8 +885,15 @@ class ASPLiteratureRAG:
             skip_words = {'study', 'analysis', 'review', 'impact', 'effect', 'outcomes', 'antimicrobial', 'antibiotic'}
             keyword = next((w for w in title_words if w not in skip_words), title_words[0] if title_words else 'paper')
         else:
+            # Use filename as keyword when no title exists (ensures uniqueness)
             keyword = pdf_path.stem[:20].lower()
-        
+
+        # If we still have completely generic metadata, append filename hash to ensure uniqueness
+        if author == 'unknown' and year == 'nodate' and keyword == 'paper':
+            # Use sanitized filename to ensure uniqueness
+            filename_id = re.sub(r'[^a-z0-9]', '', pdf_path.stem.lower())[:30]
+            return f"unknown_{filename_id}"
+
         return f"{author}_{year}_{keyword}"
 
     def search(
@@ -908,7 +918,7 @@ class ASPLiteratureRAG:
             return []
 
         # Encode query
-        query_embedding = self.embedding_model.encode(query)
+        query_embedding = self.embedding_model.encode(query, normalize_embeddings=True)
 
         # Search
         results = self.collection.query(
