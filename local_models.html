@@ -46,6 +46,13 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Style for section headings in RAG responses */
+        #rag-conversation .section-header {
+            text-decoration: underline !important;
+            text-decoration-color: #6366f1 !important;
+            text-underline-offset: 3px !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -108,22 +115,15 @@
                     <select id="module-type" class="w-full px-4 py-3 rounded-lg border-2 border-purple-300 bg-purple-50 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-gray-900 font-medium cursor-pointer hover:bg-purple-100 transition">
                         <option value="business_case">📊 Business Case Review</option>
                         <option value="prescriber_psychology">🧠 Prescriber Psychology</option>
-                        <option value="general" selected>💡 General ASP Feedback</option>
+                        <option value="general" selected>💡 General ASP Questions</option>
                     </select>
                 </div>
                 
-                <!-- Conversation History -->
-                <div id="asp-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto mb-4 bg-gray-50">
-                    <div class="text-gray-500 text-center py-8">
-                        Select a module type and start your conversation...
-                    </div>
-                </div>
-
                 <!-- Input Area -->
-                <div class="flex flex-col space-y-2">
+                <div class="flex flex-col space-y-2 mb-4">
                     <textarea id="module-input" rows="3"
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                        placeholder="Enter your question or response..."
+                        placeholder="Select a module type and start your conversation..."
                         onkeydown="if(event.key==='Enter' && event.ctrlKey) { event.preventDefault(); sendASPMessage(); }"></textarea>
                     <div class="flex justify-between items-center">
                         <span class="text-xs text-gray-500">Press Ctrl+Enter to send</span>
@@ -138,6 +138,10 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Conversation History -->
+                <div id="asp-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto bg-gray-50">
                 </div>
             </div>
         </div>
@@ -337,7 +341,7 @@
             aspConversationHistory = [];
             ragConversationHistory = [];
             const conversationDiv = document.getElementById('asp-conversation');
-            conversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">Conversation cleared. Start a new discussion...</div>';
+            conversationDiv.innerHTML = '';
             // Also clear RAG conversation
             const ragConversationDiv = document.getElementById('rag-conversation');
             ragConversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">RAG-enhanced responses will appear here after you send a message above...</div>';
@@ -353,6 +357,23 @@
 
             if (role === 'assistant') {
                 messageDiv.innerHTML = converter.makeHtml(content);
+
+                // Style section headers - find strong tags that are standalone section headers
+                const sectionHeaders = [
+                    'Direct Answer', 'Clinical Context', 'Evidence and Recommendations',
+                    'Key Clinical Considerations', 'Patient-Specific Factors',
+                    'Alternative Approaches', 'References'
+                ];
+
+                messageDiv.querySelectorAll('strong').forEach(strong => {
+                    const text = strong.textContent.trim();
+                    // Check if the text starts with any of the section headers (with or without colon)
+                    if (sectionHeaders.some(header =>
+                        text.startsWith(header + ':') || text === header
+                    )) {
+                        strong.classList.add('section-header');
+                    }
+                });
             } else {
                 messageDiv.textContent = content;
             }

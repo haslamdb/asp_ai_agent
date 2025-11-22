@@ -160,7 +160,7 @@ class EnhancedFeedbackGenerator:
                 elif not pmid and filename not in seen_filenames:
                     seen_filenames.add(filename)
                     unique_results.append(result)
-            literature_results = unique_results[:8]  # Keep top 8
+            literature_results = unique_results[:12]  # Keep top 12
 
             print(f"  ✓ Found {len(literature_results)} relevant papers")
 
@@ -471,7 +471,7 @@ Provide a direct, evidence-based answer to the clinical question above.
 2. **Provide comprehensive detail** - Write 800-1000 words with thorough clinical context
 3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc. CORRESPONDING to the Source numbers above.
 4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer.
-5. **Provide detailed clinical context** - Include:
+5. **Provide detailed clinical context** - When applicable, include:
    - Pathophysiology or mechanism
    - Diagnostic considerations
    - Treatment rationale and options
@@ -530,7 +530,7 @@ Use clean, professional markdown formatting:
 - Use **bold** for important clinical terms or recommendations
 - Keep paragraphs concise and scannable
 
-**Example structure for a comprehensive response (800-1000 words):**
+**Example structure for a comprehensive response (800-2000 words):**
 ```
 **Direct Answer:** [Clear, actionable answer to the question]
 
@@ -542,7 +542,7 @@ Use clean, professional markdown formatting:
 
 [3-4 paragraphs discussing the evidence base in depth, citing the literature provided. Include specific recommendations with citations [1], [2]. Analyze the evidence strength.]
 
-**Key Clinical Considerations:**
+**Key Clinical Considerations:** (when applicable)
 
 - **Diagnostic Workup:** [Detailed explanation]
 - **Treatment Approach:** [Specific treatment recommendations]
@@ -550,16 +550,16 @@ Use clean, professional markdown formatting:
 - **Risk Factors:** [Who is at higher risk]
 - **Complications:** [What complications to watch for]
 
-**Patient-Specific Factors:**
+**Patient-Specific Factors:** (when applicable)
 
 [Discuss how patient characteristics (age, comorbidities, etc.) might change management]
 
-**Alternative Approaches:**
+**Alternative Approaches:** (when applicable)
 
 [When applicable, discuss alternative management strategies]
 
 
-## **References**
+## **References** (Always include this section)
 
 1. [PMID/ID from Source 1]
 2. [PMID/ID from Source 2]
