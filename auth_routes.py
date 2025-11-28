@@ -12,6 +12,8 @@ from datetime import datetime
 from functools import wraps
 import re
 import os
+import html
+import requests
 
 # Create authentication blueprint
 auth_bp = Blueprint('auth', __name__)
@@ -32,12 +34,79 @@ def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
+
+def sanitize_text_input(text):
+    """
+    Sanitize text input to prevent XSS and remove malicious content.
+    Strips HTML tags and escapes special characters.
+    """
+    if not text:
+        return text
+
+    # Remove HTML tags and their contents for script/style tags
+    clean_text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    clean_text = re.sub(r'<style[^>]*>.*?</style>', '', clean_text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Remove all other HTML tags
+    clean_text = re.sub(r'<[^>]*>', '', clean_text)
+
+    # Remove common script injection patterns and their payloads
+    clean_text = re.sub(r'javascript:[^\s]*', '', clean_text, flags=re.IGNORECASE)
+    clean_text = re.sub(r'on\w+\s*=\s*[^\s]+', '', clean_text, flags=re.IGNORECASE)
+
+    # Remove URLs (common in spam)
+    clean_text = re.sub(r'https?://\S+', '', clean_text)
+    clean_text = re.sub(r'bit\.ly/\S+', '', clean_text, flags=re.IGNORECASE)
+
+    # Strip excess whitespace
+    clean_text = ' '.join(clean_text.split())
+
+    return clean_text.strip()
+
+
+def verify_recaptcha(recaptcha_response):
+    """
+    Verify reCAPTCHA response with Google.
+    Returns True if valid, False otherwise.
+    Returns True if reCAPTCHA is not configured (graceful degradation).
+    """
+    secret_key = os.getenv('RECAPTCHA_SECRET_KEY')
+
+    # If reCAPTCHA not configured, allow through (but log warning)
+    if not secret_key or secret_key == 'your-recaptcha-secret-key-here':
+        print("⚠️  Warning: reCAPTCHA not configured. Signup form is unprotected from bots.")
+        return True
+
+    if not recaptcha_response:
+        return False
+
+    try:
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': secret_key,
+                'response': recaptcha_response
+            },
+            timeout=5
+        )
+        result = response.json()
+        return result.get('success', False)
+    except Exception as e:
+        print(f"reCAPTCHA verification error: {e}")
+        # On error, allow through to avoid blocking legitimate users
+        return True
+
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
     """User registration"""
+    # Get reCAPTCHA site key for template
+    recaptcha_site_key = os.getenv('RECAPTCHA_SITE_KEY', '')
+    if recaptcha_site_key == 'your-recaptcha-site-key-here':
+        recaptcha_site_key = ''
+
     if request.method == 'GET':
         # Return signup page HTML
-        return render_template_string(SIGNUP_TEMPLATE)
+        return render_template_string(SIGNUP_TEMPLATE, recaptcha_site_key=recaptcha_site_key)
 
     # Handle POST request
     data = request.json if request.is_json else request.form
@@ -45,13 +114,20 @@ def signup():
     email = data.get('email', '').strip().lower()
     password = data.get('password', '')
     confirm_password = data.get('confirm_password', '')
-    full_name = data.get('full_name', '').strip()
-    institution = data.get('institution', '').strip()
+    full_name = sanitize_text_input(data.get('full_name', '').strip())
+    institution = sanitize_text_input(data.get('institution', '').strip())
     fellowship_year = data.get('fellowship_year')
-    specialty = data.get('specialty', '').strip()
+    specialty = sanitize_text_input(data.get('specialty', '').strip())
+
+    # Get reCAPTCHA response
+    recaptcha_response = data.get('g-recaptcha-response', '')
 
     # Validation
     errors = []
+
+    # Verify reCAPTCHA first (if configured)
+    if recaptcha_site_key and not verify_recaptcha(recaptcha_response):
+        errors.append('Please complete the CAPTCHA verification')
 
     if not email or not is_valid_email(email):
         errors.append('Valid email is required')
@@ -72,7 +148,7 @@ def signup():
     if errors:
         if request.is_json:
             return jsonify({'success': False, 'errors': errors}), 400
-        return render_template_string(SIGNUP_TEMPLATE, errors=errors, data=data)
+        return render_template_string(SIGNUP_TEMPLATE, errors=errors, data=data, recaptcha_site_key=recaptcha_site_key)
 
     # Create new user
     try:
@@ -428,6 +504,9 @@ SIGNUP_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - ASP AI Agent</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% if recaptcha_site_key %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {% endif %}
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-2xl w-full">
@@ -498,6 +577,12 @@ SIGNUP_TEMPLATE = '''
                                placeholder="e.g., Infectious Disease, Pediatric ID"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     </div>
+
+                    {% if recaptcha_site_key %}
+                    <div class="md:col-span-2">
+                        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <button type="submit"
