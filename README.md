@@ -95,6 +95,46 @@ asp_ai_agent/
     └── start_local.sh            # Local startup script
 ```
 
+## 🔄 Automated Literature Sync & Indexing
+
+The ASP AI Agent maintains an up-to-date literature database through automated daily synchronization with OneDrive and reindexing of the EndNote library.
+
+### Daily Automated Workflow
+
+**Script Location**: `/home/david/scripts/sync/sync_and_reindex_asp_endnote.sh`
+
+**Execution Time**: 4:00 AM daily (via `/home/david/scripts/backup/nightly_sync_all.sh`)
+
+**Process**:
+1. **Pull from OneDrive** - Downloads latest EndNote library from `onedrive:Documents/Code/asp_ai_agent`
+2. **Sync Library Files** - Updates both `asp_library.enl` and `asp_library.Data/` to local `asp_literature/` directory
+3. **Automatic Reindexing** - Runs `reindex_from_endnote.py` to update RAG embeddings with any new PDFs
+4. **Logging** - Saves detailed logs to `/home/david/logs/sync/asp_endnote_pull_reindex_*.log`
+
+**Daily Execution Order**:
+1. Sync from interface labs
+2. Sync from lambda quad
+3. Sync OneDrive metagenomics
+4. Sync OneDrive experiments
+5. Sync main EndNote library
+6. **Pull ASP EndNote library from OneDrive and reindex** ← New automated step
+7. Push ASP EndNote library to OneDrive
+
+### Manual Sync
+
+To manually trigger the sync and reindex process:
+
+```bash
+/home/david/scripts/sync/sync_and_reindex_asp_endnote.sh
+```
+
+### Benefits
+
+- **Always Current**: RAG system stays synchronized with EndNote library changes
+- **Zero Manual Intervention**: Fully automated nightly updates
+- **Full Logging**: Complete audit trail of sync operations
+- **Bidirectional Sync**: Changes pulled from OneDrive, then pushed back after indexing
+
 ## 🎓 Educational Modules
 
 ### Currently Available

@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Project specific
+*.db
+*.sqlite3
+*.log
+server.log
+asp_sessions.db
+asp_expert_knowledge.db
+
+# Elastic Beanstalk
+.elasticbeanstalk/
+.ebextensions/
+Dockerrun.aws.json
+
+# Environment files (API keys should be set via EB environment variables)
+.env
+
+# Large files that are downloaded at runtime
+asp_literature/embeddings/
+asp_literature/expert_embeddings/
+data/
+
+# Temp files
+tmp/
+*.tmp
+/tmp/
+
+# Documentation (not needed in container)
+docs/
+*.md
+!README.md

@@ -35,7 +35,8 @@ export default async function handler(req, res) {
         
         // Transform the request body to Claude's format
         // Expecting: { system: string, messages: [{ role: string, content: string }], max_tokens?: number }
-        const { system, messages, max_tokens = 4000, model = "claude-3-5-sonnet-20241022" } = req.body;
+        // Default to latest Claude Sonnet 4.5
+        const { system, messages, max_tokens = 4000, model = "claude-sonnet-4-5" } = req.body;
         
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: 'Messages array is required' });

@@ -4,7 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASP AI Agent - Multi-Model Interface</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- CSRF Protection -->
+    <meta name="csrf-token" id="csrf-token">
+    <script src="/csrf_helper.js"></script>
+    <script>
+        // Fetch and set CSRF token on page load
+        (async function() {
+            try {
+                const response = await fetch('/api/csrf-token');
+                const data = await response.json();
+                document.getElementById('csrf-token').setAttribute('content', data.csrf_token);
+                console.log('CSRF token loaded');
+            } catch (error) {
+                console.error('Failed to load CSRF token:', error);
+            }
+        })();
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -28,6 +46,13 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Style for section headings in RAG responses */
+        #rag-conversation .section-header {
+            text-decoration: underline !important;
+            text-decoration-color: #6366f1 !important;
+            text-underline-offset: 3px !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -39,105 +64,113 @@
                     <h1 class="text-3xl font-bold">ASP AI Agent</h1>
                     <p class="mt-1 text-lg opacity-90">Multi-Model Interface with Local & Cloud AI</p>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-2">
+                        <label class="text-sm font-medium">AI Model:</label>
+                        <select id="model-select" class="bg-white text-gray-900 rounded px-2 py-1 text-sm">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <button id="refresh-models" class="text-sm hover:opacity-80">🔄</button>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-20 rounded-lg px-3 py-2">
+                        <label class="text-sm font-medium">RAG Source:</label>
+                        <select id="rag-select" class="bg-white text-gray-900 rounded px-2 py-1 text-sm">
+                            <option value="none">None</option>
+                            <option value="literature">📚 Literature</option>
+                            <option value="expert">👨‍⚕️ Expert Knowledge</option>
+                            <option value="both" selected>🔬 Both</option>
+                        </select>
+                    </div>
                     <span id="connection-status" class="flex items-center">
                         <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                         <span class="text-sm">Connected</span>
                     </span>
+                    <a href="/dashboard" class="text-sm px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        ← Back to Dashboard
+                    </a>
+                    <a href="/logout" class="text-sm px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-md transition">
+                        Logout
+                    </a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Model Selection Bar -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700">Select Model:</label>
-                    <select id="model-select" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <option value="">Loading models...</option>
-                    </select>
-                    <button id="refresh-models" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        🔄 Refresh
-                    </button>
-                </div>
-                <div id="model-info" class="text-sm text-gray-600"></div>
-            </div>
-            
-            <!-- Available Models Display -->
-            <div id="models-grid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                <!-- Model badges will be inserted here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- Chat Interface -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chat with AI Models</h2>
-            
-            <div id="chat-messages" class="border rounded-lg p-4 h-96 overflow-y-auto mb-4 bg-gray-50">
-                <div class="text-gray-500 text-center py-8">
-                    Select a model and start chatting...
-                </div>
-            </div>
-            
-            <div class="flex space-x-2">
-                <input type="text" id="chat-input" 
-                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Type your message here..."
-                    onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()">
-                <button onclick="sendMessage()" 
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    Send
-                </button>
-            </div>
-        </div>
 
         <!-- ASP Module Tester -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">ASP Module Tester</h2>
-            
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">ASP Module Tester</h2>
+                <!-- Selected Model Display -->
+                <div id="models-grid" class="flex items-center">
+                    <!-- Selected model badge will be shown here -->
+                </div>
+            </div>
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Module Type:</label>
-                    <select id="module-type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="business_case">Business Case Review</option>
-                        <option value="prescriber_psychology">Prescriber Psychology</option>
-                        <option value="general">General ASP Feedback</option>
+                    <select id="module-type" class="w-full px-4 py-3 rounded-lg border-2 border-purple-300 bg-purple-50 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-gray-900 font-medium cursor-pointer hover:bg-purple-100 transition">
+                        <option value="business_case">📊 Business Case Review</option>
+                        <option value="prescriber_psychology">🧠 Prescriber Psychology</option>
+                        <option value="general" selected>💡 General ASP Questions</option>
                     </select>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Input:</label>
-                    <textarea id="module-input" rows="6" 
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Enter your business case, prescriber scenario, or ASP question..."></textarea>
-                </div>
-                
-                <button onclick="getASPFeedback()" 
-                    class="w-full px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    Get Expert Feedback
-                </button>
-                
-                <div id="asp-feedback" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="font-semibold text-gray-900 mb-2">Feedback:</h3>
-                    <div id="feedback-content" class="prose prose-sm max-w-none"></div>
-                    <div id="citations" class="hidden mt-4 pt-4 border-t">
-                        <h4 class="font-semibold text-gray-900 mb-2">Supporting Literature:</h4>
-                        <ul id="citations-list" class="text-sm space-y-1"></ul>
+                <!-- Input Area -->
+                <div class="flex flex-col space-y-2 mb-4">
+                    <textarea id="module-input" rows="3"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                        placeholder="Select a module type and start your conversation..."
+                        onkeydown="if(event.key==='Enter' && event.ctrlKey) { event.preventDefault(); sendASPMessage(); }"></textarea>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Press Ctrl+Enter to send</span>
+                        <div class="space-x-2">
+                            <button onclick="clearASPConversation()"
+                                class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm">
+                                Clear Chat
+                            </button>
+                            <button onclick="sendASPMessage()"
+                                class="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                Send Message
+                            </button>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Conversation History -->
+                <div id="asp-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto bg-gray-50">
                 </div>
             </div>
         </div>
-        
+
+        <!-- RAG-Enhanced ASP Module Responses -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Evidence-Enhanced Response</h2>
+                <span class="text-sm text-gray-600 italic">Uses selected knowledge sources for enhanced feedback</span>
+            </div>
+
+            <!-- Conversation History -->
+            <div id="rag-conversation" class="border rounded-lg p-4 h-128 overflow-y-auto mb-4 bg-gray-50">
+                <div class="text-gray-500 text-center py-8">
+                    RAG-enhanced responses will appear here after you send a message above...
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        const API_BASE = 'http://localhost:5000';
+        // Use current host with correct protocol
+        const protocol = window.location.protocol; // http: or https:
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        // Include port in URL if it's not a standard port
+        const portSuffix = (port && port !== '80' && port !== '443') ? ':' + port : '';
+        const API_BASE = `${protocol}//${hostname}${portSuffix}`;
         const converter = new showdown.Converter({ tables: true });
         let currentModel = null;
         let availableModels = [];
@@ -176,12 +209,18 @@
 
         async function loadModels() {
             try {
+                console.log('Loading models from:', `${API_BASE}/api/models`);
                 const response = await fetch(`${API_BASE}/api/models`);
                 const data = await response.json();
                 availableModels = data.models;
-                
+                console.log('Models loaded:', data.models.length);
+
                 // Update select dropdown
                 const select = document.getElementById('model-select');
+                if (!select) {
+                    console.error('model-select element not found!');
+                    return;
+                }
                 select.innerHTML = '<option value="">Choose a model...</option>';
                 
                 data.models.forEach(model => {
@@ -190,15 +229,17 @@
                     option.textContent = model.name;
                     select.appendChild(option);
                 });
-                
-                // Update models grid
-                updateModelsGrid(data.models);
-                
-                // Set default model if available
+
+                // Set default model - prefer Claude Sonnet 4.5, otherwise first available
                 if (data.models.length > 0) {
-                    currentModel = data.models[0].id;
+                    const claudeSonnet = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('sonnet')
+                    );
+                    const defaultModel = claudeSonnet || data.models[0];
+                    currentModel = defaultModel.id;
                     select.value = currentModel;
-                    updateModelInfo(data.models[0]);
+                    // Update models grid to show only selected model
+                    updateModelsGrid(data.models, currentModel);
                 }
             } catch (error) {
                 console.error('Failed to load models:', error);
@@ -207,33 +248,34 @@
             }
         }
 
-        function updateModelsGrid(models) {
+        function updateModelsGrid(models, selectedModelId) {
             const grid = document.getElementById('models-grid');
             grid.innerHTML = '';
-            
-            models.forEach(model => {
-                const badge = document.createElement('div');
-                badge.className = 'model-badge p-3 rounded-lg border cursor-pointer ' +
-                    (model.local ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300');
-                badge.onclick = () => selectModel(model);
-                
-                const emoji = model.provider === 'ollama' ? '🦙' :
-                             model.provider === 'anthropic' ? '🤖' :
-                             model.provider === 'google' ? '🔮' :
-                             model.provider === 'citation_assistant' ? '📚' : '🤖';
-                
-                badge.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-2xl">${emoji}</span>
-                        <div class="flex-1">
-                            <div class="font-medium text-sm">${model.name}</div>
-                            <div class="text-xs text-gray-600">${model.local ? 'Local' : 'Cloud'}</div>
-                        </div>
+
+            // Only show the selected model
+            const model = models.find(m => m.id === selectedModelId);
+            if (!model) return;
+
+            const badge = document.createElement('div');
+            badge.className = 'model-badge p-3 rounded-lg border ' +
+                (model.local ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300');
+
+            const emoji = model.provider === 'ollama' ? '🦙' :
+                         model.provider === 'anthropic' ? '🤖' :
+                         model.provider === 'google' ? '🔮' :
+                         model.provider === 'citation_assistant' ? '📚' : '🤖';
+
+            badge.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">${emoji}</span>
+                    <div class="flex-1">
+                        <div class="font-medium text-sm">${model.name}</div>
+                        <div class="text-xs text-gray-600">${model.local ? 'Local' : 'Cloud'}</div>
                     </div>
-                `;
-                
-                grid.appendChild(badge);
-            });
+                </div>
+            `;
+
+            grid.appendChild(badge);
         }
 
         function selectModel(model) {
@@ -256,134 +298,213 @@
         document.getElementById('model-select').addEventListener('change', (e) => {
             currentModel = e.target.value;
             const model = availableModels.find(m => m.id === currentModel);
-            if (model) updateModelInfo(model);
+            if (model) {
+                updateModelsGrid(availableModels, currentModel);
+            }
         });
 
         document.getElementById('refresh-models').addEventListener('click', loadModels);
 
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message || !currentModel) return;
-            
-            // Add user message to chat
-            addChatMessage('user', message);
-            input.value = '';
-            
-            // Show typing indicator
-            const typingId = addChatMessage('assistant', '<div class="spinner"></div>', true);
-            
+        // ASP Module conversation histories
+        let aspConversationHistory = [];
+        let ragConversationHistory = [];
+
+        function getSystemPrompt(moduleType) {
+            if (moduleType === 'business_case') {
+                return `You are a senior hospital administrator (CFO/CMO) reviewing an ASP business case. Focus on ROI calculations, stakeholder engagement strategies, and measurable outcomes. Be skeptical but constructive. Ground feedback in real-world ASP literature.`;
+            } else if (moduleType === 'prescriber_psychology') {
+                return `You are an expert in behavioral science and prescriber psychology for ASP. Analyze cognitive biases (commission bias, omission bias, availability heuristic). Suggest evidence-based communication strategies like academic detailing and motivational interviewing.`;
+            } else {
+                return `You are an ASP expert providing feedback on antimicrobial stewardship. Focus on evidence-based practices and implementation strategies.`;
+            }
+        }
+
+        function addASPMessage(role, content) {
+            const conversationDiv = document.getElementById('asp-conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
+                (role === 'user' ? 'bg-purple-100 ml-auto max-w-[90%]' :
+                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
+                 'bg-gray-100 mr-auto max-w-[90%]');
+
+            if (role === 'assistant') {
+                messageDiv.innerHTML = converter.makeHtml(content);
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            conversationDiv.appendChild(messageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        }
+
+        function clearASPConversation() {
+            aspConversationHistory = [];
+            ragConversationHistory = [];
+            const conversationDiv = document.getElementById('asp-conversation');
+            conversationDiv.innerHTML = '';
+            // Also clear RAG conversation
+            const ragConversationDiv = document.getElementById('rag-conversation');
+            ragConversationDiv.innerHTML = '<div class="text-gray-500 text-center py-8">RAG-enhanced responses will appear here after you send a message above...</div>';
+        }
+
+        function addRAGMessage(role, content) {
+            const conversationDiv = document.getElementById('rag-conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
+                (role === 'user' ? 'bg-green-100 ml-auto max-w-[90%]' :
+                 role === 'error' ? 'bg-red-100 max-w-[90%]' :
+                 'bg-gray-100 mr-auto max-w-[90%]');
+
+            if (role === 'assistant') {
+                messageDiv.innerHTML = converter.makeHtml(content);
+
+                // Style section headers - find strong tags that are standalone section headers
+                const sectionHeaders = [
+                    'Direct Answer', 'Clinical Context', 'Evidence and Recommendations',
+                    'Key Clinical Considerations', 'Patient-Specific Factors',
+                    'Alternative Approaches', 'References'
+                ];
+
+                messageDiv.querySelectorAll('strong').forEach(strong => {
+                    const text = strong.textContent.trim();
+                    // Check if the text starts with any of the section headers (with or without colon)
+                    if (sectionHeaders.some(header =>
+                        text.startsWith(header + ':') || text === header
+                    )) {
+                        strong.classList.add('section-header');
+                    }
+                });
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            conversationDiv.appendChild(messageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        }
+
+        async function sendASPMessage() {
+            const moduleType = document.getElementById('module-type').value;
+            const input = document.getElementById('module-input').value.trim();
+            const inputElement = document.getElementById('module-input');
+
+            if (!input) {
+                alert('Please enter a message');
+                return;
+            }
+
+            // If no model selected, use first available model
+            if (!currentModel && availableModels.length > 0) {
+                currentModel = availableModels[0].id;
+                document.getElementById('model-select').value = currentModel;
+            }
+
+            if (!currentModel) {
+                alert('No models available. Please refresh the page.');
+                return;
+            }
+
+            // Add user message to conversation
+            addASPMessage('user', input);
+            aspConversationHistory.push({ role: 'user', content: input });
+            inputElement.value = '';
+
+            // Show thinking indicator
+            addASPMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Thinking...</span></div>');
+
             try {
+                // Build messages with system prompt and conversation history
+                const chatMessages = [
+                    { role: 'system', content: getSystemPrompt(moduleType) },
+                    ...aspConversationHistory
+                ];
+
                 const response = await fetch(`${API_BASE}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         model: currentModel,
-                        messages: [{ role: 'user', content: message }]
+                        messages: chatMessages
                     })
                 });
-                
+
                 const data = await response.json();
-                
-                // Remove typing indicator
-                document.getElementById(typingId)?.remove();
-                
-                if (response.ok) {
-                    addChatMessage('assistant', data.response);
-                    
-                    // Show citations if available
-                    if (data.citations && data.citations.length > 0) {
-                        let citationsHtml = '<div class="mt-2 text-xs text-gray-600">Sources: ';
-                        data.citations.forEach((cite, i) => {
-                            citationsHtml += `<span class="font-medium">[${i+1}] ${cite.title}</span>`;
-                            if (i < data.citations.length - 1) citationsHtml += ', ';
-                        });
-                        citationsHtml += '</div>';
-                        addChatMessage('system', citationsHtml);
-                    }
-                } else {
-                    addChatMessage('error', `Error: ${data.error}`);
-                }
-            } catch (error) {
-                document.getElementById(typingId)?.remove();
-                addChatMessage('error', `Failed to send message: ${error.message}`);
-            }
-        }
 
-        function addChatMessage(role, content, isHtml = false) {
-            const messagesDiv = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            const messageId = 'msg-' + Date.now();
-            messageDiv.id = messageId;
-            messageDiv.className = 'mb-4 p-3 rounded-lg ' +
-                (role === 'user' ? 'bg-indigo-100 ml-auto max-w-xs md:max-w-md' :
-                 role === 'error' ? 'bg-red-100' :
-                 role === 'system' ? 'bg-gray-100 text-center' :
-                 'bg-gray-100 mr-auto max-w-xs md:max-w-md');
-            
-            if (isHtml) {
-                messageDiv.innerHTML = content;
-            } else if (role === 'assistant' && !content.includes('<div')) {
-                messageDiv.innerHTML = converter.makeHtml(content);
-            } else {
-                messageDiv.textContent = content;
-            }
-            
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            
-            return messageId;
-        }
-
-        async function getASPFeedback() {
-            const moduleType = document.getElementById('module-type').value;
-            const input = document.getElementById('module-input').value.trim();
-            
-            if (!input || !currentModel) {
-                alert('Please select a model and enter some input');
-                return;
-            }
-            
-            const feedbackDiv = document.getElementById('asp-feedback');
-            const contentDiv = document.getElementById('feedback-content');
-            const citationsDiv = document.getElementById('citations');
-            const citationsList = document.getElementById('citations-list');
-            
-            feedbackDiv.classList.remove('hidden');
-            contentDiv.innerHTML = '<div class="spinner mx-auto"></div>';
-            citationsDiv.classList.add('hidden');
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/asp-feedback`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        module: moduleType,
-                        input: input,
-                        model: currentModel
-                    })
+                // Remove thinking indicator
+                const conversationDiv = document.getElementById('asp-conversation');
+                const spinners = conversationDiv.querySelectorAll('.spinner');
+                spinners.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    contentDiv.innerHTML = converter.makeHtml(data.response);
-                    
-                    // Show citations if available
-                    if (data.citations && data.citations.length > 0) {
-                        citationsDiv.classList.remove('hidden');
-                        citationsList.innerHTML = '';
-                        data.citations.forEach(cite => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${cite.title}</strong> (${cite.year}) - Relevance: ${cite.score.toFixed(2)}`;
-                            citationsList.appendChild(li);
-                        });
+
+                if (response.ok && data.response) {
+                    // Add AI response to conversation
+                    addASPMessage('assistant', data.response);
+                    aspConversationHistory.push({ role: 'assistant', content: data.response });
+
+                    // Also get RAG-enhanced response if RAG is enabled
+                    const ragType = document.getElementById('rag-select').value;
+                    if (ragType !== 'none') {
+                        // Add user message to RAG conversation history
+                        ragConversationHistory.push({ role: 'user', content: input });
+                        addRAGMessage('user', input);
+                        addRAGMessage('assistant', '<div class="flex items-center"><div class="spinner mr-2"></div><span>Generating RAG-enhanced response...</span></div>');
+
+                        try {
+                            const ragResponse = await fetch(`${API_BASE}/api/feedback/enhanced`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    input: input,
+                                    module_id: 'asp_module',
+                                    scenario_id: moduleType,
+                                    level: 'intermediate',
+                                    rag_type: ragType,
+                                    mode: 'qa',
+                                    conversation_history: ragConversationHistory
+                                })
+                            });
+
+                            const ragData = await ragResponse.json();
+
+                            // Remove thinking indicator from RAG
+                            const ragConversationDiv = document.getElementById('rag-conversation');
+                            const ragSpinners = ragConversationDiv.querySelectorAll('.spinner');
+                            ragSpinners.forEach(spinner => {
+                                const parent = spinner.closest('.mb-4');
+                                if (parent) parent.remove();
+                            });
+
+                            if (ragResponse.ok && ragData.response) {
+                                addRAGMessage('assistant', ragData.response);
+                                // Add assistant response to RAG conversation history
+                                ragConversationHistory.push({ role: 'assistant', content: ragData.response });
+                            } else {
+                                addRAGMessage('error', `RAG Error: ${ragData.error || 'Unknown error'}`);
+                            }
+                        } catch (ragError) {
+                            // Remove thinking indicator from RAG on error
+                            const ragConversationDiv = document.getElementById('rag-conversation');
+                            const ragSpinners = ragConversationDiv.querySelectorAll('.spinner');
+                            ragSpinners.forEach(spinner => {
+                                const parent = spinner.closest('.mb-4');
+                                if (parent) parent.remove();
+                            });
+                            addRAGMessage('error', `Failed to get RAG response: ${ragError.message}`);
+                        }
                     }
                 } else {
-                    contentDiv.innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+                    addASPMessage('error', `Error: ${data.error || 'Unknown error'}`);
                 }
             } catch (error) {
-                contentDiv.innerHTML = `<p class="text-red-600">Failed to get feedback: ${error.message}</p>`;
+                // Remove thinking indicator
+                const conversationDiv = document.getElementById('asp-conversation');
+                const spinners = conversationDiv.querySelectorAll('.spinner');
+                spinners.forEach(spinner => {
+                    const parent = spinner.closest('.mb-4');
+                    if (parent) parent.remove();
+                });
+                addASPMessage('error', `Failed to send message: ${error.message}`);
             }
         }
     </script>

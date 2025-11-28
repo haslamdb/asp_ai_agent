@@ -52,3 +52,34 @@ __pycache__/
 # Literature PDFs
 asp_literature/pdfs/*.pdf
 *.pdf
+
+# AWS and Deployment
+.aws/
+*.pem
+*.key
+credentials
+config
+.elasticbeanstalk/
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Databases (local development only)
+*.db
+*.sqlite
+*.sqlite3
+
+# Embeddings and models cache (regenerated)
+asp_literature/embeddings/
+asp_literature/expert_embeddings/
+expert_embeddings/
+literature_embeddings/
+.cache/
+models/
+
+# Backups
+backup-*.tar.gz
+*.backup
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

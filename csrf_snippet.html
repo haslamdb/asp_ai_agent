@@ -1,0 +1,16 @@
+<!-- CSRF Protection - Add this to the <head> section of all HTML pages -->
+<meta name="csrf-token" id="csrf-token">
+<script src="/csrf_helper.js"></script>
+<script>
+    // Fetch and set CSRF token on page load
+    (async function() {
+        try {
+            const response = await fetch('/api/csrf-token');
+            const data = await response.json();
+            document.getElementById('csrf-token').setAttribute('content', data.csrf_token);
+            console.log('CSRF token loaded');
+        } catch (error) {
+            console.error('Failed to load CSRF token:', error);
+        }
+    })();
+</script>
