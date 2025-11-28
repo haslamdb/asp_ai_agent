@@ -237,13 +237,11 @@ def login():
             return jsonify({
                 'success': False,
                 'error': error,
-                'email_verified': False,
-                'user_id': user.id
+                'email_verified': False
             }), 403
         return render_template_string(
             VERIFICATION_REQUIRED_TEMPLATE,
-            email=email,
-            user_id=user.id
+            email=email
         )
 
     # Login successful
@@ -919,7 +917,7 @@ VERIFICATION_REQUIRED_TEMPLATE = '''
             </p>
             <form method="POST" action="/resend-verification">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <input type="hidden" name="user_id" value="{{ user_id }}">
+                <input type="hidden" name="email" value="{{ email }}">
                 <button type="submit"
                         class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-200 font-semibold mb-4">
                     Resend Verification Email
