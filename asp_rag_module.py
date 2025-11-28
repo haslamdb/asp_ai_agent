@@ -874,12 +874,14 @@ class ASPLiteratureRAG:
             author = 'unknown'
 
         year = metadata.get('year')
-        if year is None or year == '':
+        if year is None or year == '' or str(year) == 'None':
             year = 'nodate'
+        else:
+            year = str(year)
 
         # Extract keyword from title
         title = metadata.get('title', '')
-        if title:
+        if title and str(title) != 'None':
             # Get first meaningful word from title (skip common words)
             title_words = [w.lower() for w in re.findall(r'\b[a-z]{4,}\b', title.lower())]
             skip_words = {'study', 'analysis', 'review', 'impact', 'effect', 'outcomes', 'antimicrobial', 'antibiotic'}
@@ -888,11 +890,16 @@ class ASPLiteratureRAG:
             # Use filename as keyword when no title exists (ensures uniqueness)
             keyword = pdf_path.stem[:20].lower()
 
-        # If we still have completely generic metadata, append filename hash to ensure uniqueness
-        if author == 'unknown' and year == 'nodate' and keyword == 'paper':
+        # If we still have completely generic metadata, use filename to ensure uniqueness
+        if author == 'unknown' and year == 'nodate':
             # Use sanitized filename to ensure uniqueness
             filename_id = re.sub(r'[^a-z0-9]', '', pdf_path.stem.lower())[:30]
             return f"unknown_{filename_id}"
+
+        # If keyword is still generic, append a hash of filename for uniqueness
+        if keyword == 'paper':
+            filename_hash = re.sub(r'[^a-z0-9]', '', pdf_path.stem.lower())[:10]
+            return f"{author}_{year}_{keyword}_{filename_hash}"
 
         return f"{author}_{year}_{keyword}"
 
