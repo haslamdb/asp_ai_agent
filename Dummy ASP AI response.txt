@@ -1,1 +1,0 @@
-I would calculate DOT per 1000 patient days by collecting antibiotic use data from Vigilanz MAR data. I would calculate vancomycin and meropenem separately. I would compare our CICU DOT per 1000 patient days to other CICU, for example using NHSN data. I would then show our CICU faculty information on how we compare to other CICU and tell them they are bad human beings.
