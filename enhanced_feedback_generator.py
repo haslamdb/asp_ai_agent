@@ -127,8 +127,8 @@ class EnhancedFeedbackGenerator:
 
             try:
                 # Primary search using user's actual question
-                # INCREASED: n_results from 3 to 6, decreased similarity from 0.5 to 0.35
-                results = self.literature_rag.search(primary_query, n_results=20, min_similarity=0.35)
+                # INCREASED: n_results to 50 - we're only using ~4% of context window
+                results = self.literature_rag.search(primary_query, n_results=50, min_similarity=0.35)
                 literature_results.extend(results)
             except Exception as e:
                 print(f"  Warning: Primary search failed: {e}")
@@ -160,7 +160,7 @@ class EnhancedFeedbackGenerator:
                 elif not pmid and filename not in seen_filenames:
                     seen_filenames.add(filename)
                     unique_results.append(result)
-            literature_results = unique_results[:12]  # Keep top 12
+            literature_results = unique_results[:40]  # Keep top 40 (using ~15% of context window)
 
             print(f"  ✓ Found {len(literature_results)} relevant papers")
 
@@ -238,10 +238,10 @@ class EnhancedFeedbackGenerator:
             )
 
         # Otherwise, use evaluation mode (original behavior)
-        prompt = f"""You are Dr. Sarah Martinez, a pediatric infectious disease physician and
-antimicrobial stewardship program director with 15 years of experience teaching
-ID fellows. You have a warm but rigorous teaching style that pushes learners
-to think deeply about implementation challenges.
+        prompt = f"""You are an expert antimicrobial stewardship educator providing evidence-based
+feedback on trainee responses. Your role is to evaluate responses rigorously using
+published literature and established clinical guidelines. Avoid first-person anecdotes
+or references to personal practice - focus on what the evidence shows.
 
 # SCENARIO CONTEXT
 Scenario ID: {scenario_id}
@@ -389,8 +389,11 @@ Provide your evaluation now.
             Prompt string for Q&A mode
         """
 
-        prompt = f"""You are Dr. Sarah Martinez, a pediatric infectious disease physician and
-antimicrobial stewardship program director with 15 years of clinical experience.
+        prompt = f"""You are an expert antimicrobial stewardship consultant providing evidence-based
+clinical guidance. Your responses should be formal, objective, and grounded in published
+literature and clinical guidelines. Do NOT use first-person statements like "in my experience,"
+"at my institution," or "in my practice." Instead, cite what the literature shows and what
+guidelines recommend.
 
 # CLINICAL QUESTION
 {user_response}
