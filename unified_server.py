@@ -881,6 +881,8 @@ def enhanced_feedback():
     use_literature = rag_type in ['literature', 'both', 'pubmed', 'both_pubmed']
     use_expert_knowledge = rag_type in ['expert', 'both', 'both_pubmed']
     force_pubmed = rag_type in ['pubmed', 'both_pubmed']  # Force PubMed search even with local results
+    
+    print(f"DEBUG: rag_type={rag_type}, force_pubmed={force_pubmed}, use_literature={use_literature}")
 
     try:
         # Use Enhanced Feedback Generator
@@ -902,6 +904,9 @@ def enhanced_feedback():
                 context_aware_input = f"Previous conversation context:\n{context_summary}\n\nCurrent question: {user_input}"
 
         # Use Expert RAG if available (unless forcing PubMed), otherwise fall back to PubMed RAG
+        print(f"DEBUG: enhanced_feedback_gen exists: {enhanced_feedback_gen is not None}, force_pubmed: {force_pubmed}")
+        print(f"DEBUG: Taking path: {'PubMed fallback' if (not enhanced_feedback_gen or force_pubmed) else 'Enhanced feedback gen'}")
+        
         if enhanced_feedback_gen and not force_pubmed:
             result = enhanced_feedback_gen.generate_feedback(
                 module_id=module_id,
@@ -931,17 +936,33 @@ def enhanced_feedback():
                                 from anthropic import Anthropic
                                 client = Anthropic(api_key=ANTHROPIC_API_KEY)
                                 
-                                extraction_prompt = f"""Extract key medical search terms from this query for a PubMed search.
-                                Focus on: disease names, treatments, drugs, procedures, age groups, study types.
-                                Return ONLY the search terms as a single line, no explanation.
-                                
-                                Query: {user_input}
-                                
-                                Search terms:"""
+                                extraction_prompt = f"""You are an expert medical librarian creating a PubMed search query.
+Convert the user's question into an effective PubMed search string using these guidelines:
+
+1. Identify key medical concepts (diseases, treatments, populations, outcomes)
+2. Use MeSH terms when appropriate
+3. Use Boolean operators (AND, OR) to connect concepts
+4. Use quotation marks for exact phrases
+5. Include relevant synonyms with OR
+6. Be specific but not overly narrow
+
+Examples:
+User: "studies about short IV therapy for pediatric osteomyelitis"
+Search: ("pediatric osteomyelitis" OR "osteomyelitis in children") AND ("short course" OR "early switch" OR "oral therapy" OR "IV to oral") AND (antibiotic* OR antimicrobial*)
+
+User: "Finnish studies on pediatric bone infections"
+Search: (Finland OR Finnish) AND ("bone infection*" OR osteomyelitis OR "septic arthritis") AND (pediatric OR child* OR adolescent*)
+
+User: "vancomycin dosing in obese children"
+Search: vancomycin AND (dosing OR dose OR pharmacokinetics) AND (obese OR obesity OR overweight) AND (pediatric OR child* OR adolescent*)
+
+User's Query: {user_input}
+
+PubMed Search String:"""
                                 
                                 message = client.messages.create(
                                     model="claude-haiku-4-5",
-                                    max_tokens=100,
+                                    max_tokens=200,
                                     messages=[{"role": "user", "content": extraction_prompt}]
                                 )
                                 search_query = message.content[0].text.strip()
@@ -956,13 +977,29 @@ def enhanced_feedback():
                                 genai.configure(api_key=GEMINI_API_KEY)
                                 model = genai.GenerativeModel('gemini-pro')
                                 
-                                extraction_prompt = f"""Extract key medical search terms from this query for a PubMed search.
-                                Focus on: disease names, treatments, drugs, procedures, age groups, study types.
-                                Return ONLY the search terms as a single line, no explanation.
-                                
-                                Query: {user_input}
-                                
-                                Search terms:"""
+                                extraction_prompt = f"""You are an expert medical librarian creating a PubMed search query.
+Convert the user's question into an effective PubMed search string using these guidelines:
+
+1. Identify key medical concepts (diseases, treatments, populations, outcomes)
+2. Use MeSH terms when appropriate
+3. Use Boolean operators (AND, OR) to connect concepts
+4. Use quotation marks for exact phrases
+5. Include relevant synonyms with OR
+6. Be specific but not overly narrow
+
+Examples:
+User: "studies about short IV therapy for pediatric osteomyelitis"
+Search: ("pediatric osteomyelitis" OR "osteomyelitis in children") AND ("short course" OR "early switch" OR "oral therapy" OR "IV to oral") AND (antibiotic* OR antimicrobial*)
+
+User: "Finnish studies on pediatric bone infections"
+Search: (Finland OR Finnish) AND ("bone infection*" OR osteomyelitis OR "septic arthritis") AND (pediatric OR child* OR adolescent*)
+
+User: "vancomycin dosing in obese children"
+Search: vancomycin AND (dosing OR dose OR pharmacokinetics) AND (obese OR obesity OR overweight) AND (pediatric OR child* OR adolescent*)
+
+User's Query: {user_input}
+
+PubMed Search String:"""
                                 
                                 response = model.generate_content(extraction_prompt)
                                 search_query = response.text.strip()
@@ -990,15 +1027,16 @@ def enhanced_feedback():
                                 for doc in documents[:5]
                             ])
                             
-                            summary_prompt = f"""Summarize these research abstracts focusing on key findings relevant to the user's question.
-                            Preserve PMIDs for citation. Be concise but thorough.
+                            summary_prompt = f"""Summarize these research abstracts to answer the user's question.
+                            Format: For each relevant study, provide a 1-2 sentence summary of key findings.
+                            Keep PMIDs for citation.
                             
                             User's question: {user_input}
                             
                             Abstracts:
                             {all_abstracts}
                             
-                            Summary with key findings:"""
+                            Concise summary of each study:"""
                             
                             message = client.messages.create(
                                 model="claude-haiku-4-5",
@@ -1028,20 +1066,21 @@ def enhanced_feedback():
                     print(f"PubMed RAG error: {e}")
             
             # Build the enhanced prompt with literature
-            enhanced_prompt = f"""You are an expert in antimicrobial stewardship providing feedback.
+            enhanced_prompt = f"""You are an expert in antimicrobial stewardship answering clinical questions based on current medical literature.
 
-User's Input: {context_aware_input}
+User's Question: {user_input}
 
-Relevant Medical Literature:
+Relevant Medical Literature Found:
 {literature_context if literature_context else "No literature context available."}
 
-Please provide expert-level feedback that:
-1. Addresses the clinical accuracy of the response
-2. Suggests improvements based on current guidelines
-3. References relevant literature when applicable
-4. Maintains an educational and constructive tone
+Provide a direct, evidence-based answer to the user's question. Structure your response as:
+1. A clear summary of what the literature shows (2-3 paragraphs)
+2. Key findings from the most relevant studies
+3. Clinical implications and recommendations
+4. Any important limitations or caveats
 
-Provide your feedback in a clear, structured format."""
+Cite specific PMIDs using [PMID: xxxxx] format when referring to studies.
+Be concise but thorough. Focus on answering the user's specific question."""
             
             result['enhanced_prompt'] = enhanced_prompt
             result['sources'] = sources

@@ -395,6 +395,8 @@ literature and clinical guidelines. Do NOT use first-person statements like "in 
 "at my institution," or "in my practice." Instead, cite what the literature shows and what
 guidelines recommend.
 
+[DEBUG: Using Enhanced Feedback Generator path - NOT PubMed fallback]
+
 # CLINICAL QUESTION
 {user_response}
 
