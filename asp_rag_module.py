@@ -924,7 +924,34 @@ class ASPLiteratureRAG:
             print("   Warning: Collection is empty. Run index_pdfs() first.")
             return []
 
-        # Encode query
+        # Check if query contains a PMID pattern and do direct lookup first
+        pmid_match = re.search(r'\b(\d{7,8})\b', query)
+        if pmid_match:
+            pmid = pmid_match.group(1)
+            pmid_results = self.collection.get(
+                where={'pmid': pmid},
+                include=['metadatas', 'documents'],
+                limit=n_results
+            )
+            if pmid_results['metadatas']:
+                # Found by PMID - return these results
+                formatted_results = []
+                for i, meta in enumerate(pmid_results['metadatas']):
+                    formatted_results.append({
+                        'text': pmid_results['documents'][i],
+                        'filename': meta['filename'],
+                        'paper_id': meta.get('paper_id', meta.get('pmid', '')),
+                        'similarity': 1.0,  # Exact match
+                        'title': meta.get('title', ''),
+                        'first_author': meta.get('first_author', ''),
+                        'year': int(meta['year']) if meta.get('year') and meta['year'].isdigit() else None,
+                        'journal': meta.get('journal', ''),
+                        'doi': meta.get('doi', ''),
+                        'pmid': meta.get('pmid', ''),
+                    })
+                return formatted_results[:n_results]
+
+        # Encode query for semantic search
         query_embedding = self.embedding_model.encode(query, normalize_embeddings=True)
 
         # Search

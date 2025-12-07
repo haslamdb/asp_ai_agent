@@ -1072,12 +1072,12 @@ def list_models():
     if ANTHROPIC_API_KEY:
         models.extend([
             {
-                'id': 'claude:4.1-opus',
-                'name': 'Claude Opus 4.1',
+                'id': 'claude:4.5-opus',
+                'name': 'Claude Opus 4.5',
                 'provider': 'anthropic',
                 'type': 'llm',
                 'local': False,
-                'description': 'Most powerful Claude model for complex reasoning and coding'
+                'description': 'Most powerful Claude model - best for complex reasoning, coding, and agentic tasks'
             },
             {
                 'id': 'claude:4.5-sonnet',
@@ -1354,7 +1354,7 @@ def claude_chat(model: str, messages: List[Dict], system_prompt: str = '', tempe
     try:
         # Map model names to Claude model IDs
         model_map = {
-            '4.1-opus': 'claude-opus-4-1',
+            '4.5-opus': 'claude-opus-4-5',
             '4.5-sonnet': 'claude-sonnet-4-5',
             '4.5-haiku': 'claude-haiku-4-5'
         }
