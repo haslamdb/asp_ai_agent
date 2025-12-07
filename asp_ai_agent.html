@@ -302,12 +302,12 @@
                     modelSelect.appendChild(option);
                 });
 
-                // Set default model - prefer Claude Sonnet 4.5
+                // Set default model - prefer Claude Opus 4.5
                 if (data.models.length > 0) {
-                    const claudeSonnet = data.models.find(m =>
-                        m.id.includes('claude') && m.id.includes('sonnet')
+                    const claudeOpus = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('opus')
                     );
-                    const defaultModel = claudeSonnet || data.models[0];
+                    const defaultModel = claudeOpus || data.models[0];
                     currentModel = defaultModel.id;
                     modelSelect.value = currentModel;
                 }
@@ -387,21 +387,21 @@ Your role is to:
 
 Maintain a professional, educational tone while being practical and actionable in your responses.`;
 
-            // Use unified /api/chat endpoint
-            const messages = [
-                { role: 'system', content: systemPrompt },
-                ...conversationHistory.slice(-10) // Keep last 10 messages for context
-            ];
+            // Use literature-enhanced chat endpoint for RAG support
+            // Combine the system prompt with the last message for the query
+            const lastMessage = conversationHistory[conversationHistory.length - 1];
+            const query = lastMessage ? lastMessage.content : message;
 
             const payload = {
                 model: currentModel,
-                messages: messages
+                query: query,
+                max_literature: 5  // Get up to 5 relevant papers
             };
 
-            console.log('Sending request to:', `${currentHost}/api/chat`);
+            console.log('Sending request to:', `${currentHost}/api/chat/with-literature`);
             console.log('Payload:', payload);
 
-            const response = await fetch(`${currentHost}/api/chat`, {
+            const response = await fetch(`${currentHost}/api/chat/with-literature`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -417,7 +417,18 @@ Maintain a professional, educational tone while being practical and actionable i
 
             const result = await response.json();
             console.log('API result:', result);
-            return result.response || result.text || 'No response received';
+            
+            let responseText = result.response || result.text || 'No response received';
+            
+            // Add sources if available
+            if (result.sources && result.sources.length > 0) {
+                responseText += '\n\n---\n**Sources:**\n';
+                result.sources.forEach((source, idx) => {
+                    responseText += `${idx + 1}. [PMID: ${source.pmid}] ${source.title} (${source.source})\n`;
+                });
+            }
+            
+            return responseText;
         }
         
         function addMessage(text, sender) {

@@ -57,6 +57,10 @@ from asp_rag_module import ASPLiteratureRAG
 from expert_knowledge_rag import ExpertKnowledgeRAG
 from enhanced_feedback_generator import EnhancedFeedbackGenerator
 
+# Import PubMed RAG and Literature Extractor
+from pubmed_rag_tools import PubMedRAGSystem, PUBMED_RAG_TOOLS
+from literature_extractor import LiteratureExtractor, EnhancedPubMedRAG, RelevanceLevel
+
 app = Flask(__name__)
 
 # SECURITY: Fail securely if no secret key in production
@@ -151,6 +155,24 @@ except Exception as e:
     expert_rag = None
     enhanced_feedback_gen = None
 
+# Initialize PubMed RAG system
+print("Initializing PubMed RAG system...")
+try:
+    pubmed_rag = PubMedRAGSystem(
+        local_rag=asp_rag,  # Existing ASPLiteratureRAG instance
+        similarity_threshold=0.55,
+        min_local_results=3,
+        ncbi_api_key=os.environ.get('NCBI_API_KEY')
+    )
+    print(f"✓ PubMed RAG system initialized")
+except Exception as e:
+    print(f"⚠ Warning: Could not initialize PubMed RAG: {e}")
+    pubmed_rag = None
+
+# Initialize Literature Extractor
+literature_extractor = None
+enhanced_rag = None
+
 # Configuration - load from environment with defaults
 OLLAMA_API_PORT = os.environ.get('OLLAMA_API_PORT', '11434')
 CITATION_API_PORT = os.environ.get('CITATION_API_PORT', '9998')
@@ -163,6 +185,34 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 # API endpoints
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+
+# Create data directory for caches
+os.makedirs('data', exist_ok=True)
+
+# Initialize Literature Extractor if Ollama is available
+def init_literature_extractor():
+    """Initialize Literature Extractor after checking Ollama availability"""
+    global literature_extractor, enhanced_rag
+    try:
+        resp = requests.get(f"{OLLAMA_API}/api/tags", timeout=2)
+        if resp.status_code == 200:
+            extraction_model = os.environ.get('EXTRACTION_MODEL', 'qwen2.5:72b-instruct-q4_K_M')
+            literature_extractor = LiteratureExtractor(
+                ollama_url=OLLAMA_API,
+                model=extraction_model,
+                cache_db='data/extraction_cache.db'
+            )
+            if pubmed_rag:
+                enhanced_rag = EnhancedPubMedRAG(
+                    pubmed_rag=pubmed_rag,
+                    extractor=literature_extractor
+                )
+            print(f"✓ Literature Extractor initialized with {extraction_model}")
+    except Exception as e:
+        print(f"⚠ Warning: Could not initialize Literature Extractor: {e}")
+
+# Initialize after server starts
+init_literature_extractor()
 
 @app.route('/api/csrf-token', methods=['GET'])
 def get_csrf_token():
@@ -511,7 +561,7 @@ def cicu_ai_feedback():
     data = request.json or {}
     user_input = data.get('input', '')
     level = data.get('level', 'beginner')
-    preferred_model = data.get('model', 'gemma2:27b')  # Default to faster model
+    preferred_model = data.get('model', 'claude:4.5-opus')  # Default to Claude Opus 4.5
 
     if not user_input:
         return jsonify({'error': 'No input provided'}), 400
@@ -543,33 +593,36 @@ def cicu_ai_feedback():
     difficulty_level = level_map.get(level, CICUDifficultyLevel.BEGINNER)
     scenario = cicu_module.get_scenario(difficulty_level)
 
-    # Retrieve relevant literature using RAG
+    # Retrieve relevant literature using enhanced PubMed RAG
     literature_context = ""
-    if asp_rag:
+    sources_used = []
+    if pubmed_rag:
         try:
-            # Extract key concepts for literature search
-            search_queries = [
-                f"antimicrobial stewardship {level}",
-                "reducing broad-spectrum antibiotic use",
-                "days of therapy DOT measurement",
-                "behavioral change interventions antimicrobial",
-                "implementation science stewardship"
-            ]
-
-            all_results = []
-            for query in search_queries:
-                results = asp_rag.search(query, n_results=2, min_similarity=0.4)
-                all_results.extend(results)
-
-            # Deduplicate by PMID and take top 5
-            seen_pmids = set()
+            # Combine search queries into one comprehensive query
+            search_query = f"antimicrobial stewardship {level} reducing broad-spectrum antibiotic use days of therapy DOT behavioral change implementation"
+            
+            # Use hierarchical retrieval: local RAG → PubMed → PMC
+            documents, metadata = pubmed_rag.retrieve(
+                query=search_query,
+                max_results=5,
+                force_pubmed=False,
+                fetch_full_text=True  # Try to get full text when available
+            )
+            
             unique_results = []
-            for result in all_results:
-                if result['pmid'] not in seen_pmids:
-                    seen_pmids.add(result['pmid'])
-                    unique_results.append(result)
-                    if len(unique_results) >= 5:
-                        break
+            for doc in documents:
+                unique_results.append({
+                    'pmid': doc.pmid,
+                    'title': doc.title,
+                    'text': doc.abstract,
+                    'similarity': doc.similarity_score,
+                    'source': doc.source.value
+                })
+                sources_used.append({
+                    'pmid': doc.pmid,
+                    'title': doc.title,
+                    'source': doc.source.value
+                })
 
             if unique_results:
                 literature_parts = []
@@ -790,7 +843,8 @@ def enhanced_feedback():
     from prompt_injection_protection import sanitize_input, log_suspicious_input
     from flask_login import current_user
 
-    if not enhanced_feedback_gen:
+    # Fall back to PubMed RAG if Expert RAG is not available
+    if not enhanced_feedback_gen and not pubmed_rag:
         return jsonify({
             'error': 'Enhanced feedback system not available',
             'fallback': True
@@ -824,8 +878,9 @@ def enhanced_feedback():
     user_input = sanitized_input
 
     # Map rag_type to boolean flags
-    use_literature = rag_type in ['literature', 'both']
-    use_expert_knowledge = rag_type in ['expert', 'both']
+    use_literature = rag_type in ['literature', 'both', 'pubmed', 'both_pubmed']
+    use_expert_knowledge = rag_type in ['expert', 'both', 'both_pubmed']
+    force_pubmed = rag_type in ['pubmed', 'both_pubmed']  # Force PubMed search even with local results
 
     try:
         # Use Enhanced Feedback Generator
@@ -846,17 +901,157 @@ def enhanced_feedback():
                 context_summary = "\n".join(context_parts)
                 context_aware_input = f"Previous conversation context:\n{context_summary}\n\nCurrent question: {user_input}"
 
-        result = enhanced_feedback_gen.generate_feedback(
-            module_id=module_id,
-            scenario_id=scenario_id,
-            user_response=context_aware_input,
-            difficulty_level=level,
-            use_expert_knowledge=use_expert_knowledge,
-            use_literature=use_literature,
-            mode=mode
-        )
+        # Use Expert RAG if available (unless forcing PubMed), otherwise fall back to PubMed RAG
+        if enhanced_feedback_gen and not force_pubmed:
+            result = enhanced_feedback_gen.generate_feedback(
+                module_id=module_id,
+                scenario_id=scenario_id,
+                user_response=context_aware_input,
+                difficulty_level=level,
+                use_expert_knowledge=use_expert_knowledge,
+                use_literature=use_literature,
+                mode=mode
+            )
+        else:
+            # Fallback to PubMed RAG when Expert RAG is unavailable
+            result = {}
+            
+            # Build literature context using PubMed RAG
+            literature_context = ""
+            sources = []
+            if pubmed_rag and use_literature:
+                try:
+                    # Extract medical search terms from conversational query using LLM
+                    search_query = context_aware_input
+                    
+                    if force_pubmed:  # Only extract terms when forcing PubMed search
+                        # Use Claude to extract search terms if available
+                        if ANTHROPIC_API_KEY:
+                            try:
+                                from anthropic import Anthropic
+                                client = Anthropic(api_key=ANTHROPIC_API_KEY)
+                                
+                                extraction_prompt = f"""Extract key medical search terms from this query for a PubMed search.
+                                Focus on: disease names, treatments, drugs, procedures, age groups, study types.
+                                Return ONLY the search terms as a single line, no explanation.
+                                
+                                Query: {user_input}
+                                
+                                Search terms:"""
+                                
+                                message = client.messages.create(
+                                    model="claude-haiku-4-5",
+                                    max_tokens=100,
+                                    messages=[{"role": "user", "content": extraction_prompt}]
+                                )
+                                search_query = message.content[0].text.strip()
+                                print(f"Extracted PubMed search terms: {search_query}")
+                            except Exception as e:
+                                print(f"Failed to extract search terms with Claude: {e}")
+                        
+                        # Fallback to Gemini if Claude not available
+                        elif GEMINI_API_KEY and search_query == context_aware_input:
+                            try:
+                                import google.generativeai as genai
+                                genai.configure(api_key=GEMINI_API_KEY)
+                                model = genai.GenerativeModel('gemini-pro')
+                                
+                                extraction_prompt = f"""Extract key medical search terms from this query for a PubMed search.
+                                Focus on: disease names, treatments, drugs, procedures, age groups, study types.
+                                Return ONLY the search terms as a single line, no explanation.
+                                
+                                Query: {user_input}
+                                
+                                Search terms:"""
+                                
+                                response = model.generate_content(extraction_prompt)
+                                search_query = response.text.strip()
+                                print(f"Extracted PubMed search terms: {search_query}")
+                            except Exception as e:
+                                print(f"Failed to extract search terms with Gemini: {e}")
+                    
+                    # Search for relevant literature with extracted terms
+                    documents, metadata = pubmed_rag.retrieve(
+                        query=search_query,
+                        max_results=5,
+                        force_pubmed=force_pubmed,  # Use force_pubmed flag from RAG type
+                        fetch_full_text=False
+                    )
+                    
+                    # Optionally summarize literature if we have many results and using PubMed
+                    if force_pubmed and len(documents) > 2 and ANTHROPIC_API_KEY:
+                        try:
+                            from anthropic import Anthropic
+                            client = Anthropic(api_key=ANTHROPIC_API_KEY)
+                            
+                            # Combine abstracts for summarization
+                            all_abstracts = "\n\n".join([
+                                f"[PMID: {doc.pmid}]\nTitle: {doc.title}\nAbstract: {doc.abstract}"
+                                for doc in documents[:5]
+                            ])
+                            
+                            summary_prompt = f"""Summarize these research abstracts focusing on key findings relevant to the user's question.
+                            Preserve PMIDs for citation. Be concise but thorough.
+                            
+                            User's question: {user_input}
+                            
+                            Abstracts:
+                            {all_abstracts}
+                            
+                            Summary with key findings:"""
+                            
+                            message = client.messages.create(
+                                model="claude-haiku-4-5",
+                                max_tokens=1000,
+                                messages=[{"role": "user", "content": summary_prompt}]
+                            )
+                            literature_context = message.content[0].text
+                            print("Literature summarized with Claude")
+                        except Exception as e:
+                            print(f"Failed to summarize literature: {e}")
+                            # Fall back to raw abstracts
+                            for doc in documents[:3]:
+                                literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n{doc.abstract[:500]}...\n"
+                    else:
+                        # Use raw abstracts without summarization
+                        for doc in documents[:3]:
+                            literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n{doc.abstract[:500]}...\n"
+                    
+                    # Always add sources for references
+                    for doc in documents[:5]:
+                        sources.append({
+                            'pmid': doc.pmid,
+                            'title': doc.title,
+                            'source': doc.source.value
+                        })
+                except Exception as e:
+                    print(f"PubMed RAG error: {e}")
+            
+            # Build the enhanced prompt with literature
+            enhanced_prompt = f"""You are an expert in antimicrobial stewardship providing feedback.
 
-        # The enhanced_prompt includes expert corrections and exemplars
+User's Input: {context_aware_input}
+
+Relevant Medical Literature:
+{literature_context if literature_context else "No literature context available."}
+
+Please provide expert-level feedback that:
+1. Addresses the clinical accuracy of the response
+2. Suggests improvements based on current guidelines
+3. References relevant literature when applicable
+4. Maintains an educational and constructive tone
+
+Provide your feedback in a clear, structured format."""
+            
+            result['enhanced_prompt'] = enhanced_prompt
+            result['sources'] = sources
+            result['metadata'] = {
+                'use_expert': False,
+                'use_literature': use_literature,
+                'force_pubmed': force_pubmed
+            }
+
+        # The enhanced_prompt includes expert corrections and exemplars (or literature)
         # Now we need to send it to an LLM to generate the actual feedback
 
         # Try LLMs in order: Claude -> Gemini -> Ollama
@@ -1030,6 +1225,22 @@ def check_services():
     }
     services['openai'] = {
         'status': 'configured' if OPENAI_API_KEY else 'not_configured'
+    }
+    
+    # Check PubMed RAG
+    services['pubmed_rag'] = {
+        'status': 'online' if pubmed_rag else 'offline'
+    }
+    
+    # Check Literature Extractor
+    services['literature_extractor'] = {
+        'status': 'online' if literature_extractor else 'offline',
+        'model': os.environ.get('EXTRACTION_MODEL', 'qwen2.5:72b-instruct-q4_K_M') if literature_extractor else None
+    }
+    
+    # Check Enhanced RAG (combination of both)
+    services['enhanced_rag'] = {
+        'status': 'online' if enhanced_rag else 'offline'
     }
 
     return services
@@ -2208,6 +2419,417 @@ def chat_with_model(model_id: str, messages: List[Dict]) -> tuple:
         return citation_search(query)
     
     return jsonify({'error': f'Unknown model: {model_id}'}), 400
+
+# ============================================================================
+# Literature Search and Extraction Endpoints
+# ============================================================================
+
+@app.route('/api/literature/search', methods=['POST'])
+@limiter.limit("30 per minute")
+def literature_search():
+    """
+    Basic hierarchical literature search using PubMed RAG
+    Falls back gracefully if components are unavailable
+    """
+    data = request.json
+    query = data.get('query', '')
+    max_results = data.get('max_results', 5)
+    force_pubmed = data.get('force_pubmed', False)
+    fetch_full_text = data.get('fetch_full_text', False)
+    
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
+    
+    if not pubmed_rag:
+        # Fallback to local RAG only if PubMed RAG not available
+        if asp_rag:
+            results = asp_rag.search(query, n_results=max_results)
+            return jsonify({
+                'query': query,
+                'results': results,
+                'sources': ['local_rag'],
+                'warning': 'PubMed RAG not available, using local RAG only'
+            })
+        else:
+            return jsonify({'error': 'No literature search services available'}), 503
+    
+    try:
+        documents, metadata = pubmed_rag.retrieve(
+            query=query,
+            max_results=max_results,
+            force_pubmed=force_pubmed,
+            fetch_full_text=fetch_full_text
+        )
+        
+        return jsonify({
+            'query': query,
+            'results': [doc.to_dict() for doc in documents],
+            'metadata': metadata
+        })
+    except Exception as e:
+        return jsonify({'error': f'Literature search error: {str(e)}'}), 500
+
+
+@app.route('/api/literature/extract', methods=['POST'])
+@limiter.limit("10 per minute")  # Stricter limit for extraction
+def literature_extract():
+    """
+    Search literature and extract structured information using local LLM
+    """
+    data = request.json
+    query = data.get('query', '')
+    max_results = data.get('max_results', 5)
+    extract_top_n = data.get('extract_top_n', 3)
+    
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
+    
+    if not enhanced_rag:
+        # Fallback to basic search without extraction
+        if pubmed_rag:
+            documents, metadata = pubmed_rag.retrieve(query, max_results=max_results)
+            return jsonify({
+                'query': query,
+                'results': [doc.to_dict() for doc in documents],
+                'metadata': metadata,
+                'warning': 'Extraction not available, returning raw search results'
+            })
+        else:
+            return jsonify({'error': 'Literature extraction services not available'}), 503
+    
+    try:
+        result = enhanced_rag.retrieve_and_extract(
+            query=query,
+            max_results=max_results,
+            fetch_full_text=True,
+            extract=True
+        )
+        extractions = result.get('extractions', [])
+        metadata = result.get('metadata', {})
+        
+        return jsonify({
+            'query': query,
+            'extractions': [ext.to_dict() for ext in extractions],
+            'metadata': metadata
+        })
+    except Exception as e:
+        return jsonify({'error': f'Extraction error: {str(e)}'}), 500
+
+
+@app.route('/api/chat/with-literature', methods=['POST'])
+@limiter.limit("15 per minute")
+def chat_with_literature():
+    """
+    Chat endpoint that automatically retrieves literature for context
+    """
+    data = request.json
+    query = data.get('query', '')
+    model = data.get('model', 'claude:3.5-sonnet')
+    max_literature = data.get('max_literature', 3)
+    stream = data.get('stream', False)
+    
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
+    
+    try:
+        # Retrieve relevant literature
+        literature_context = ""
+        sources = []
+        
+        if pubmed_rag:
+            documents, metadata = pubmed_rag.retrieve(query, max_results=max_literature)
+            for doc in documents:
+                literature_context += doc.to_context() + "\n\n"
+                sources.append({
+                    'pmid': doc.pmid,
+                    'title': doc.title,
+                    'source': doc.source.value
+                })
+        elif asp_rag:
+            # Fallback to local RAG
+            results = asp_rag.search(query, n_results=max_literature)
+            for r in results:
+                literature_context += f"[PMID: {r.get('pmid', 'N/A')}] {r.get('title', '')}\n{r.get('text', '')[:500]}...\n\n"
+                sources.append({
+                    'pmid': r.get('pmid', 'N/A'),
+                    'title': r.get('title', ''),
+                    'source': 'local_rag'
+                })
+        
+        # Prepare enhanced prompt
+        enhanced_prompt = f"""Based on the following medical literature, please answer this query: {query}
+
+RELEVANT LITERATURE:
+{literature_context}
+
+Please provide a comprehensive, evidence-based response citing the relevant PMIDs."""
+        
+        # Route to appropriate model
+        messages = [{'role': 'user', 'content': enhanced_prompt}]
+        
+        # Parse model identifier
+        if ':' in model:
+            provider, model_name = model.split(':', 1)
+        else:
+            provider = 'ollama'
+            model_name = model
+        
+        # Get response from model
+        if provider == 'claude':
+            response = claude_chat(model_name, messages)
+        elif provider == 'openai':
+            response = openai_chat(model_name, messages)
+        elif provider == 'gemini':
+            response = gemini_chat(model_name, messages)
+        else:
+            response = ollama_chat(model_name, messages)
+        
+        # Handle Flask Response objects
+        from flask import Response as FlaskResponse
+        if isinstance(response, FlaskResponse):
+            # Extract JSON data from response
+            response_data = response.get_json()
+            if response_data and not response_data.get('error'):
+                response_data['sources'] = sources
+                return jsonify(response_data)
+            return response
+        elif isinstance(response, tuple):
+            # Handle error responses (jsonify object, status_code)
+            return response
+        else:
+            # Add sources to response if it's a dict
+            if isinstance(response, dict):
+                response['sources'] = sources
+            return response
+        
+    except Exception as e:
+        return jsonify({'error': f'Chat error: {str(e)}'}), 500
+
+
+@app.route('/api/chat/evidence-based', methods=['POST'])
+@limiter.limit("10 per minute")  # Strict limit for full extraction pipeline
+def evidence_based_chat():
+    """
+    Full extraction pipeline: search → extract → synthesize response
+    """
+    data = request.json
+    query = data.get('query', '')
+    model = data.get('model', 'claude:3.5-sonnet')
+    max_literature = data.get('max_literature', 5)
+    extract_top_n = data.get('extract_top_n', 3)
+    
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
+    
+    if not enhanced_rag:
+        # Fallback to regular chat with literature
+        return chat_with_literature()
+    
+    try:
+        # Retrieve and extract literature
+        result = enhanced_rag.retrieve_and_extract(
+            query=query,
+            max_results=max_literature,
+            fetch_full_text=True,
+            extract=True
+        )
+        extractions = result.get('extractions', [])
+        metadata = result.get('metadata', {})
+        
+        # Build structured context from extractions
+        evidence_context = ""
+        sources = []
+        
+        for ext in extractions:
+            evidence_context += ext.to_context() + "\n" + "="*50 + "\n"
+            sources.append({
+                'pmid': ext.pmid,
+                'title': ext.title,
+                'relevance': ext.relevance.value,
+                'key_findings': ext.key_findings
+            })
+        
+        # Prepare synthesis prompt
+        synthesis_prompt = f"""Based on the following extracted evidence from medical literature, provide a comprehensive answer to: {query}
+
+EXTRACTED EVIDENCE:
+{evidence_context}
+
+Please:
+1. Synthesize the key findings across all studies
+2. Note any contradictions or limitations
+3. Provide clinical recommendations where appropriate
+4. Cite PMIDs for specific claims"""
+        
+        # Get response from model
+        messages = [{'role': 'user', 'content': synthesis_prompt}]
+        
+        # Parse model identifier
+        if ':' in model:
+            provider, model_name = model.split(':', 1)
+        else:
+            provider = 'ollama'
+            model_name = model
+        
+        # Get response
+        if provider == 'claude':
+            response = claude_chat(model_name, messages)
+        elif provider == 'openai':
+            response = openai_chat(model_name, messages)
+        elif provider == 'gemini':
+            response = gemini_chat(model_name, messages)
+        else:
+            response = ollama_chat(model_name, messages)
+        
+        # Handle Flask Response objects
+        from flask import Response as FlaskResponse
+        if isinstance(response, FlaskResponse):
+            # Extract JSON data from response
+            response_data = response.get_json()
+            if response_data and not response_data.get('error'):
+                response_data['sources'] = sources
+                response_data['extraction_metadata'] = metadata
+                return jsonify(response_data)
+            return response
+        elif isinstance(response, tuple):
+            # Handle error responses
+            return response
+        else:
+            # Add metadata if it's a dict
+            if isinstance(response, dict):
+                response['sources'] = sources
+                response['extraction_metadata'] = metadata
+            return response
+        
+    except Exception as e:
+        return jsonify({'error': f'Evidence synthesis error: {str(e)}'}), 500
+
+
+@app.route('/api/chat/agentic', methods=['POST'])
+@limiter.limit("20 per minute")
+def agentic_chat():
+    """
+    LLM-orchestrated literature search using tool calling
+    The LLM decides when and how to search for literature
+    """
+    data = request.json
+    messages = data.get('messages', [])
+    model = data.get('model', 'claude:3.5-sonnet')
+    stream = data.get('stream', False)
+    
+    if not messages:
+        return jsonify({'error': 'Messages are required'}), 400
+    
+    # Check if we have tool-capable model
+    if ':' in model:
+        provider, model_name = model.split(':', 1)
+    else:
+        provider = 'ollama'
+        model_name = model
+    
+    # Only Claude and certain Ollama models support tools well
+    tool_capable = (provider == 'claude' or 
+                   (provider == 'ollama' and any(x in model_name for x in ['llama', 'mixtral', 'qwen'])))
+    
+    if not tool_capable or not pubmed_rag:
+        # Fallback to regular chat
+        return chat_with_literature()
+    
+    try:
+        # Define available tools for the LLM
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_literature",
+                    "description": "Search medical literature in local database and PubMed",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Search query for medical literature"
+                            },
+                            "max_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results to return",
+                                "default": 5
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "extract_evidence",
+                    "description": "Extract structured evidence from literature using AI",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Context query for extraction"
+                            },
+                            "pmids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of PMIDs to extract from"
+                            }
+                        },
+                        "required": ["query", "pmids"]
+                    }
+                }
+            }
+        ]
+        
+        # For Claude, use native tool support
+        if provider == 'claude':
+            # This would require implementing Claude's tool use API
+            # For now, fallback to enhanced prompt
+            tool_prompt = """You have access to medical literature search. 
+When you need evidence, explicitly state: "SEARCH: [your query]" 
+I will provide the results, then you can synthesize them."""
+            
+            enhanced_messages = messages.copy()
+            enhanced_messages.append({
+                'role': 'system',
+                'content': tool_prompt
+            })
+            
+            response = claude_chat(model_name, enhanced_messages)
+            
+            # Check if response requests a search
+            if isinstance(response, dict) and 'SEARCH:' in response.get('response', ''):
+                # Extract search query and perform search
+                # This is a simplified implementation
+                search_query = response['response'].split('SEARCH:')[1].split('\n')[0].strip()
+                documents, _ = pubmed_rag.retrieve(search_query, max_results=5)
+                
+                # Add results and get final response
+                literature_context = "\n\n".join([doc.to_context() for doc in documents])
+                enhanced_messages.append({
+                    'role': 'assistant',
+                    'content': response['response']
+                })
+                enhanced_messages.append({
+                    'role': 'user',
+                    'content': f"Here are the search results:\n\n{literature_context}\n\nPlease continue with your response."
+                })
+                
+                response = claude_chat(model_name, enhanced_messages)
+                response['tool_calls'] = [{'function': 'search_literature', 'query': search_query}]
+            
+            return response
+            
+        else:
+            # For other models, use a simplified approach
+            return chat_with_literature()
+            
+    except Exception as e:
+        return jsonify({'error': f'Agentic chat error: {str(e)}'}), 500
+
 
 if __name__ == '__main__':
     print("=" * 60)

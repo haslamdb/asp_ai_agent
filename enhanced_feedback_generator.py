@@ -472,7 +472,7 @@ Provide a direct, evidence-based answer to the clinical question above.
 ## Content Requirements:
 1. **Answer the question directly** - Start with a clear, actionable answer
 2. **Provide comprehensive detail** - Write 800-1000 words with thorough clinical context
-3. **Reference the evidence** - Cite the expert knowledge and literature provided above using [1], [2], etc. CORRESPONDING to the Source numbers above.
+3. **Reference the evidence** - Cite the expert knowledge and literature provided above using the PMID/ID directly in brackets (e.g., [PMID: 36337760]).
 4. **BE TRANSPARENT about evidence limitations** - If no specific literature was provided above, or if the provided literature doesn't directly address the question, include a disclaimer.
 5. **Provide detailed clinical context** - When applicable, include:
    - Pathophysiology or mechanism
@@ -503,25 +503,27 @@ Use clean, professional markdown formatting:
 - Use **numbered lists** for sequential steps or hierarchical information
 - Add **section headings** (##) for major topic changes if needed
 
-### References Section Formatting (CRITICAL):
+### Citation and References Formatting (CRITICAL):
+- **IN-TEXT CITATIONS**: Use PMIDs directly in square brackets (e.g., [PMID: 36337760])
 - **REQUIRED**: Create a "## **References**" section at the end (note the bold asterisks)
-- **DO NOT** use bullet points for the references. They **MUST** be a numbered list.
-- Format as a numbered list with each reference on a new line
+- **DO NOT** use numbered citations like [1], [2], [3] in the text
+- Format references as a simple list with each PMID on a new line
 - Add TWO blank lines before the References section
 - **USE THE "PMID/ID" information provided in the literature section above.**
-- Copy the complete PMID/ID from "PMID/ID:" - do NOT truncate or modify it.
-- Each reference MUST start with its number followed by a period: "1. ", "2. ", "3. "
-- Reference numbers must match in-text citations (e.g., [1], [2])
+- Copy the complete PMID/ID from "PMID/ID:" - do NOT truncate or modify it
+- Use PMIDs directly in text citations (e.g., [PMID: 12345678], [PMID: 87654321])
 - DO NOT include "Source: filename.pdf" or partial URLs
 - ONLY list the PMID/ID as the reference.
 
-**CORRECT Reference Format:**
+**CORRECT Citation and Reference Format:**
 ```
+In text: "Recent studies demonstrate improved outcomes [PMID: 12345678], particularly in pediatric populations [PMID: 87654321]."
+
 ## **References**
 
-1. PMID: 12345678
-2. PMID: 87654321
-3. doc_3
+PMID: 12345678
+PMID: 87654321
+doc_3
 ```
 
 **INCORRECT formats (DO NOT USE):**
@@ -543,7 +545,7 @@ Use clean, professional markdown formatting:
 
 **Evidence and Recommendations:**
 
-[3-4 paragraphs discussing the evidence base in depth, citing the literature provided. Include specific recommendations with citations [1], [2]. Analyze the evidence strength.]
+[3-4 paragraphs discussing the evidence base in depth, citing the literature provided. Include specific recommendations with citations [PMID: actual_number]. Analyze the evidence strength.]
 
 **Key Clinical Considerations:** (when applicable)
 

@@ -235,12 +235,12 @@
                     modelSelector.appendChild(option);
                 });
 
-                // Set default model - prefer Claude Sonnet 4.5
+                // Set default model - prefer Claude Opus 4.5
                 if (data.models.length > 0) {
-                    const claudeSonnet = data.models.find(m =>
-                        m.id.includes('claude') && m.id.includes('sonnet')
+                    const claudeOpus = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('opus')
                     );
-                    const defaultModel = claudeSonnet || data.models[0];
+                    const defaultModel = claudeOpus || data.models[0];
                     currentModel = defaultModel.id;
                     modelSelector.value = currentModel;
                 }
@@ -404,16 +404,14 @@ Ground your recommendations in real-world evidence.`;
          */
         async function makeApiCall(systemPrompt, userMessage, retries = 3, delay = 1000) {
             try {
-                // Use unified /api/chat endpoint that works with all models
+                // Use literature-enhanced chat endpoint for RAG support
                 const payload = {
                     model: currentModel,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userMessage }
-                    ]
+                    query: userMessage,  // The main query
+                    max_literature: 5    // Get up to 5 relevant papers
                 };
 
-                const response = await fetch(`${currentHost}/api/chat`, {
+                const response = await fetch(`${currentHost}/api/chat/with-literature`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -431,7 +429,15 @@ Ground your recommendations in real-world evidence.`;
                 const result = await response.json();
 
                 // Extract text and sources from unified response
-                const text = result.response || result.text || '';
+                let text = result.response || result.text || '';
+                
+                // Add sources if available
+                if (result.sources && result.sources.length > 0) {
+                    text += '\n\n---\n**Sources:**\n';
+                    result.sources.forEach((source, idx) => {
+                        text += `${idx + 1}. [PMID: ${source.pmid}] ${source.title} (${source.source})\n`;
+                    });
+                }
                 const sources = result.citations || result.sources || [];
 
                 return { text, sources };

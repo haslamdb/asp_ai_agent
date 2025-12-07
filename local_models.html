@@ -76,9 +76,11 @@
                         <label class="text-sm font-medium">RAG Source:</label>
                         <select id="rag-select" class="bg-white text-gray-900 rounded px-2 py-1 text-sm">
                             <option value="none">None</option>
-                            <option value="literature">📚 Literature</option>
+                            <option value="literature">📚 Local Literature</option>
                             <option value="expert">👨‍⚕️ Expert Knowledge</option>
-                            <option value="both" selected>🔬 Both</option>
+                            <option value="both" selected>🔬 Both (Local)</option>
+                            <option value="pubmed">🔍 PubMed Search</option>
+                            <option value="both_pubmed">🌐 Both + PubMed</option>
                         </select>
                     </div>
                     <span id="connection-status" class="flex items-center">
@@ -230,12 +232,12 @@
                     select.appendChild(option);
                 });
 
-                // Set default model - prefer Claude Sonnet 4.5, otherwise first available
+                // Set default model - prefer Claude Opus 4.5, otherwise first available
                 if (data.models.length > 0) {
-                    const claudeSonnet = data.models.find(m =>
-                        m.id.includes('claude') && m.id.includes('sonnet')
+                    const claudeOpus = data.models.find(m =>
+                        m.id.includes('claude') && m.id.includes('opus')
                     );
-                    const defaultModel = claudeSonnet || data.models[0];
+                    const defaultModel = claudeOpus || data.models[0];
                     currentModel = defaultModel.id;
                     select.value = currentModel;
                     // Update models grid to show only selected model
