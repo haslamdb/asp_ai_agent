@@ -840,6 +840,7 @@ def enhanced_feedback():
     Combines literature RAG + expert corrections + exemplar responses
     for higher quality, expert-validated feedback
     """
+    print("DEBUG: Enhanced feedback endpoint called")
     from prompt_injection_protection import sanitize_input, log_suspicious_input
     from flask_login import current_user
 
@@ -925,11 +926,33 @@ def enhanced_feedback():
             literature_context = ""
             sources = []
             if pubmed_rag and use_literature:
+                print(f"DEBUG: Starting PubMed search. use_literature={use_literature}, force_pubmed={force_pubmed}")
                 try:
                     # Extract medical search terms from conversational query using LLM
                     search_query = context_aware_input
                     
-                    if force_pubmed:  # Only extract terms when forcing PubMed search
+                    # Check for direct PMID reference
+                    import re
+                    pmid_match = re.search(r'PMID:?\s*(\d+)', user_input, re.IGNORECASE)
+                    
+                    # Log to file for debugging
+                    try:
+                        with open('/tmp/debug_rag.log', 'a') as f:
+                            f.write(f"\\n[{datetime.now()}] Input: {user_input}\\n")
+                    except:
+                        pass
+                    
+                    if pmid_match:
+                        # Direct PMID search - bypass LLM extraction
+                        search_query = pmid_match.group(1)
+                        print(f"DEBUG: Detected direct PMID reference: {search_query}")
+                        try:
+                            with open('/tmp/debug_rag.log', 'a') as f:
+                                f.write(f"Detected PMID: {search_query}\\n")
+                        except:
+                            pass
+                    
+                    elif force_pubmed:  # Only extract terms when forcing PubMed search
                         # Use Claude to extract search terms if available
                         if ANTHROPIC_API_KEY:
                             try:
@@ -1008,52 +1031,64 @@ PubMed Search String:"""
                                 print(f"Failed to extract search terms with Gemini: {e}")
                     
                     # Search for relevant literature with extracted terms
+                    print(f"DEBUG: Calling pubmed_rag.retrieve with query: {search_query[:100]}, force_pubmed={force_pubmed}")
                     documents, metadata = pubmed_rag.retrieve(
                         query=search_query,
                         max_results=5,
                         force_pubmed=force_pubmed,  # Use force_pubmed flag from RAG type
                         fetch_full_text=False
                     )
+                    print(f"DEBUG: Retrieved {len(documents) if documents else 0} documents")
                     
-                    # Optionally summarize literature if we have many results and using PubMed
-                    if force_pubmed and len(documents) > 2 and ANTHROPIC_API_KEY:
-                        try:
-                            from anthropic import Anthropic
-                            client = Anthropic(api_key=ANTHROPIC_API_KEY)
-                            
-                            # Combine abstracts for summarization
-                            all_abstracts = "\n\n".join([
-                                f"[PMID: {doc.pmid}]\nTitle: {doc.title}\nAbstract: {doc.abstract}"
-                                for doc in documents[:5]
-                            ])
-                            
-                            summary_prompt = f"""Summarize these research abstracts to answer the user's question.
-                            Format: For each relevant study, provide a 1-2 sentence summary of key findings.
-                            Keep PMIDs for citation.
-                            
-                            User's question: {user_input}
-                            
-                            Abstracts:
-                            {all_abstracts}
-                            
-                            Concise summary of each study:"""
-                            
-                            message = client.messages.create(
-                                model="claude-haiku-4-5",
-                                max_tokens=1000,
-                                messages=[{"role": "user", "content": summary_prompt}]
-                            )
-                            literature_context = message.content[0].text
-                            print("Literature summarized with Claude")
-                        except Exception as e:
-                            print(f"Failed to summarize literature: {e}")
-                            # Fall back to raw abstracts
-                            for doc in documents[:3]:
-                                literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n{doc.abstract[:500]}...\n"
+                    # Build literature context from retrieved documents
+                    if documents:
+                        print(f"Found {len(documents)} documents from PubMed")
+                        
+                        # Try to summarize if we have Claude and multiple results
+                        if len(documents) > 2 and ANTHROPIC_API_KEY:
+                            try:
+                                from anthropic import Anthropic
+                                client = Anthropic(api_key=ANTHROPIC_API_KEY)
+                                
+                                # Combine abstracts for summarization
+                                all_abstracts = "\n\n".join([
+                                    f"[PMID: {doc.pmid}]\nTitle: {doc.title}\nAbstract: {doc.abstract}"
+                                    for doc in documents[:5]
+                                ])
+                                
+                                summary_prompt = f"""Summarize these research abstracts to answer the user's question.
+                                Format: For each relevant study, provide a 1-2 sentence summary of key findings.
+                                Keep PMIDs for citation.
+                                
+                                User's question: {user_input}
+                                
+                                Abstracts:
+                                {all_abstracts}
+                                
+                                Concise summary of each study:"""
+                                
+                                message = client.messages.create(
+                                    model="claude-haiku-4-5",
+                                    max_tokens=1000,
+                                    messages=[{"role": "user", "content": summary_prompt}]
+                                )
+                                literature_context = message.content[0].text
+                                print("Literature summarized with Claude")
+                            except Exception as e:
+                                print(f"Failed to summarize literature: {e}")
+                                # Fall back to raw abstracts
+                                for doc in documents[:5]:
+                                    literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n"
+                                    literature_context += f"Authors: {doc.authors or 'N/A'} | {doc.journal or 'N/A'} ({doc.year or 'N/A'})\n"
+                                    literature_context += f"Abstract: {doc.abstract[:500]}...\n\n" if len(doc.abstract) > 500 else f"Abstract: {doc.abstract}\n\n"
+                        else:
+                            # Use raw abstracts without summarization
+                            for doc in documents[:5]:
+                                literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n"
+                                literature_context += f"Authors: {doc.authors or 'N/A'} | {doc.journal or 'N/A'} ({doc.year or 'N/A'})\n"
+                                literature_context += f"Abstract: {doc.abstract[:500]}...\n\n" if len(doc.abstract) > 500 else f"Abstract: {doc.abstract}\n\n"
                     else:
-                        # Use raw abstracts without summarization
-                        for doc in documents[:3]:
-                            literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n{doc.abstract[:500]}...\n"
+                        print("No documents found from PubMed search")
                     
                     # Always add sources for references
                     for doc in documents[:5]:
@@ -1910,9 +1945,34 @@ def asp_feedback():
             context_prompt += f"User: {turn.user_message[:200]}...\n"
             context_prompt += f"Assistant: {turn.ai_response[:200]}...\n\n"
     
-    # Try to enhance with citations
+    # Try to enhance with PubMed search
+    literature_context = ""
+    pubmed_metadata = {}
+    if pubmed_rag:
+        try:
+            # Search for relevant literature
+            documents, metadata = pubmed_rag.retrieve(
+                query=user_input,
+                max_results=5,
+                force_pubmed=True  # Force PubMed search for medical queries
+            )
+            
+            pubmed_metadata = metadata
+            
+            if documents:
+                literature_context = "\n\nRelevant literature from PubMed:\n"
+                for doc in documents:
+                    literature_context += f"\n[PMID: {doc.pmid}] {doc.title}\n"
+                    literature_context += f"Authors: {doc.authors or 'N/A'} | {doc.journal or 'N/A'} ({doc.year or 'N/A'})\n"
+                    literature_context += f"Abstract: {doc.abstract[:500]}...\n\n" if len(doc.abstract) > 500 else f"Abstract: {doc.abstract}\n\n"
+                
+                print(f"Added {len(documents)} PubMed documents to context")
+        except Exception as e:
+            print(f"PubMed search error: {e}")
+    
+    # Try to enhance with citations (fallback)
     citations = []
-    if check_services().get('citation_assistant', {}).get('status') == 'online':
+    if not literature_context and check_services().get('citation_assistant', {}).get('status') == 'online':
         try:
             search_resp = requests.post(
                 f"{CITATION_API}/api/search",
@@ -1928,7 +1988,9 @@ def asp_feedback():
     enhanced_input = user_input
     if context_prompt:
         enhanced_input = context_prompt + "\nCurrent question: " + user_input
-    if citations:
+    if literature_context:
+        enhanced_input += literature_context
+    elif citations:
         enhanced_input += "\n\nRelevant literature to consider:\n"
         for cite in citations:
             enhanced_input += f"- {cite.get('title', '')} ({cite.get('year', '')}): {cite.get('context', '')[:100]}...\n"
@@ -1953,7 +2015,7 @@ def asp_feedback():
                     response_obj, status_code = result
                     if status_code == 200:
                         response_data = json.loads(response_obj.get_data(as_text=True))
-                        response_data['citations'] = citations
+                        response_data['citations'] = pubmed_metadata.get('pubmed_results', 0) if pubmed_metadata else 0
                         model_used = preferred_model
                         print(f"DEBUG: Success with preferred model")
         except Exception as e:
@@ -1987,7 +2049,7 @@ def asp_feedback():
                         response_obj, status_code = result
                         if status_code == 200:
                             response_data = json.loads(response_obj.get_data(as_text=True))
-                            response_data['citations'] = citations
+                            response_data['citations'] = pubmed_metadata.get('pubmed_results', 0) if pubmed_metadata else 0
                             model_used = model_id
                             print(f"DEBUG: Success with fallback model {model_id}")
                             break
@@ -2016,7 +2078,7 @@ def asp_feedback():
                 'conversation_state': conversation_context['context'].state.value,
                 'scaffolding_level': conversation_context['scaffolding_level']
             },
-            citations=citations,
+            citations=citations if citations else pubmed_metadata.get('pubmed_results', []),
             metrics={'model': model_used}
         )
         user_session.add_turn(turn)
@@ -2104,9 +2166,13 @@ def asp_feedback():
             'personalized_path': adaptive_engine.generate_personalized_path(user_session)[:1]  # Top recommendation
         }
         
+        # Add PubMed metadata if available
+        if pubmed_metadata:
+            response_data['pubmed_info'] = pubmed_metadata
+        
         return jsonify(response_data)
     
-    return jsonify({'error': 'No AI models available', 'citations': citations}), 503
+    return jsonify({'error': 'No AI models available', 'citations': citations if citations else pubmed_metadata.get('pubmed_results', [])}), 503
 
 @lru_cache(maxsize=100)
 def get_cached_citations(query_hash: str) -> Optional[List[Dict]]:
